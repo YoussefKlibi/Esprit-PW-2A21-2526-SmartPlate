@@ -1,5 +1,18 @@
 # 🥗 SmartPlate
 
+## 📑 Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+- [Architecture](#architecture)
+- [Contributors](#contributors)
+- [Academic Context](#academic-context)
+- [Getting Started](#getting-started)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
+
 ## Overview
 SmartPlate is a web platform focused on sustainable food and intelligent nutrition. It helps users adopt healthy and eco-friendly eating habits through personalized recommendations, food tracking, and smart services.
 
@@ -72,7 +85,21 @@ Academic Year: **2025–2026**
    ```bash
    git clone https://github.com/YoussefKlibi/Esprit-PW-2A21-2526-SmartPlate.git
 
+2. Si vous utilisez WAMP ou XAMPP :
+
+* Placez le projet dans le dossier www (WAMP) ou htdocs (XAMPP).
+
+* Démarrez Apache et MySQL depuis l'interface de WAMP/XAMPP.
+
+* Accédez au projet via http://localhost/projet.
+
 
 ## Acknowledgments
 
 We would like to thank our instructors and Esprit School of Engineering for their guidance and support throughout this project.
+
+## 📜 License
+
+This project is developed for academic purposes at **Esprit School of Engineering**.
+
+You are free to use and modify this project for educational purposes.
