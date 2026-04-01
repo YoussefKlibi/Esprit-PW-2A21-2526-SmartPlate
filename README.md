@@ -48,9 +48,9 @@ The system is based on a modular architecture where each module represents a spe
 - **User Module**: handles authentication and profile management  
 - **Product Sales Module**: manages products, categories, and orders  
 - **Recipes Module**: manages recipes and ingredients  
-- **Nutrition Tracking Module**: tracks meals and nutritional data  
-- **Payment Module**: processes transactions  
-- **Reviews & Reclamation Module**: manages user feedback and complaints  
+- **Nutrition Tracking Module**: tracks meals and nutritional data 
+- **Reviews Module**: manages user feedback
+- **Reclamation Module**: manages user complaints
 
 The database follows a relational model with multiple entities and relationships (joins) to ensure data consistency and scalability.
 
