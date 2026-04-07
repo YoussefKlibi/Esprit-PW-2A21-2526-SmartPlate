@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPlate - Mon Journal</title>
+    <link rel="stylesheet" href="templates/template.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+    <div class="sidebar-logo">
+        <img src="C:\Youssef\2A\ProjetWeb\SmartPlate\Logo\logo.png" alt="Avatar" height="80%" width="50%">
+        <h2>SmartPlate</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+        <span class="nav-section-title">Menu Principal</span>
+        
+        <a href="Journal.html" class="nav-item">
+            <span class="icon">🍽️</span>
+            <span>Journal Alimentaire</span>
+        </a>
+        
+        <a href="Objectif.html" class="nav-item">
+            <span class="icon">🎯</span>
+            <span>Mes Objectifs</span>
+        </a>
+        
+        <a href="Progression.html" class="nav-item">
+            <span class="icon">📈</span>
+            <span>Ma Progression</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-badge">
+            <img src="https://ui-avatars.com/api/?name=Youssef&background=d4f283&color=1a1a1a&rounded=true" alt="Avatar">
+            <div class="user-info">
+                <span class="user-name">Youssef</span>
+                <span class="user-status">Connecté</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<div class="dashboard">
+    
+    <header class="dashboard-header">
+        <h1>Journal Alimentaire</h1>
+        <span class="date-badge">Aujourd'hui, 2 Avril</span>
+    </header>
+
+    <div class="journal-grid">
+        
+        <div class="card progress-card">
+            <div class="card-header">
+                <h2>Total Calorique</h2>
+                <span class="badge yellow">Objectif : 2000 kcal</span>
+            </div>
+            <div class="progress-content">
+                <div class="circle-chart">
+                    <div class="circle-inner">
+                        <span class="percentage">75%</span>
+                        <span class="label">Complété</span>
+                    </div>
+                </div>
+                <div class="macros-summary">
+                    <div class="macro-item">
+                        <span class="dot blue"></span> Glucides <span>150g / 200g</span>
+                    </div>
+                    <div class="macro-item">
+                        <span class="dot yellow"></span> Protéines <span>90g / 120g</span>
+                    </div>
+                    <div class="macro-item">
+                        <span class="dot green"></span> Lipides <span>45g / 65g</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card health-card">
+            <div class="card-header">
+                <h2>Score Nutritionnel</h2>
+            </div>
+            <div class="health-content">
+                <div class="score-display">
+                    <span class="score-number">82%</span>
+                    <span class="badge white">Très Équilibré</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 82%;"></div>
+                </div>
+                <p class="encouragement">Continue comme ça pour atteindre ton objectif !</p>
+            </div>
+        </div>
+
+        <div class="meals-section">
+            <div class="section-header">
+                <h2>Mes Repas</h2>
+                <button class="btn-add-main">+ Ajouter un repas</button>
+            </div>
+
+            <div class="meal-card">
+                <div class="meal-image">
+                    <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=150&q=80" alt="Repas">
+                </div>
+                
+                <div class="meal-info">
+                    <div class="meal-tags">
+                        <span class="badge green-light">Déjeuner</span>
+                        <span class="time-info">12:30</span>
+                    </div>
+                    <h3>Salade Saumon & Quinoa</h3> <p>Saumon au four, brocolis vapeur et quinoa.</p>
+                </div>
+
+                <div class="meal-stats">
+                    <div class="stat-col">
+                        <span class="stat-val">450 Cal</span>
+                        <span class="stat-val">40g Glucides</span>
+                    </div>
+                    <div class="stat-col">
+                        <span class="stat-val">35g Protéines</span>
+                        <span class="stat-val">15g Lipides</span>
+                    </div>
+                    <button class="btn-action">+ Détails</button>
+                </div>
+            </div>
+
+            <div class="meal-card">
+                <div class="meal-image">
+                    <img src="https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=150&q=80" alt="Petit dej">
+                </div>
+                <div class="meal-info">
+                    <div class="meal-tags">
+                        <span class="badge blue-light">Petit-Déjeuner</span>
+                        <span class="time-info">07:30</span>
+                    </div>
+                    <h3>Pancakes Avoine</h3>
+                    <p>Pancakes à l'avoine, banane et sirop d'érable.</p>
+                </div>
+                <div class="meal-stats">
+                    <div class="stat-col">
+                        <span class="stat-val">320 Cal</span>
+                        <span class="stat-val">50g Glucides</span>
+                    </div>
+                    <div class="stat-col">
+                        <span class="stat-val">12g Protéines</span>
+                        <span class="stat-val">8g Lipides</span>
+                    </div>
+                    <button class="btn-action">+ Détails</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
