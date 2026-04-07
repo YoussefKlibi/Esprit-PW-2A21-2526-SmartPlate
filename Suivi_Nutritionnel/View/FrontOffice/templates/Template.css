@@ -685,3 +685,57 @@ body {
     font-size: 0.75rem;
     color: #8c8c8c;
 }
+
+/* --- Gestion du Journal (En-tête) --- */
+
+.active-journal-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--green-light);
+}
+
+.journal-info-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.journal-actions-right {
+    display: flex;
+    gap: 0.8rem;
+}
+
+/* Boutons d'icônes pour le CRUD du Journal */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: #f8fafc;
+}
+
+.btn-icon.danger {
+    color: #e53e3e; /* Rouge */
+    border-color: #feb2b2;
+}
+
+.btn-icon.danger:hover {
+    background-color: #fff5f5;
+}

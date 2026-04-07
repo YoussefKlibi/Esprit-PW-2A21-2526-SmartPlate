@@ -46,10 +46,40 @@
 
 <div class="dashboard">
     
-    <header class="dashboard-header">
+    <header class="dashboard-header" style="flex-direction: column; align-items: stretch; gap: 1.5rem; margin-bottom: 2rem;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center;">
         <h1>Journal Alimentaire</h1>
-        <span class="date-badge">Aujourd'hui, 2 Avril</span>
-    </header>
+        
+        <form action="index.php?action=addJournal" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="date" name="date_journal" class="form-control" style="padding: 0.5rem; width: auto;" required>
+            
+            <input type="number" name="poids_actuel" class="form-control" placeholder="Poids (kg)" step="0.1" style="padding: 0.5rem; width: 120px;">
+            
+            <button type="submit" class="btn-main" style="padding: 0.5rem 1rem;">+ Créer Journal</button>
+        </form>
+    </div>
+
+    <div class="active-journal-bar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: var(--shadow); border-left: 4px solid var(--green-light);">
+        <div class="journal-info-left" style="display: flex; align-items: center; gap: 1rem;">
+            <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">📅 Aujourd'hui, 2 Avril</span>
+            
+            <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">⚖️ 75.5 kg</span>
+            
+            <span class="badge green-light">Journal Actif</span>
+        </div>
+        
+        <div class="journal-actions-right" style="display: flex; gap: 0.8rem;">
+            <button class="btn-icon" style="display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #e2e8f0; padding: 5px 10px; border-radius: 8px; cursor: pointer;">
+                ✏️ Modifier
+            </button>
+
+            <a href="index.php?action=deleteJournal" class="btn-icon danger" style="text-decoration: none; color: #e53e3e; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 8px;" onclick="return confirm('Voulez-vous vraiment supprimer ce journal et ses repas ?');">
+                🗑️ Supprimer
+            </a>
+        </div>
+    </div>
+</header>
 
     <div class="journal-grid">
         
@@ -151,7 +181,52 @@
                     <button class="btn-action">+ Détails</button>
                 </div>
             </div>
+            <div class="card" style="margin-top: 2rem; border: 2px solid var(--green-light);">
+            <div class="card-header">
+                <h2>Enregistrer un nouveau repas</h2>
+            </div>
+            
+            <form action="index.php?action=addRepas" method="POST" class="modern-form">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nom">Nom du repas</label>
+                        <input type="text" id="nom" name="nom" class="form-control" placeholder="Ex: Blanc de poulet" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qte">Quantité (g ou portion)</label>
+                        <input type="number" id="qte" name="qte" class="form-control" placeholder="Ex: 150" required>
+                    </div>
+                </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nbre_calories">Calories (kcal)</label>
+                        <input type="number" id="nbre_calories" name="nbre_calories" class="form-control" placeholder="Ex: 250" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="proteine">Protéines (g)</label>
+                        <input type="number" id="proteine" name="proteine" class="form-control" placeholder="Ex: 30" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="glucide">Glucides (g)</label>
+                        <input type="number" id="glucide" name="glucide" class="form-control" placeholder="Ex: 0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lipide">Lipides (g)</label>
+                        <input type="number" id="lipide" name="lipide" class="form-control" placeholder="Ex: 5" required>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="reset" class="btn-secondary">Effacer les champs</button>
+                    <button type="submit" class="btn-main">Ajouter au journal</button>
+                </div>
+            </form>
+        </div>
         </div>
     </div>
 </div>
