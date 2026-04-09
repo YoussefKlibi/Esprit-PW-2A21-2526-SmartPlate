@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     // --- 3. CONTRÔLE DE L'OBJECTIF ---
     // =========================================================================
-    const formObjectif = document.querySelector('form[action="index.php?action=updateObjectif"]');
+    const formObjectif = document.querySelector('form[action="../../Controller/ObjectifController.php?action=add"]');
     if (formObjectif) {
         formObjectif.addEventListener('submit', function(e) {
             let poidsCible = document.getElementById('poids_cible').value;
