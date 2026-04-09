@@ -8,228 +8,210 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    
     <aside class="sidebar">
-    <div class="sidebar-logo">
-        <img src="C:\Youssef\2A\ProjetWeb\SmartPlate\Logo\logo.png" alt="Avatar" height="80%" width="50%">
-        <h2>SmartPlate</h2>
-    </div>
-
-    <nav class="sidebar-nav">
-        <span class="nav-section-title">Menu Principal</span>
-        
-        <a href="Journal.html" class="nav-item">
-            <span class="icon">🍽️</span>
-            <span>Journal Alimentaire</span>
-        </a>
-        
-        <a href="Objectif.html" class="nav-item">
-            <span class="icon">🎯</span>
-            <span>Mes Objectifs</span>
-        </a>
-        
-        <a href="Progression.html" class="nav-item">
-            <span class="icon">📈</span>
-            <span>Ma Progression</span>
-        </a>
-    </nav>
-
-    <div class="sidebar-footer">
-        <div class="user-badge">
-            <img src="https://ui-avatars.com/api/?name=Youssef&background=d4f283&color=1a1a1a&rounded=true" alt="Avatar">
-            <div class="user-info">
-                <span class="user-name">Youssef</span>
-                <span class="user-status">Connecté</span>
-            </div>
+        <div class="sidebar-logo">
+            <img src="C:\Youssef\2A\ProjetWeb\SmartPlate\Logo\logo.png" alt="Logo" height="80%" width="50%">
+            <h2>SmartPlate</h2>
         </div>
-    </div>
-</aside>
 
-<div class="dashboard">
-    
-    <header class="dashboard-header" style="flex-direction: column; align-items: stretch; gap: 1.5rem; margin-bottom: 2rem;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Journal Alimentaire</h1>
-        
-        <form action="index.php?action=addJournal" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
-            <input type="date" name="date_journal" class="form-control" style="padding: 0.5rem; width: auto;" required>
+        <nav class="sidebar-nav">
+            <span class="nav-section-title">Menu Principal</span>
             
-            <input type="number" name="poids_actuel" class="form-control" placeholder="Poids (kg)" step="0.1" style="padding: 0.5rem; width: 120px;">
-            
-            <button type="submit" class="btn-main" style="padding: 0.5rem 1rem;">+ Créer Journal</button>
-        </form>
-    </div>
-
-    <div class="active-journal-bar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: var(--shadow); border-left: 4px solid var(--green-light);">
-        <div class="journal-info-left" style="display: flex; align-items: center; gap: 1rem;">
-            <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">📅 Aujourd'hui, 2 Avril</span>
-            
-            <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">⚖️ 75.5 kg</span>
-            
-            <span class="badge green-light">Journal Actif</span>
-        </div>
-        
-        <div class="journal-actions-right" style="display: flex; gap: 0.8rem;">
-            <button class="btn-icon" style="display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #e2e8f0; padding: 5px 10px; border-radius: 8px; cursor: pointer;">
-                ✏️ Modifier
-            </button>
-
-            <a href="index.php?action=deleteJournal" class="btn-icon danger" style="text-decoration: none; color: #e53e3e; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 8px;" onclick="return confirm('Voulez-vous vraiment supprimer ce journal et ses repas ?');">
-                🗑️ Supprimer
+            <a href="Journal.html" class="nav-item active">
+                <span class="icon">🍽️</span>
+                <span>Journal Alimentaire</span>
             </a>
-        </div>
-    </div>
-</header>
-
-    <div class="journal-grid">
-        
-        <div class="card progress-card">
-            <div class="card-header">
-                <h2>Total Calorique</h2>
-                <span class="badge yellow">Objectif : 2000 kcal</span>
-            </div>
-            <div class="progress-content">
-                <div class="circle-chart">
-                    <div class="circle-inner">
-                        <span class="percentage">75%</span>
-                        <span class="label">Complété</span>
-                    </div>
-                </div>
-                <div class="macros-summary">
-                    <div class="macro-item">
-                        <span class="dot blue"></span> Glucides <span>150g / 200g</span>
-                    </div>
-                    <div class="macro-item">
-                        <span class="dot yellow"></span> Protéines <span>90g / 120g</span>
-                    </div>
-                    <div class="macro-item">
-                        <span class="dot green"></span> Lipides <span>45g / 65g</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card health-card">
-            <div class="card-header">
-                <h2>Score Nutritionnel</h2>
-            </div>
-            <div class="health-content">
-                <div class="score-display">
-                    <span class="score-number">82%</span>
-                    <span class="badge white">Très Équilibré</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: 82%;"></div>
-                </div>
-                <p class="encouragement">Continue comme ça pour atteindre ton objectif !</p>
-            </div>
-        </div>
-
-        <div class="meals-section">
-            <div class="section-header">
-                <h2>Mes Repas</h2>
-                <button class="btn-add-main">+ Ajouter un repas</button>
-            </div>
-
-            <div class="meal-card">
-                <div class="meal-image">
-                    <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=150&q=80" alt="Repas">
-                </div>
-                
-                <div class="meal-info">
-                    <div class="meal-tags">
-                        <span class="badge green-light">Déjeuner</span>
-                        <span class="time-info">12:30</span>
-                    </div>
-                    <h3>Salade Saumon & Quinoa</h3> <p>Saumon au four, brocolis vapeur et quinoa.</p>
-                </div>
-
-                <div class="meal-stats">
-                    <div class="stat-col">
-                        <span class="stat-val">450 Cal</span>
-                        <span class="stat-val">40g Glucides</span>
-                    </div>
-                    <div class="stat-col">
-                        <span class="stat-val">35g Protéines</span>
-                        <span class="stat-val">15g Lipides</span>
-                    </div>
-                    <button class="btn-action">+ Détails</button>
-                </div>
-            </div>
-
-            <div class="meal-card">
-                <div class="meal-image">
-                    <img src="https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=150&q=80" alt="Petit dej">
-                </div>
-                <div class="meal-info">
-                    <div class="meal-tags">
-                        <span class="badge blue-light">Petit-Déjeuner</span>
-                        <span class="time-info">07:30</span>
-                    </div>
-                    <h3>Pancakes Avoine</h3>
-                    <p>Pancakes à l'avoine, banane et sirop d'érable.</p>
-                </div>
-                <div class="meal-stats">
-                    <div class="stat-col">
-                        <span class="stat-val">320 Cal</span>
-                        <span class="stat-val">50g Glucides</span>
-                    </div>
-                    <div class="stat-col">
-                        <span class="stat-val">12g Protéines</span>
-                        <span class="stat-val">8g Lipides</span>
-                    </div>
-                    <button class="btn-action">+ Détails</button>
-                </div>
-            </div>
-            <div class="card" style="margin-top: 2rem; border: 2px solid var(--green-light);">
-            <div class="card-header">
-                <h2>Enregistrer un nouveau repas</h2>
-            </div>
             
-            <form action="index.php?action=addRepas" method="POST" class="modern-form">
+            <a href="Objectif.html" class="nav-item">
+                <span class="icon">🎯</span>
+                <span>Mes Objectifs</span>
+            </a>
+            
+            <a href="Progression.html" class="nav-item">
+                <span class="icon">📈</span>
+                <span>Ma Progression</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="dashboard">
+        
+        <header class="dashboard-header" style="flex-direction: column; align-items: stretch; gap: 1.5rem; margin-bottom: 2rem;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <h1>Journal Alimentaire</h1>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nom">Nom du repas</label>
-                        <input type="text" id="nom" name="nom" class="form-control" placeholder="Ex: Blanc de poulet" required>
+                <div style="display: flex; gap: 1.5rem; align-items: center;">
+                    <form action="index.php" method="GET" style="display: flex; gap: 0.5rem; align-items: center; border-right: 2px solid #e2e8f0; padding-right: 1.5rem;">
+                        <input type="hidden" name="action" value="consulterJournal">
+                        <span style="font-size: 0.85rem; color: var(--text-gray); font-weight: 600;">Historique :</span>
+                        <input type="date" name="date_recherche" class="form-control" style="padding: 0.4rem; font-size: 0.9rem;">
+                        <button type="submit" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">Afficher</button>
+                    </form>
+
+                    <form action="index.php?action=addJournal" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="date" name="date_journal" class="form-control" style="padding: 0.4rem; width: auto; font-size: 0.9rem;">
+                        <input type="number" name="poids_actuel" class="form-control" placeholder="Poids (kg)" step="0.1" style="padding: 0.4rem; width: 100px; font-size: 0.9rem;">
+                        <button type="submit" class="btn-main" style="padding: 0.4rem 1rem; font-size: 0.9rem;">+ Créer</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="active-journal-bar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: var(--shadow); border-left: 4px solid var(--green-light);">
+                <div class="journal-info-left" style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">📅 2 Avril 2026</span>
+                    <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">⚖️ 75.5 kg</span>
+                    <span class="badge green-light">Journal Actif</span>
+                </div>
+                
+                <div class="journal-actions-right" style="display: flex; gap: 0.8rem;">
+                    <button class="btn-icon" style="display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #e2e8f0; padding: 5px 10px; border-radius: 8px; cursor: pointer;">
+                        ✏️ Modifier
+                    </button>
+                    <a href="index.php?action=deleteJournal&id=1" class="btn-icon danger" style="text-decoration: none; color: #e53e3e; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 8px;" onclick="return confirm('Voulez-vous vraiment supprimer ce journal et ses repas ?');">
+                        🗑️ Supprimer
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="journal-grid">
+            
+            <div class="card progress-card">
+                <div class="card-header">
+                    <h2>Total Calorique</h2>
+                    <span class="badge yellow">Objectif : 2000 kcal</span>
+                </div>
+                <div class="progress-content">
+                    <div class="circle-chart">
+                        <div class="circle-inner">
+                            <span class="percentage">75%</span>
+                            <span class="label">Complété</span>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="qte">Quantité (g ou portion)</label>
-                        <input type="number" id="qte" name="qte" class="form-control" placeholder="Ex: 150" required>
+                    <div class="macros-summary">
+                        <div class="macro-item"><span class="dot blue"></span> Glucides <span>150g / 200g</span></div>
+                        <div class="macro-item"><span class="dot yellow"></span> Protéines <span>90g / 120g</span></div>
+                        <div class="macro-item"><span class="dot green"></span> Lipides <span>45g / 65g</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card health-card">
+                <div class="card-header">
+                    <h2>Score Nutritionnel</h2>
+                </div>
+                <div class="health-content">
+                    <div class="score-display">
+                        <span class="score-number">82%</span>
+                        <span class="badge white">Très Équilibré</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 82%;"></div>
+                    </div>
+                    <p class="encouragement">Continue comme ça pour atteindre ton objectif !</p>
+                </div>
+            </div>
+
+            <div class="meals-section">
+                <div class="section-header">
+                    <h2>Mes Repas</h2>
+                </div>
+
+                <div class="meal-card">
+                    <div class="meal-image">
+                        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=150&q=80" alt="Repas">
+                    </div>
+                    <div class="meal-info">
+                        <div class="meal-tags">
+                            <span class="badge green-light">Déjeuner</span>
+                            <span class="time-info">12:30</span>
+                        </div>
+                        <h3>Salade Saumon & Quinoa</h3>
+                        <p>Saumon au four, brocolis vapeur et quinoa.</p>
+                    </div>
+                    <div class="meal-stats">
+                        <div class="stat-col">
+                            <span class="stat-val">450 Cal</span>
+                            <span class="stat-val">40g Glucides</span>
+                        </div>
+                        <div class="stat-col">
+                            <span class="stat-val">35g Protéines</span>
+                            <span class="stat-val">15g Lipides</span>
+                        </div>
+                        <button class="btn-action">+ Détails</button>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nbre_calories">Calories (kcal)</label>
-                        <input type="number" id="nbre_calories" name="nbre_calories" class="form-control" placeholder="Ex: 250" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="proteine">Protéines (g)</label>
-                        <input type="number" id="proteine" name="proteine" class="form-control" placeholder="Ex: 30" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="glucide">Glucides (g)</label>
-                        <input type="number" id="glucide" name="glucide" class="form-control" placeholder="Ex: 0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lipide">Lipides (g)</label>
-                        <input type="number" id="lipide" name="lipide" class="form-control" placeholder="Ex: 5" required>
-                    </div>
-                </div>
-
-                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="reset" class="btn-secondary">Effacer les champs</button>
-                    <button type="submit" class="btn-main">Ajouter au journal</button>
-                </div>
-            </form>
+               <div class="card" style="margin-top: 2rem; border: 2px solid var(--green-light);">
+    <div class="card-header">
+        <h2>Enregistrer un nouveau repas</h2>
+    </div>
+    
+    <form action="index.php?action=addRepas" method="POST" class="modern-form">
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="type_repas">Type de repas</label>
+                <select id="type_repas" name="type_repas" class="form-control">
+                    <option value="Petit-Déjeuner">Petit-Déjeuner 🍳</option>
+                    <option value="Déjeuner">Déjeuner 🍱</option>
+                    <option value="Dîner">Dîner 🍲</option>
+                    <option value="Collation">Collation 🍎</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="heure_repas">Heure du repas</label>
+                <input type="time" id="heure_repas" name="heure_repas" class="form-control">
+            </div>
         </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nom">Nom du repas</label>
+                <input type="text" id="nom" name="nom" class="form-control" placeholder="Ex: Blanc de poulet">
+            </div>
+            <div class="form-group">
+                <label for="qte">Quantité (g ou portion)</label>
+                <input type="number" id="qte" name="qte" class="form-control" placeholder="Ex: 150">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nbre_calories">Calories (kcal)</label>
+                <input type="number" id="nbre_calories" name="nbre_calories" class="form-control" placeholder="Ex: 250">
+            </div>
+            <div class="form-group">
+                <label for="proteine">Protéines (g)</label>
+                <input type="number" id="proteine" name="proteine" class="form-control" placeholder="Ex: 30">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="glucide">Glucides (g)</label>
+                <input type="number" id="glucide" name="glucide" class="form-control" placeholder="Ex: 0">
+            </div>
+            <div class="form-group">
+                <label for="lipide">Lipides (g)</label>
+                <input type="number" id="lipide" name="lipide" class="form-control" placeholder="Ex: 5">
+            </div>
+        </div>
+
+        <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <button type="reset" class="btn-secondary">Effacer les champs</button>
+            <button type="submit" class="btn-main">Ajouter au journal</button>
+        </div>
+    </form>
+</div>
+
+            </div>
         </div>
     </div>
-</div>
+
+    <script src="JavaScript.js"></script>
 
 </body>
 </html>
