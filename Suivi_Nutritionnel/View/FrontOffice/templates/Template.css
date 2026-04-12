@@ -739,3 +739,34 @@ body {
 .btn-icon.danger:hover {
     background-color: #fff5f5;
 }
+
+/* --- COMPOSANTS TABLEAU DE BORD (Pour Objectif.php) --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-stat {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.card-stat.primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    background: rgba(0,0,0,0.05);
+    padding: 10px;
+    border-radius: 12px;
+}

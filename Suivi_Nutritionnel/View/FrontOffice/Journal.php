@@ -18,7 +18,7 @@
         <nav class="sidebar-nav">
             <span class="nav-section-title">Menu Principal</span>
             
-            <a href="Journal.html" class="nav-item active">
+            <a href="Journal.php" class="nav-item active">
                 <span class="icon">🍽️</span>
                 <span>Journal Alimentaire</span>
             </a>
@@ -28,7 +28,7 @@
                 <span>Mes Objectifs</span>
             </a>
             
-            <a href="Progression.html" class="nav-item">
+            <a href="Progression.php" class="nav-item">
                 <span class="icon">📈</span>
                 <span>Ma Progression</span>
             </a>

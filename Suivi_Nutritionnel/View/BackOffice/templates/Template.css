@@ -175,3 +175,15 @@
         .btn-action {
             background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 5px;
         }
+
+.btn-action.btn-danger-outline {
+    color: #e74c3c;
+    background: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-action.btn-danger-outline:hover {
+    background-color: #e74c3c;
+    color: #ffffff;
+}
+

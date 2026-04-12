@@ -7,47 +7,74 @@
     <link rel="stylesheet" href="templates/template.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-   <?php
+<?php
+    // 1. Inclure le contrôleur (qui inclut déjà la classe Objectif et la Config)
     include_once '../../Controller/ObjectifController.php';
-    $liste = Objectif::liste(); 
+
+    // 2. Récupérer l'utilisateur connecté (Simulé à 1 pour l'instant)
+    $id_utilisateur_connecte = 1; 
+
+    // 3. Récupérer tous les objectifs de la base
+    $tousLesObjectifs = Objectif::liste(); 
     
-    // 1. On récupère le premier objectif de la liste s'il existe
-    $objectifActuel = !empty($liste) ? $liste[0] : null;
+
+   // 4. LOGIQUE : Extraire l'unique objectif "En cours"
+    $objectifActuel = null;
+
+foreach($tousLesObjectifs as $obj) {
+    $statutBDD = strtolower(trim($obj['statut']));
+    
+    if ($obj['id_utilisateur'] == $id_utilisateur_connecte && 
+       ($statutBDD == 'en cours' || $statutBDD == 'en_cours')) {
+        $objectifActuel = $obj;
+        break;
+    }
+}
+
 
     // ==========================================
-    // 2. CALCUL DES CIBLES NUTRITIONNELLES
+    // 5. CALCULS NUTRITIONNELS DYNAMIQUES
     // ==========================================
-    $poidsActuel = 75; // Simulation : à remplacer plus tard par le vrai poids du journal
+    $calories = 0; $proteines = 0; $glucides = 0; $lipides = 0; $diffPoids = 0;
+    if ($objectifActuel) {
+    // Valeurs de base
+    $poidsActuel = 75; 
     $typeObjectif = $objectifActuel ? $objectifActuel['type_objectif'] : 'maintien';
-    $calories = 2000; // Valeur par défaut
+    $poidsCible = $objectifActuel ? $objectifActuel['poids_cible'] : 0;
+    $diffPoids = $objectifActuel ? abs($poidsActuel - $poidsCible) : 0;
+    // Initialisation des cibles
+    $calories = 0;
+    $proteines = 0;
+    $glucides = 0;
+    $lipides = 0;
 
-    // Calcul des calories selon l'objectif
+    // Formules de calcul selon le type d'objectif
     if ($typeObjectif == 'perte_poids') {
-        $calories = $poidsActuel * 24;
-    } elseif ($typeObjectif == 'prise_masse') {
-        $calories = $poidsActuel * 35;
-    } else {
-        $calories = $poidsActuel * 30; // maintien
+        $calories = $poidsActuel * 22; // Déficit calorique
+        $proteines = $poidsActuel * 2.2; // Haute protéine pour garder le muscle
+        $lipides = $poidsActuel * 0.8;
+    } 
+    elseif ($typeObjectif == 'prise_masse') {
+        $calories = $poidsActuel * 30; // Surplus calorique
+        $proteines = $poidsActuel * 1.8;
+        $lipides = $poidsActuel * 1;
+    } 
+    else { // Maintien
+        $calories = $poidsActuel * 25;
+        $proteines = $poidsActuel * 1.5;
+        $lipides = $poidsActuel * 0.9;
     }
 
-    // Calcul des macronutriments (en grammes)
-    // 1g Glucide = 4 kcal | 1g Protéine = 4 kcal | 1g Lipide = 9 kcal
-    $glucides = round(($calories * 0.50) / 4);
-    $proteines = round(($calories * 0.30) / 4);
-    $lipides = round(($calories * 0.20) / 9);
+    // Le reste des calories provient des glucides (1g glucide = 4 kcal)
+    $caloriesRestantes = $calories - ($proteines * 4) - ($lipides * 9);
+    $glucides = $caloriesRestantes / 4;
 
-    // ==========================================
-    // 3. CALCUL POUR LA PROGRESSION DU POIDS
-    // ==========================================
-    $poidsCible = $objectifActuel ? $objectifActuel['poids_cible'] : 0;
-    
-    // On calcule la différence absolue (pour éviter un chiffre négatif)
-    $diffPoids = abs($poidsActuel - $poidsCible);
-
-    // Note pour plus tard : Pour avoir une vraie barre de progression en %, 
-    // il faudrait enregistrer le "poids de départ" dans la base de données.
-    // Pour l'instant on va simuler la barre à 50%.
-    $pourcentageProgression = 50;
+    // Arrondir les valeurs pour l'affichage
+    $calories = round($calories);
+    $proteines = round($proteines);
+    $glucides = round($glucides);
+    $lipides = round($lipides);
+    }
 ?>
 
 <span class="weight-value">
@@ -63,7 +90,7 @@
     <nav class="sidebar-nav">
         <span class="nav-section-title">Menu Principal</span>
         
-        <a href="Journal.html" class="nav-item">
+        <a href="Journal.php" class="nav-item">
             <span class="icon">🍽️</span>
             <span>Journal Alimentaire</span>
         </a>
@@ -73,7 +100,7 @@
             <span>Mes Objectifs</span>
         </a>
         
-        <a href="Progression.html" class="nav-item">
+        <a href="Progression.php" class="nav-item">
             <span class="icon">📈</span>
             <span>Ma Progression</span>
         </a>
@@ -98,127 +125,158 @@
 
     <div class="journal-grid">
         
-       <div class="card health-card">
-    <div class="card-header">
-        <h2>Progression Poids</h2>
-        <span class="badge white">
-            <?php 
-                if ($typeObjectif == 'perte_poids') echo 'Perte de poids';
-                elseif ($typeObjectif == 'prise_masse') echo 'Prise de masse';
-                else echo 'Maintien';
-            ?>
-        </span>
-    </div>
-    <div class="health-content">
-        <div class="weight-display">
-            <div class="weight-item">
-                <span class="weight-label">Actuel</span>
-                <span class="weight-value"><?php echo $poidsActuel; ?> kg</span>
+      <div class="card health-card">
+            <div class="card-header">
+                <h2>Progression Poids</h2>
+                <?php if ($objectifActuel): ?>
+                    <span class="badge white">
+                        <?php 
+                            if ($typeObjectif == 'perte_poids') echo 'Perte de poids';
+                            elseif ($typeObjectif == 'prise_masse') echo 'Prise de masse';
+                            else echo 'Maintien';
+                        ?>
+                    </span>
+                <?php endif; ?>
             </div>
-            <div class="weight-divider">➔</div>
-            <div class="weight-item">
-                <span class="weight-label">Cible</span>
-                <span class="weight-value"><?php echo $poidsCible; ?> kg</span>
-            </div>
-        </div>
-        
-        <div class="progress-bar-container mt-2">
-            <div class="progress-bar" style="width: <?php echo $pourcentageProgression; ?>%;"></div>
-        </div>
-        
-        <p class="encouragement">Encore <?php echo $diffPoids; ?> kg pour atteindre ton but, Youssef !</p>
-    </div>
-</div>
+            
+            <div class="health-content">
+                <div class="card health-card" style="height: 100%; display: flex; flex-direction: column;">
+                <?php if ($objectifActuel): ?>
+                    
+                    <div class="weight-display">
+                        <div class="weight-item">
+                            <span class="weight-label">Actuel</span>
+                            <span class="weight-value"><?php echo $poidsActuel; ?> kg</span>
+                        </div>
+                        <div class="weight-divider">➔</div>
+                        <div class="weight-item">
+                            <span class="weight-label">Cible</span>
+                            <span class="weight-value"><?php echo $poidsCible; ?> kg</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar-container mt-2">
+                        <div class="progress-bar" style="width: <?php echo isset($pourcentageProgression) ? $pourcentageProgression : 0; ?>%;"></div>
+                    </div>
+                    
+                    <p class="encouragement">Encore <?php echo $diffPoids; ?> kg pour atteindre ton but, Youssef !</p>
 
-        <div class="card progress-card">
-    <div class="card-header">
-        <h2>Cibles Journalières</h2>
-        <span class="badge yellow"><?php echo $calories; ?> kcal/jour</span>
-    </div>
-    <div class="progress-content">
-        <div class="macros-summary full-width">
-            <div class="macro-item">
-                <div class="macro-title"><span class="dot blue"></span> Glucides (50%)</div>
-                <span class="macro-target"><?php echo $glucides; ?>g</span>
+                <?php else: ?>
+                    
+                    <p style="font-style: italic; opacity: 0.9; margin-top: 20px; font-size: 1rem;">
+                        ⚠️ Veuillez définir et enregistrer un objectif ci-dessous pour voir votre progression.
+                    </p>
+                    
+                <?php endif; ?>
             </div>
-            <div class="macro-item">
-                <div class="macro-title"><span class="dot yellow"></span> Protéines (30%)</div>
-                <span class="macro-target"><?php echo $proteines; ?>g</span>
+        </div>
+                </div>
+                
+
+       <div class="card progress-card">
+            <div class="card-header">
+                <h2>Cibles Journalières</h2>
+                <?php if ($objectifActuel): ?>
+                    <span class="badge yellow"><?php echo $calories; ?> kcal/jour</span>
+                <?php endif; ?>
             </div>
-            <div class="macro-item">
-                <div class="macro-title"><span class="dot green"></span> Lipides (20%)</div>
-                <span class="macro-target"><?php echo $lipides; ?>g</span>
+            
+            <div class="progress-content">
+                <div class="progress-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <?php if ($objectifActuel): ?>
+                    
+                    <div class="macros-summary full-width">
+                        <div class="macro-item">
+                            <div class="macro-title"><span class="dot blue"></span> Glucides (50%)</div>
+                            <span class="macro-target"><?php echo $glucides; ?>g</span>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-title"><span class="dot yellow"></span> Protéines (30%)</div>
+                            <span class="macro-target"><?php echo $proteines; ?>g</span>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-title"><span class="dot green"></span> Lipides (20%)</div>
+                            <span class="macro-target"><?php echo $lipides; ?>g</span>
+                        </div>
+                    </div>
+
+                <?php else: ?>
+                    
+                    <p style="font-style: italic; color: var(--text-gray); margin-top: 20px; font-size: 1rem;">
+                        ⚠️ Veuillez valider un objectif pour calculer automatiquement vos besoins nutritionnels.
+                    </p>
+
+                <?php endif; ?>
             </div>
         </div>
     </div>
-</div>
+
 
         <div class="form-section">
             <div class="card">
-                <div class="card-header">
-                    <h2>Gérer mon objectif</h2>
-                </div>
-                
-               <form action="../../Controller/ObjectifController.php?action=add" method="POST" class="modern-form">
-                    
-                    <input type="hidden" name="id_objectif" value="">
+    <div class="card-header">
+        <h2><?php echo $objectifActuel ? '✏️ Modifier mon objectif actuel' : '🚀 Créer un nouvel objectif'; ?></h2>
+    </div>
 
-                    <div class="form-row">
-                       <div class="form-group">
-    <label for="type">Type d'objectif</label>
-    <select id="type" name="type" class="form-control">
-        <?php $type = $objectifActuel ? $objectifActuel['type_objectif'] : ''; ?>
-        <option value="perte_poids" <?php if($type == 'perte_poids') echo 'selected'; ?>>Perte de poids</option>
-        <option value="maintien" <?php if($type == 'maintien') echo 'selected'; ?>>Maintien</option>
-        <option value="prise_masse" <?php if($type == 'prise_masse') echo 'selected'; ?>>Prise de masse</option>
-    </select>
-</div>
+    <form action="../../Controller/ObjectifController.php?action=<?php echo $objectifActuel ? 'update&id='.$objectifActuel['id_objectif'] : 'add'; ?>" method="POST">
+        
+        <input type="hidden" name="id_utilisateur" value="<?php echo $id_utilisateur_connecte; ?>">
 
-                        <div class="form-group">
-                            <label for="statut">Statut actuel</label>
-                            <select id="statut" name="statut" class="form-control">
-                                <option value="en_cours">En cours</option>
-                                <option value="atteint">Atteint</option>
-                                <option value="abandonne">Abandonné</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                       <div class="form-group">
-                            <label for="poids_cible">Poids cible (kg)</label>
-                            <input type="number" id="poids_cible" name="poids_cible" class="form-control" 
-                            value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>">
-</div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-    <label for="Date_Debut">Date de début</label>
-    <input type="date" id="Date_Debut" name="Date_Debut" class="form-control"
-           value="<?php echo $objectifActuel ? $objectifActuel['date_debut'] : ''; ?>">
-</div>
-
-<div class="form-group">
-    <label for="Date_Fin">Date de fin (prévue)</label>
-    <input type="date" id="Date_Fin" name="Date_Fin" class="form-control"
-           value="<?php echo $objectifActuel ? $objectifActuel['date_fin'] : ''; ?>">
-</div>
-                    </div>
-
-                    <div class="form-actions">
-                        <a href="../../Controller/ObjectifController.php?action=delete&id=<?php echo $liste[0]['id_objectif'] ?? 0; ?>" class="btn-danger" onclick="return confirm('Es-tu sûr de vouloir supprimer cet objectif ?');">
-    Supprimer mon objectif
-</a>
-                        </a>
-                        
-                        <div class="right-actions">
-                            <button type="reset" class="btn-secondary">Annuler</button>
-                            <button type="submit" class="btn-main">Enregistrer l'objectif</button>
-                        </div>
-                    </div>
-                </form>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Type d'objectif</label>
+                <select name="type" class="form-control" required>
+                    <option value="perte_poids" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'perte_poids') echo 'selected'; ?>>Perte de poids</option>
+                    <option value="maintien" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'maintien') echo 'selected'; ?>>Maintien de forme</option>
+                    <option value="prise_masse" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'prise_masse') echo 'selected'; ?>>Prise de masse</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label>Poids cible (kg)</label>
+                <input type="number" step="0.1" name="poids_cible" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Date de début</label>
+                <input type="date" name="Date_Debut" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['date_debut'] : date('Y-m-d'); ?>" required>
+            </div>
+            <div class="form-group">
+                <label>Date de fin (prévue)</label>
+                <input type="date" name="Date_Fin" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['date_fin'] : ''; ?>">
+            </div>
+        </div>
+
+        <?php if($objectifActuel): ?>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="color: #e74c3c; font-weight: bold;">Statut de l'objectif (Modifier pour pouvoir en créer un nouveau)</label>
+                <select name="statut" class="form-control" style="border: 2px solid #e74c3c;">
+                    <option value="En cours" selected>En cours</option>
+                    <option value="Atteint">🏆 Objectif Atteint</option>
+                    <option value="Abandonné">❌ Abandonner l'objectif</option>
+                </select>
+            </div>
+        <?php else: ?>
+            <input type="hidden" name="statut" value="En cours">
+        <?php endif; ?>
+
+        <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: space-between;">
+            
+            <?php if($objectifActuel): ?>
+                <a href="../../Controller/ObjectifController.php?action=delete&id=<?php echo $objectifActuel['id_objectif']; ?>" 
+                   class="btn-danger" style="color: red; text-decoration: none;" 
+                   onclick="return confirm('Supprimer cet objectif ?');">Supprimer</a>
+                
+                <button type="submit" class="btn-main" style="background: #3498db;">Mettre à jour l'objectif</button>
+            
+            <?php else: ?>
+                <div></div> <button type="submit" class="btn-main">Enregistrer mon objectif</button>
+            <?php endif; ?>
+
+        </div>
+    </form>
+</div>
         </div>
 
                 </form>

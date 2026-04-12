@@ -16,8 +16,8 @@
         <div class="sidebar-menu">
             <div class="menu-category">Menu Principal</div>
             <a href="#" class="menu-item active">📊 Dashboard Analytics</a>
-            <a href="#" class="menu-item">🎯 Modération Objectifs</a>
-            <a href="#" class="menu-item">🍽️ Journaux Utilisateurs</a>
+            <a href="admin_objectifs.php" class="menu-item">🎯 Modération Objectifs</a>
+            <a href="admin_journaux.php" class="menu-item">🍽️ Journaux Utilisateurs</a>
             
             <div class="menu-category" style="margin-top: 20px;">Système</div>
             <a href="#" class="menu-item">⚠️ Anomalies (3)</a>
