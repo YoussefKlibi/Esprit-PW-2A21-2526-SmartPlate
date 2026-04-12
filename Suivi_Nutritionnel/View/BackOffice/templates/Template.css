@@ -187,3 +187,34 @@
     color: #ffffff;
 }
 
+/* --- ANIMATIONS DE VALIDATION JS --- */
+.input-error {
+    border: 2px solid #ff4757 !important;
+    background-color: #fff0f0;
+    transition: all 0.3s ease;
+}
+
+.error-text {
+    color: #ff4757;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 5px;
+    display: block;
+    animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Effet de tremblement (Shake) */
+@keyframes shakeAnimation {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shakeAnimation 0.4s ease-in-out;
+}

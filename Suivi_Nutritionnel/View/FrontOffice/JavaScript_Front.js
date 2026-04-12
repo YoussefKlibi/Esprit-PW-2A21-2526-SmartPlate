@@ -154,3 +154,96 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+            // 1. On cible le formulaire de la page
+            const form = document.querySelector('form[action*="ObjectifController.php"]');
+
+            if(form) {
+                // Désactive les bulles grises moches du HTML5 (required)
+                form.setAttribute('novalidate', true);
+
+                // 2. PROTECTION EN TEMPS RÉEL : Poids Cible (Anti-Alphabet)
+                const poidsInput = form.querySelector('input[name="poids_cible"]');
+                if(poidsInput) {
+                    poidsInput.addEventListener('input', function(e) {
+                        // Expression régulière : On remplace tout ce qui n'est PAS un chiffre (0-9) ou un point (.) par du vide
+                        this.value = this.value.replace(/[^0-9.]/g, '');
+                    });
+                }
+
+                // 3. VÉRIFICATION À LA SOUMISSION DU BOUTON
+                form.addEventListener('submit', function(e) {
+                    let isValid = true;
+
+                    // Nettoyage visuel : on enlève les anciens messages rouges
+                    document.querySelectorAll('.error-text').forEach(el => el.remove());
+                    form.querySelectorAll('input').forEach(el => {
+                        el.style.border = '1px solid #ddd'; // Remet la bordure normale
+                        el.classList.remove('shake');
+                    });
+
+                    // Fonction magique pour animer l'erreur
+                    const showError = (inputName, message) => {
+                        const input = form.querySelector(`input[name="${inputName}"]`);
+                        if(input) {
+                            input.style.border = '2px solid #e74c3c'; // Bordure rouge
+                            
+                            // On déclenche l'effet de tremblement
+                            input.classList.remove('shake');
+                            void input.offsetWidth; 
+                            input.classList.add('shake');
+
+                            // Création du texte d'erreur
+                            const errorSpan = document.createElement('span');
+                            errorSpan.className = 'error-text';
+                            errorSpan.style.color = '#e74c3c';
+                            errorSpan.style.fontSize = '0.85rem';
+                            errorSpan.style.fontWeight = '600';
+                            errorSpan.style.display = 'block';
+                            errorSpan.style.marginTop = '5px';
+                            errorSpan.innerHTML = '⚠️ ' + message;
+                            
+                            input.parentNode.appendChild(errorSpan);
+                            isValid = false;
+                        }
+                    };
+
+                    // --- LES RÈGLES MÉTICULEUSES ---
+
+                    // A. Vérification du Poids
+                    const poidsVal = parseFloat(poidsInput.value);
+                    if(!poidsVal || poidsVal < 30 || poidsVal > 250) {
+                        showError('poids_cible', 'Veuillez saisir un poids réaliste (entre 30 et 250 kg).');
+                    }
+
+                    // B. Vérification de la Logique des Dates
+                    const debutInput = form.querySelector('input[name="Date_Debut"]');
+                    const finInput = form.querySelector('input[name="Date_Fin"]');
+                    
+                    if (debutInput && finInput && finInput.value !== "") {
+                        const dateDebut = new Date(debutInput.value);
+                        const dateFin = new Date(finInput.value);
+                        
+                        // Règle 1 : La date de fin ne peut pas être dans le passé de la date de début
+                        if (dateFin <= dateDebut) {
+                            showError('Date_Fin', 'Voyage dans le temps interdit : la date de fin doit être ultérieure.');
+                        } else {
+                            // Règle 2 : Plus de 30 jours
+                            // Calcul savant : (Différence en millisecondes) divisé par (1000ms * 60s * 60m * 24h)
+                            const diffTemps = Math.abs(dateFin - dateDebut);
+                            const diffJours = Math.ceil(diffTemps / (1000 * 60 * 60 * 24)); 
+                            
+                            if (diffJours < 30) {
+                                showError('Date_Fin', `Un objectif sérieux nécessite au moins 30 jours (Seulement ${diffJours} jours saisis).`);
+                            }
+                        }
+                    }
+
+                    // Si une seule erreur est détectée, on bloque l'envoi au serveur PHP !
+                    if (!isValid) {
+                        e.preventDefault(); 
+                    }
+                });
+            }
+        });

@@ -42,11 +42,11 @@
                     <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                         <div style="flex: 1;">
                             <label for="id_utilisateur" style="display: block; margin-bottom: 5px; font-weight: 500; color: var(--admin-green-dark);">👤 ID Utilisateur</label>
-                            <input type="number" id="id_utilisateur" name="id_utilisateur" required placeholder="Ex: 1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <input type="number" id="id_utilisateur" name="id_utilisateur" placeholder="Ex: 1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
                         <div style="flex: 1;">
                             <label for="type" style="display: block; margin-bottom: 5px; font-weight: 500;">Type d'objectif</label>
-                            <select id="type" name="type" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <select id="type" name="type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                 <option value="perte_poids">Perte de poids</option>
                                 <option value="maintien">Maintien</option>
                                 <option value="prise_masse">Prise de masse</option>
@@ -54,14 +54,14 @@
                         </div>
                         <div style="flex: 1;">
                             <label for="poids_cible" style="display: block; margin-bottom: 5px; font-weight: 500;">Poids cible (kg)</label>
-                            <input type="number" id="poids_cible" name="poids_cible" step="0.1" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <input type="number" id="poids_cible" name="poids_cible" step="0.1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 15px; margin-bottom: 20px;">
                         <div style="flex: 1;">
                             <label for="Date_Debut" style="display: block; margin-bottom: 5px; font-weight: 500;">Date de début</label>
-                            <input type="date" id="Date_Debut" name="Date_Debut" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <input type="date" id="Date_Debut" name="Date_Debut" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
                         <div style="flex: 1;">
                             <label for="Date_Fin" style="display: block; margin-bottom: 5px; font-weight: 500;">Date de fin</label>
@@ -69,8 +69,8 @@
                         </div>
                         <div style="flex: 1;">
     <label for="statut" style="display: block; margin-bottom: 5px; font-weight: 500;">Statut</label>
-    <select id="statut" name="statut" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <option value="En cours">En cours</option>
+    <select id="statut" name="statut" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="en_cours">En cours</option>
         <option value="Atteint">Atteint</option>
         <option value="Abandonné">Abandonné</option>
     </select>
@@ -96,81 +96,52 @@
             
             <table class="admin-table" style="width: 100%; text-align: left; border-collapse: collapse;">
                 <thead>
-                    <tr style="border-bottom: 2px solid #e2e8f0;">
-                        <th style="padding: 10px;">ID</th>
-                        <th style="padding: 10px;">Utilisateur</th>
-                        <th style="padding: 10px;">Type</th>
-                        <th style="padding: 10px;">Poids Cible</th>
-                        <th style="padding: 10px;">Statut</th>
-                        <th style="padding: 10px;">Actions</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th style="padding: 10px; text-align: left;">ID Objectif</th>
+        <th style="padding: 10px; text-align: left;">Utilisateur</th>
+        <th style="padding: 10px; text-align: left;">Type</th>
+        <th style="padding: 10px; text-align: left;">Poids Cible</th>
+        <th style="padding: 10px; text-align: left;">Date Début</th>
+        <th style="padding: 10px; text-align: left;">Date Fin</th>
+        <th style="padding: 10px; text-align: left;">Statut</th>
+        <th style="padding: 10px; text-align: left;">Actions</th>
+    </tr>
+</thead>
                 <tbody>
                     <?php foreach($listeObjectifsTousUtilisateurs as $obj): ?>
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 10px;">#<?php echo $obj['id_objectif']; ?></td>
-                        <td style="padding: 10px;"><strong>Utilisateur #<?php echo $obj['id_utilisateur'] ?? 'Inconnu'; ?></strong></td>
-                        <td style="padding: 10px;"><?php echo $obj['type_objectif']; ?></td>
-                        <td style="padding: 10px;"><?php echo $obj['poids_cible']; ?> kg</td>
-                        <td style="padding: 10px;"><span class="badge yellow"><?php echo $obj['statut']; ?></span></td>
-                        <td style="padding: 10px; display: flex; gap: 8px; align-items: center;">
-                             <button type="button" class="btn-action" 
-        onclick="openEditForm('<?php echo $obj['id_objectif']; ?>', '<?php echo $obj['id_utilisateur']; ?>', '<?php echo $obj['type_objectif']; ?>', '<?php echo $obj['poids_cible']; ?>', '<?php echo $obj['date_debut']; ?>', '<?php echo $obj['date_fin']; ?>', '<?php echo $obj['statut']; ?>')">
-    ✏️Editer
-</button>
-                            <a href="../../Controller/ObjectifController.php?action=delete&id=<?php echo $obj['id_objectif']; ?>" style="color: white; text-decoration: none;" class="btn-action btn-danger-outline" onclick="return confirm('Supprimer cet objectif ?');" >🗑️ Suppr.</a>
-                        </td>
-                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+    <td style="padding: 10px;">#<?php echo $obj['id_objectif']; ?></td>
+    <td style="padding: 10px;"><strong>Utilisateur #<?php echo $obj['id_utilisateur'] ?? 'Inconnu'; ?></strong></td>
+    <td style="padding: 10px;"><?php echo $obj['type_objectif']; ?></td>
+    <td style="padding: 10px;"><?php echo $obj['poids_cible']; ?> kg</td>
+    
+    <td style="padding: 10px; font-size: 0.9rem; color: #666;">
+        <?php echo date('d/m/Y', strtotime($obj['date_debut'])); ?>
+    </td>
+    <td style="padding: 10px; font-size: 0.9rem; color: #666;">
+        <?php echo $obj['date_fin'] ? date('d/m/Y', strtotime($obj['date_fin'])) : '---'; ?>
+    </td>
+
+    <td style="padding: 10px;"><span class="badge yellow"><?php echo $obj['statut']; ?></span></td>
+    
+    <td style="padding: 10px; display: flex; gap: 8px; align-items: center;">
+         <button type="button" class="btn-action" 
+                onclick="openEditForm('<?php echo $obj['id_objectif']; ?>', '<?php echo $obj['id_utilisateur']; ?>', '<?php echo $obj['type_objectif']; ?>', '<?php echo $obj['poids_cible']; ?>', '<?php echo $obj['date_debut']; ?>', '<?php echo $obj['date_fin']; ?>', '<?php echo $obj['statut']; ?>')">
+            ✏️Editer
+        </button>
+        <a href="../../Controller/ObjectifController.php?action=delete&id=<?php echo $obj['id_objectif']; ?>" 
+           style="color: white; text-decoration: none;" 
+           class="btn-action btn-danger-outline" 
+           onclick="return confirm('Supprimer cet objectif ?');">
+           🗑️ Suppr.
+        </a>
+    </td>
+</tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
     </main>
-
-    <script>
-        // 1. Fonction pour afficher/cacher le formulaire d'ajout
-        function toggleForm() {
-            var formSection = document.getElementById("sectionAjout");
-            if (formSection.style.display === "none") {
-                formSection.style.display = "block";
-            } else {
-                formSection.style.display = "none";
-            }
-        }
-
-        // 2. Fonction de recherche dynamique
-        document.getElementById('searchId').addEventListener('input', function() {
-            let filter = this.value.toLowerCase().replace('#', ''); 
-            let rows = document.querySelectorAll('.admin-table tbody tr');
-
-            rows.forEach(row => {
-                let idCell = row.cells[0].textContent.toLowerCase(); 
-                if (idCell.includes(filter)) {
-                    row.style.display = ''; 
-                } else {
-                    row.style.display = 'none'; 
-                }
-            });
-        });
-        function openEditForm(id, id_user, type, poids, debut, fin, statut) {
-    // 1. On affiche la section si elle est cachée
-    document.getElementById("sectionAjout").style.display = "block";
-    
-    // 2. On change le titre et l'action du formulaire
-    document.getElementById("formTitle").innerText = "✏️ Modifier l'objectif #" + id;
-    document.getElementById("objectifForm").action = "../../Controller/ObjectifController.php?action=update&id=" + id;
-    
-    // 3. On remplit les champs
-    document.getElementById("id_utilisateur").value = id_user;
-    document.getElementById("type").value = type;
-    document.getElementById("poids_cible").value = poids;
-    document.getElementById("Date_Debut").value = debut;
-    document.getElementById("Date_Fin").value = fin;
-    document.getElementById("statut").value = statut;
-    
-    // 4. On scrolle vers le formulaire pour que l'admin le voie
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-    </script>
+    <script src="JavaScript.js"></script>
 </body>
 </html>

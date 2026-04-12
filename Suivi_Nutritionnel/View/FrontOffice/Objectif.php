@@ -225,7 +225,7 @@ foreach($tousLesObjectifs as $obj) {
         <div class="form-row">
             <div class="form-group">
                 <label>Type d'objectif</label>
-                <select name="type" class="form-control" required>
+                <select name="type" class="form-control">
                     <option value="perte_poids" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'perte_poids') echo 'selected'; ?>>Perte de poids</option>
                     <option value="maintien" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'maintien') echo 'selected'; ?>>Maintien de forme</option>
                     <option value="prise_masse" <?php if($objectifActuel && $objectifActuel['type_objectif'] == 'prise_masse') echo 'selected'; ?>>Prise de masse</option>
@@ -233,14 +233,14 @@ foreach($tousLesObjectifs as $obj) {
             </div>
             <div class="form-group">
                 <label>Poids cible (kg)</label>
-                <input type="number" step="0.1" name="poids_cible" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>" required>
+                <input type="number" step="0.1" name="poids_cible" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label>Date de début</label>
-                <input type="date" name="Date_Debut" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['date_debut'] : date('Y-m-d'); ?>" required>
+                <input type="date" name="Date_Debut" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['date_debut'] : date('Y-m-d'); ?>">
             </div>
             <div class="form-group">
                 <label>Date de fin (prévue)</label>
@@ -252,13 +252,13 @@ foreach($tousLesObjectifs as $obj) {
             <div class="form-group" style="margin-top: 15px;">
                 <label style="color: #e74c3c; font-weight: bold;">Statut de l'objectif (Modifier pour pouvoir en créer un nouveau)</label>
                 <select name="statut" class="form-control" style="border: 2px solid #e74c3c;">
-                    <option value="En cours" selected>En cours</option>
+                    <option value="en_cours" selected>En cours</option>
                     <option value="Atteint">🏆 Objectif Atteint</option>
                     <option value="Abandonné">❌ Abandonner l'objectif</option>
                 </select>
             </div>
         <?php else: ?>
-            <input type="hidden" name="statut" value="En cours">
+            <input type="hidden" name="statut" value="en_cours">
         <?php endif; ?>
 
         <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: space-between;">
@@ -285,6 +285,6 @@ foreach($tousLesObjectifs as $obj) {
 
     </div>
 </div>
-        <script src="JavaScript.js"></script>
+    <script src="JavaScript_Front.js"></script>
 </body>
 </html>
