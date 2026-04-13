@@ -1,0 +1,227 @@
+body{
+font-family: Arial;
+background:#f4f6f9;
+margin:0;
+padding:40px;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+color:#20c997;
+margin-bottom:40px;
+}
+
+/* FORMULAIRE */
+
+.form-section{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+margin-bottom:40px;
+}
+
+.form-section h2{
+margin-bottom:20px;
+}
+
+form input,
+form textarea{
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border:1px solid #ddd;
+border-radius:5px;
+font-size:14px;
+}
+
+form textarea{
+height:80px;
+resize:none;
+}
+
+.btn-add{
+background:#20c997;
+color:white;
+border:none;
+padding:12px;
+border-radius:5px;
+cursor:pointer;
+font-size:16px;
+width:100%;
+}
+
+.btn-add:hover{
+background:#17a589;
+}
+
+/* TABLE */
+
+.table-section{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th{
+background:#20c997;
+color:white;
+padding:12px;
+}
+
+td{
+padding:10px;
+text-align:center;
+border-bottom:1px solid #eee;
+}
+
+td img{
+width:60px;
+height:60px;
+object-fit:cover;
+border-radius:8px;
+}
+
+/* BOUTONS */
+
+.btn-edit{
+background:#3498db;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:5px;
+cursor:pointer;
+margin-right:5px;
+}
+
+.btn-delete{
+background:#e74c3c;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:5px;
+cursor:pointer;
+}
+
+.btn-edit:hover{
+background:#2e86c1;
+}
+
+.btn-delete:hover{
+background:#c0392b;
+}
+/* CATEGORIE SELECT */
+
+#categorie{
+
+width:100%;
+padding:10px;
+
+border:2px solid #20c997;
+border-radius:8px;
+
+background:#f8f9fa;
+color:#333;
+
+font-size:15px;
+font-weight:500;
+
+cursor:pointer;
+
+transition:0.3s;
+
+}
+
+/* quand on clique dessus */
+
+#categorie:focus{
+
+outline:none;
+border-color:#12b886;
+box-shadow:0 0 5px rgba(32,201,151,0.5);
+
+}
+/* TABLEAU RECETTES */
+
+.table-recettes{
+
+width:95%;
+margin:40px auto;
+border-collapse:collapse;
+background:white;
+
+}
+
+.table-recettes th{
+
+background:#20c997;
+color:white;
+padding:12px;
+
+}
+
+.table-recettes td{
+
+padding:10px;
+text-align:center;
+border-bottom:1px solid #ddd;
+
+}
+
+.table-recettes tr:hover{
+
+background:#f1f1f1;
+
+}
+
+
+/* BOUTON MODIFIER */
+
+.btn-modifier{
+
+background:#ffc107;
+color:white;
+padding:6px 12px;
+border-radius:5px;
+text-decoration:none;
+margin-right:5px;
+
+}
+
+
+/* BOUTON SUPPRIMER */
+
+.btn-supprimer{
+
+background:#dc3545;
+color:white;
+padding:6px 12px;
+border-radius:5px;
+text-decoration:none;
+
+}
+
+
+.btn-modifier:hover{
+
+background:#e0a800;
+
+}
+
+.btn-supprimer:hover{
+
+background:#c82333;
+
+}
