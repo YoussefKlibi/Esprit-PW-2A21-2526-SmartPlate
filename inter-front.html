@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Plate - Alimentation Durable</title>
+    <link rel="stylesheet" href="css/Template-front.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌱</div>
+        <h2>Smart Plate</h2>
+    </div>
+
+    <div class="sidebar-nav">
+        <span class="nav-section-title">Navigation</span>
+        <a href="#" class="nav-item active">📖 Articles</a>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Blog Alimentation Durable & Intelligente</h1>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Lisez nos articles et partagez votre avis</p>
+    </div>
+
+    <!-- Liste des articles -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Derniers articles</h2>
+        </div>
+
+        <div id="articles-list">
+            <p>Chargement des articles...</p>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    function escapeHtml(s){ return String(s).replace(/[&<>"]|'/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; }); }
+
+    // Fetch Articles
+    fetch('article_controller.php?action=list')
+        .then(r => r.json())
+        .then(articles => {
+            const container = document.getElementById('articles-list');
+            if (articles.error) {
+                container.innerHTML = '<p>Erreur: ' + escapeHtml(articles.error) + '</p>';
+                return;
+            }
+            if (!Array.isArray(articles) || articles.length === 0) {
+                container.innerHTML = '<p>Aucun article disponible.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            
+            articles.forEach(a => {
+                const card = document.createElement('div');
+                card.className = 'meal-card';
+                card.style.marginBottom = '25px';
+                const date = new Date(a.created_at);
+                
+                const typeTag = a.type ? `<span class="badge" style="background:#e8f8f5; color:#20c997;">${escapeHtml(a.type)}</span>` : '';
+                const imageEl = a.image_url ? `<img src="${escapeHtml(a.image_url)}" alt="${escapeHtml(a.name)}" style="width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:15px;">` : '';
+
+                card.innerHTML = `
+                    <div class="meal-info" style="width: 100%;">
+                        ${imageEl}
+                        <div class="meal-tags">
+                            <span class="badge green-light">Article</span>
+                            ${typeTag}
+                            <span class="time-info">Par ${escapeHtml(a.author||'Admin')} • ${date.toLocaleDateString()}</span>
+                        </div>
+                        <h3>${escapeHtml(a.name)}</h3>
+                        <p style="margin-bottom:20px;">${escapeHtml(a.content)}</p>
+                        
+                        <!-- Comment Section -->
+                        <div style="background: var(--bg-color); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="margin-bottom: 10px; font-size: 1rem;">Commentaires</h4>
+                            <div id="comments-${a.id}" style="margin-bottom: 15px;">
+                                <p style="font-size: 0.9rem; color: #666;">Chargement des commentaires...</p>
+                            </div>
+                            
+                            <!-- Comment Form -->
+                            <form onsubmit="submitComment(event, ${a.id})" style="display: flex; flex-direction: column; gap: 10px;">
+                                <input type="text" id="username-${a.id}" placeholder="Votre nom" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit;">
+                                <textarea id="comment-${a.id}" placeholder="Votre commentaire..." style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; resize: vertical;" rows="2"></textarea>
+                                <button type="submit" class="btn-action" style="align-self: flex-start;">Publier</button>
+                            </form>
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+                
+                // Load comments for this article
+                loadComments(a.id);
+            });
+        })
+        .catch(err => {
+            const container = document.getElementById('articles-list');
+            if (container) container.innerHTML = '<p>Erreur chargement articles.</p>';
+            console.error(err);
+        });
+
+    // Make functions globally available
+    window.loadComments = function(articleId) {
+        // Fetch published comments (status = 1) - adding all=1 bypasses moderation for local testing
+        fetch(`comment_controller.php?action=list&article_id=${articleId}&all=1`)
+            .then(r => r.json())
+            .then(comments => {
+                const container = document.getElementById(`comments-${articleId}`);
+                if (!Array.isArray(comments) || comments.length === 0) {
+                    container.innerHTML = '<p style="font-size: 0.9rem; color: #888; font-style: italic;">Soyez le premier à commenter !</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                comments.forEach(c => {
+                    const cDate = new Date(c.created_at).toLocaleDateString();
+                    const div = document.createElement('div');
+                    div.style.borderBottom = '1px solid #eee';
+                    div.style.paddingBottom = '8px';
+                    div.style.marginBottom = '8px';
+                    // Mention if it is waiting for moderation
+                    const modText = c.status == 0 ? '<span style="color: red; font-size: 0.8rem;">(En attente de modération)</span>' : '';
+                    div.innerHTML = `
+                        <div style="font-size: 0.95rem; margin-bottom: 4px;"><strong>${escapeHtml(c.username)}</strong> <span style="color: #888; font-size: 0.85rem;">• ${cDate}</span> ${modText}</div>
+                        <div style="font-size: 0.95rem; color: var(--text-color);">${escapeHtml(c.comment)}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+    };
+
+    window.submitComment = function(event, articleId) {
+        event.preventDefault();
+        const usernameInput = document.getElementById(`username-${articleId}`);
+        const commentInput = document.getElementById(`comment-${articleId}`);
+        
+        const formData = new FormData();
+        formData.append('action', 'create');
+        formData.append('article_id', articleId);
+        formData.append('username', usernameInput.value);
+        formData.append('comment', commentInput.value);
+        // By default status is 0 (waiting for moderation). We can set to 1 here to auto-publish if you want.
+        formData.append('status', 1); 
+        
+        fetch('comment_controller.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                usernameInput.value = '';
+                commentInput.value = '';
+                // Reload comments to show the new one
+                window.loadComments(articleId);
+            } else {
+                alert('Erreur: ' + (res.error || 'Erreur lors de l\'ajout du commentaire'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Erreur réseau');
+        });
+    };
+});
+</script>
+
+</body>
+</html>

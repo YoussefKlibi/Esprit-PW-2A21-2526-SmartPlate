@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Gestion du Blog Smart Plate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/template-backoffice.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="admin-sidebar">
+    <div class="sidebar-header">
+        <img src="assets/logo.png" alt="Smart Plate" class="sidebar-logo">
+    </div>
+
+    <div class="sidebar-menu">
+        <div class="menu-category">Gestion</div>
+
+        <a href="#" class="menu-item active" id="nav-dashboard" onclick="switchView('dashboard'); return false;">📊 Dashboard</a>
+        <a href="#" class="menu-item" id="nav-articles" onclick="switchView('articles'); return false;">📝 Articles</a>
+        <a href="#" class="menu-item" id="nav-drafts" onclick="switchView('drafts'); return false;">🕒 Brouillons</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h2>Blog Alimentation Durable & Intelligente</h2>
+
+        <div class="admin-profile">
+            <span>Admin</span>
+            <img src="https://via.placeholder.com/40">
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="dashboard-container">
+
+        <!-- HEADER -->
+        <div class="page-header">
+            <div>
+                <h1>Tableau de Bord</h1>
+                <p>Gestion des articles et commentaires</p>
+            </div>
+            <button class="btn-action" style="background: #20c997;" onclick="switchView('articles')">+ Nouvel article</button>
+        </div>
+
+        <!-- KPI -->
+        <div class="kpi-grid">
+
+            <div id="kpi-card-articles" class="card kpi-card" role="button" tabindex="0" onclick="switchView('articles');" style="cursor:pointer;">
+                <div class="kpi-icon green">📝</div>
+                <div class="kpi-info">
+                    <h3 id="kpi-articles">...</h3>
+                    <span>Articles</span>
+                </div>
+            </div>
+
+            <div class="card kpi-card">
+                <div class="kpi-icon yellow">💬</div>
+                <div class="kpi-info">
+                    <h3 id="kpi-comments">...</h3>
+                    <span>Commentaires</span>
+                </div>
+            </div>
+
+            <div id="kpi-card-drafts" class="card kpi-card" role="button" tabindex="0" onclick="switchView('drafts');" style="cursor:pointer;">
+                <div class="kpi-icon red">🕒</div>
+                <div class="kpi-info">
+                    <h3 id="kpi-drafts">...</h3>
+                    <span>Brouillons</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content-grid">
+            <!-- COMMENTAIRES À MODÉRER -->
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <h2>Commentaires à modérer</h2>
+                </div>
+                <div id="admin-comments-list">
+                    <p style="padding: 15px;">Chargement des commentaires...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ARTICLES VIEW -->
+    <div id="view-articles" class="dashboard-container" style="display: none;">
+
+        <!-- HEADER -->
+        <div class="page-header">
+            <div>
+                <h1>Gestion des Articles</h1>
+                <p>Créer, modifier et supprimer vos articles</p>
+            </div>
+            <button class="btn-action" style="background: #20c997;" onclick="toggleArticleForm()">+ Ajouter un article</button>
+        </div>
+
+        <div class="card" id="article-form-card" style="margin-top:16px; display: none;">
+            <div class="card-header"><h2 id="article-form-title">Créer un article</h2></div>
+            <div style="padding:16px;">
+                <form id="manage-article-form" action="article_controller.php" method="post" novalidate>
+                    <input type="hidden" name="id" id="form-article-id" value="">
+                    <input type="hidden" name="action" id="form-article-action" value="create">
+                    
+                    <div class="form-group">
+                        <input type="text" name="name" id="form-article-name" placeholder="Nom de l'article" style="width:100%; padding:8px;">
+                    </div>
+                    <div class="form-group" style="margin-top:8px;">
+                        <input type="text" name="type" id="form-article-type" placeholder="Type (ex: Veggie, Viande, etc.)" style="width:100%; padding:8px;">
+                    </div>
+                    <div class="form-group" style="margin-top:8px;">
+                        <input type="text" name="image_url" id="form-article-image" placeholder="URL de l'image" style="width:100%; padding:8px;">
+                    </div>
+                    <div class="form-group" style="margin-top:8px;">
+                        <input type="text" name="author" id="form-article-author" placeholder="Auteur" style="width:100%; padding:8px;" value="Admin">
+                    </div>
+                    <div class="form-group" style="margin-top:8px;">
+                        <textarea name="content" id="form-article-content" rows="6" placeholder="Contenu" style="width:100%; padding:8px;"></textarea>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label><input type="checkbox" name="status" id="form-article-status" value="1" checked> Publier maintenant</label>
+                    </div>
+                    <div style="margin-top:12px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn-action" style="background:#20c997">Enregistrer</button>
+                        <button type="button" class="btn-action" style="background:#95a5a6" onclick="toggleArticleForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <div class="card-header">
+                <h2>Articles publiés et brouillons</h2>
+            </div>
+            <div style="overflow-x: auto; padding: 15px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #eee;">
+                            <th style="padding: 10px;">ID</th>
+                            <th style="padding: 10px;">Image</th>
+                            <th style="padding: 10px;">Nom</th>
+                            <th style="padding: 10px;">Type</th>
+                            <th style="padding: 10px;">Auteur</th>
+                            <th style="padding: 10px;">Statut</th>
+                            <th style="padding: 10px;">Date</th>
+                            <th style="padding: 10px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-articles-list">
+                        <tr><td colspan="8" style="padding: 15px;">Chargement des articles...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DRAFTS VIEW -->
+    <div id="view-drafts" class="dashboard-container" style="display: none;">
+
+        <div class="page-header">
+            <div>
+                <h1>Brouillons</h1>
+                <p>Articles en attente de publication (statut = 0)</p>
+            </div>
+            <button class="btn-action" style="background: #20c997;" onclick="switchView('articles')">Retour aux articles</button>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <div class="card-header">
+                <h2>Brouillons</h2>
+            </div>
+            <div style="overflow-x: auto; padding: 15px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #eee;">
+                            <th style="padding: 10px;">ID</th>
+                            <th style="padding: 10px;">Image</th>
+                            <th style="padding: 10px;">Nom</th>
+                            <th style="padding: 10px;">Type</th>
+                            <th style="padding: 10px;">Auteur</th>
+                            <th style="padding: 10px;">Date</th>
+                            <th style="padding: 10px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-drafts-list">
+                        <tr><td colspan="7" style="padding: 15px;">Chargement des brouillons...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function escapeHtml(s) { 
+        return String(s || '').replace(/[&<>"']/g, function(m) { 
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; 
+        }); 
+    }
+
+    // track current view
+    window.currentAdminView = 'dashboard';
+
+    // View Switching
+    window.switchView = function(view) {
+        window.currentAdminView = view;
+        // hide all
+        document.getElementById('view-dashboard').style.display = 'none';
+        document.getElementById('view-articles').style.display = 'none';
+        const draftsEl = document.getElementById('view-drafts');
+        if (draftsEl) draftsEl.style.display = 'none';
+
+        // remove active on nav
+        document.getElementById('nav-dashboard').classList.remove('active');
+        document.getElementById('nav-articles').classList.remove('active');
+        const navDrafts = document.getElementById('nav-drafts');
+        if (navDrafts) navDrafts.classList.remove('active');
+
+        if (view === 'dashboard') {
+            document.getElementById('view-dashboard').style.display = 'block';
+            document.getElementById('nav-dashboard').classList.add('active');
+        } else if (view === 'articles') {
+            document.getElementById('view-articles').style.display = 'block';
+            document.getElementById('nav-articles').classList.add('active');
+        } else if (view === 'drafts') {
+            if (draftsEl) draftsEl.style.display = 'block';
+            if (navDrafts) navDrafts.classList.add('active');
+            // load drafts content
+            loadDraftsView();
+        }
+    };
+
+    // Make Articles KPI accessible via keyboard (Enter/Space)
+    const kpiArticlesCard = document.getElementById('kpi-card-articles');
+    if (kpiArticlesCard) {
+        kpiArticlesCard.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                switchView('articles');
+            }
+        });
+    }
+
+    // Make Drafts KPI accessible
+    const kpiDraftsCard = document.getElementById('kpi-card-drafts');
+    if (kpiDraftsCard) {
+        kpiDraftsCard.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                switchView('drafts');
+            }
+        });
+    }
+
+    function loadAdminDashboard() {
+        // Fetch all articles
+        fetch('article_controller.php?action=list&all=1')
+            .then(res => res.json())
+            .then(articles => {
+                if (articles.error) throw new Error(articles.error);
+
+                // Update Article KPI (total)
+                document.getElementById('kpi-articles').textContent = articles.length || 0;
+
+                // Update Drafts KPI
+                const draftsCount = (articles.filter ? articles.filter(a => a.status == 0).length : 0);
+                const kpiDraftsEl = document.getElementById('kpi-drafts');
+                if (kpiDraftsEl) kpiDraftsEl.textContent = draftsCount || 0;
+
+                const articlesContainer = document.getElementById('admin-articles-list');
+                articlesContainer.innerHTML = '';
+
+                if (!articles.length) {
+                    articlesContainer.innerHTML = '<tr><td colspan="8" style="padding: 15px;">Aucun article trouvé.</td></tr>';
+                } else {
+                    let listHtml = '';
+                    articles.forEach(a => {
+                        const date = new Date(a.created_at).toLocaleDateString();
+                        const encodedContent = escapeHtml(a.content).replace(/'/g, "\\'");
+                        const encodedName = escapeHtml(a.name).replace(/'/g, "\\'");
+                        const encodedType = escapeHtml(a.type).replace(/'/g, "\\'");
+                        const encodedImage = escapeHtml(a.image_url).replace(/'/g, "\\'");
+                        const encodedAuthor = escapeHtml(a.author).replace(/'/g, "\\'");
+
+                        listHtml += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 15px;">#${a.id}</td>
+                            <td style="padding: 15px;">
+                                ${a.image_url ? `<img src="${escapeHtml(a.image_url)}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">` : '<span style="color:#aaa">Aucune</span>'}
+                            </td>
+                            <td style="padding: 15px;"><strong>${escapeHtml(a.name)}</strong></td>
+                            <td style="padding: 15px;">${escapeHtml(a.type || '-')}</td>
+                            <td style="padding: 15px;">${escapeHtml(a.author || 'Admin')}</td>
+                            <td style="padding: 15px;">
+                                <span style="background: ${a.status == 1 ? '#2ecc71' : '#f1c40f'}; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                                    ${a.status == 1 ? 'Publié' : 'Brouillon'}
+                                </span>
+                            </td>
+                            <td style="padding: 15px;">${date}</td>
+                            <td style="padding: 15px; text-align: right;">
+                                <button class="btn-action" style="background: #9b59b6; margin-right: 5px; padding: 5px 10px;" onclick="viewComments(${a.id})">Commentaires</button>
+                                <button class="btn-action" style="background: #3498db; margin-right: 5px; padding: 5px 10px;" onclick="editArticle(${a.id}, '${encodedName}', '${encodedType}', '${encodedImage}', '${encodedAuthor}', '${encodedContent}', ${a.status})">Modifier</button>
+                                <button class="btn-action" style="background: #e74c3c; padding: 5px 10px;" onclick="deleteArticle(${a.id})">Supprimer</button>
+                            </td>
+                        </tr>
+                        <tr id="comments-row-${a.id}" style="display: none; background: #f9f9f9; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border-bottom: 2px solid #eee;">
+                            <td colspan="8" style="padding: 15px;">
+                                <div id="comments-container-${a.id}"></div>
+                            </td>
+                        </tr>
+                        `;
+                    });
+                    articlesContainer.innerHTML = listHtml;
+                }
+            })
+            .catch(err => console.error("Erreur chargement articles:", err));
+
+        // Fetch all comments and display them (pending first) with actions
+        fetch('comment_controller.php?action=list&all=1')
+            .then(res => res.json())
+            .then(comments => {
+                if (comments.error) throw new Error(comments.error);
+
+                const totalComments = comments.length || 0;
+                const pendingComments = comments.filter(c => c.status == 0);
+                document.getElementById('kpi-comments').textContent = totalComments;
+
+                const commentsContainer = document.getElementById('admin-comments-list');
+                commentsContainer.innerHTML = '';
+
+                if (!totalComments) {
+                    commentsContainer.innerHTML = '<p style="padding: 15px; color: #666;">Aucun commentaire trouvé.</p>';
+                } else {
+                    // Show all comments, sorting so pending (status=0) appear first
+                    comments.sort((a, b) => a.status - b.status || new Date(b.created_at) - new Date(a.created_at));
+
+                    comments.forEach(c => {
+                        const date = new Date(c.created_at).toLocaleString();
+                        const div = document.createElement('div');
+                        div.className = 'timeline-item';
+                        const statusBadge = c.status == 1
+                            ? '<span style="background:#2ecc71;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;">Validé</span>'
+                            : '<span style="background:#f1c40f;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;">En attente</span>';
+                        const actions = c.status == 0
+                            ? `<button class="btn-action" style="background:#28a745; margin-left:8px;" onclick="updateCommentStatus(${c.id}, 1)">Valider</button><button class="btn-action" style="background:#e74c3c; margin-left:8px;" onclick="deleteComment(${c.id})">Supprimer</button>`
+                            : `<button class="btn-action" style="background:#e74c3c; margin-left:8px;" onclick="deleteComment(${c.id})">Supprimer</button>`;
+
+                        div.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:8px 0; border-bottom: 1px solid #f1f1f1;">
+                                <div style="flex:1;">
+                                    <div style="margin-bottom:6px;"><strong>${escapeHtml(c.username)}</strong> <span style="color:#888; font-size:0.9rem;">• ${date}</span> ${statusBadge}</div>
+                                    <div style="color:#333;">${escapeHtml(c.comment)}</div>
+                                </div>
+                                <div style="display:flex; align-items:center;">${actions}</div>
+                            </div>
+                        `;
+                        commentsContainer.appendChild(div);
+                    });
+                }
+            })
+            .catch(err => console.error("Erreur chargement commentaires:", err));
+    }
+
+    // Load drafts-only view
+    function loadDraftsView() {
+        fetch('article_controller.php?action=list&all=1')
+            .then(r => r.json())
+            .then(articles => {
+                if (articles.error) throw new Error(articles.error);
+                const drafts = (articles.filter ? articles.filter(a => a.status == 0) : []);
+                const container = document.getElementById('admin-drafts-list');
+                container.innerHTML = '';
+                if (!drafts.length) {
+                    container.innerHTML = '<tr><td colspan="7" style="padding: 15px;">Aucun brouillon trouvé.</td></tr>';
+                    return;
+                }
+                let html = '';
+                drafts.forEach(a => {
+                    const date = new Date(a.created_at).toLocaleDateString();
+                    const encodedContent = escapeHtml(a.content).replace(/'/g, "\\'");
+                    const encodedName = escapeHtml(a.name).replace(/'/g, "\\'");
+                    const encodedType = escapeHtml(a.type).replace(/'/g, "\\'");
+                    const encodedImage = escapeHtml(a.image_url).replace(/'/g, "\\'");
+                    const encodedAuthor = escapeHtml(a.author).replace(/'/g, "\\'");
+
+                    html += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 15px;">#${a.id}</td>
+                        <td style="padding: 15px;">${a.image_url ? `<img src="${escapeHtml(a.image_url)}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">` : '<span style="color:#aaa">Aucune</span>'}</td>
+                        <td style="padding: 15px;"><strong>${escapeHtml(a.name)}</strong></td>
+                        <td style="padding: 15px;">${escapeHtml(a.type || '-')}</td>
+                        <td style="padding: 15px;">${escapeHtml(a.author || 'Admin')}</td>
+                        <td style="padding: 15px;">${date}</td>
+                        <td style="padding: 15px; text-align: right;">
+                            <button class="btn-action" style="background: #3498db; margin-right: 5px; padding: 5px 10px;" onclick="editArticle(${a.id}, '${encodedName}', '${encodedType}', '${encodedImage}', '${encodedAuthor}', '${encodedContent}', ${a.status})">Modifier</button>
+                            <button class="btn-action" style="background: #2ecc71; margin-right: 5px; padding: 5px 10px;" onclick="(function(){ if(confirm('Publier cet article ?')) { const fd=new FormData(); fd.append('action','update'); fd.append('id', ${a.id}); fd.append('status', 1); fetch('article_controller.php',{method:'POST', body: fd}).then(()=> loadDraftsView()); } })()">Publier</button>
+                            <button class="btn-action" style="background: #e74c3c; padding: 5px 10px;" onclick="deleteArticle(${a.id})">Supprimer</button>
+                        </td>
+                    </tr>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(err => console.error('Erreur chargement brouillons:', err));
+    }
+
+    // Global Action Functions
+
+    window.toggleArticleForm = function(forceShow = false) {
+        const formCard = document.getElementById('article-form-card');
+        if (forceShow || formCard.style.display === 'none') {
+            formCard.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            formCard.style.display = 'none';
+            document.getElementById('manage-article-form').reset();
+            document.getElementById('form-article-action').value = 'create';
+            document.getElementById('form-article-id').value = '';
+            document.getElementById('article-form-title').innerText = 'Créer un article';
+        }
+    };
+
+    window.editArticle = function(id, name, type, image, author, content, status) {
+        document.getElementById('form-article-id').value = id;
+        document.getElementById('form-article-action').value = 'update';
+        document.getElementById('form-article-name').value = name;
+        document.getElementById('form-article-type').value = type;
+        document.getElementById('form-article-image').value = image;
+        document.getElementById('form-article-author').value = author;
+        document.getElementById('form-article-content').value = content;
+        document.getElementById('form-article-status').checked = (status == 1);
+        document.getElementById('article-form-title').innerText = 'Modifier l\'article #' + id;
+
+        toggleArticleForm(true);
+    };
+
+    window.deleteArticle = function(id) {
+        if(!confirm('Supprimer cet article ?')) return;
+        const fd = new FormData();
+        fd.append('action', 'delete');
+        fd.append('id', id);
+        fetch('article_controller.php', { method: 'POST', body: fd })
+            .then(r => r.json()).then(() => {
+                if (window.currentAdminView === 'drafts') loadDraftsView(); else loadAdminDashboard();
+            });
+    };
+
+    window.viewComments = function(articleId) {
+        const row = document.getElementById('comments-row-' + articleId);
+        const container = document.getElementById('comments-container-' + articleId);
+        
+        if (row.style.display === 'none') {
+            row.style.display = 'table-row';
+            container.innerHTML = '<p style="color: #666; font-style: italic;">Chargement des commentaires...</p>';
+            
+            fetch('comment_controller.php?action=list&all=1&article_id=' + articleId)
+                .then(r => r.json())
+                .then(comments => {
+                    if (comments.error) throw new Error(comments.error);
+                    
+                    if (!comments.length) {
+                        container.innerHTML = '<p style="color: #888;">Aucun commentaire pour cet article.</p>';
+                        return;
+                    }
+                    
+                    let commentsHtml = `
+                        <h4 style="margin-bottom: 10px; color: #555;">Commentaires de l'article #${articleId}</h4>
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #ddd; background: #f1f1f1;">
+                                    <th style="padding: 8px;">Auteur</th>
+                                    <th style="padding: 8px;">Commentaire</th>
+                                    <th style="padding: 8px;">Statut</th>
+                                    <th style="padding: 8px;">Date</th>
+                                    <th style="padding: 8px; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    comments.forEach(c => {
+                        const date = new Date(c.created_at).toLocaleString();
+                        const statusBadge = c.status == 1 
+                            ? '<span style="background:#2ecce1;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;">Validé</span>' 
+                            : '<span style="background:#f1c40f;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;">En attente</span>';
+                            
+                        // Use a specific global function for deleting from article view so it re-renders exactly this list
+                        commentsHtml += `
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 8px;"><strong>${escapeHtml(c.username)}</strong></td>
+                                <td style="padding: 8px; width: 40%;">${escapeHtml(c.comment)}</td>
+                                <td style="padding: 8px;">${statusBadge}</td>
+                                <td style="padding: 8px; font-size: 0.85rem;">${date}</td>
+                                <td style="padding: 8px; text-align: right;">
+                                    <button class="btn-action" style="background:#e74c3c; padding:3px 8px; font-size:0.8rem;" onclick="deleteCommentFromArticle(${c.id}, ${articleId})">Supprimer</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    commentsHtml += `</tbody></table>`;
+                    container.innerHTML = commentsHtml;
+                })
+                .catch(err => {
+                    console.error("Erreur chargement:", err);
+                    container.innerHTML = '<p style="color: red;">Erreur lors du chargement des commentaires.</p>';
+                });
+        } else {
+            row.style.display = 'none';
+        }
+    };
+
+    window.deleteCommentFromArticle = function(commentId, articleId) {
+        if(!confirm('Supprimer définitivement ce commentaire ?')) return;
+        const fd = new FormData();
+        fd.append('action', 'delete');
+        fd.append('id', commentId);
+        fetch('comment_controller.php', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(() => {
+                // Refresh both the dashboard stats and the specific opened view
+                loadAdminDashboard(); // This will auto update KPIs and top list
+                document.getElementById('comments-row-' + articleId).style.display = 'none';
+                viewComments(articleId); // Re-open properly updated
+            });
+    };
+
+    window.updateCommentStatus = function(id, status) {
+        const fd = new FormData();
+        fd.append('action', 'update');
+        fd.append('id', id);
+        fd.append('status', status);
+        fetch('comment_controller.php', { method: 'POST', body: fd })
+            .then(r => r.json()).then(() => loadAdminDashboard());
+    };
+
+    window.deleteComment = function(id) {
+        if(!confirm('Supprimer ce commentaire ?')) return;
+        const fd = new FormData();
+        fd.append('action', 'delete');
+        fd.append('id', id);
+        fetch('comment_controller.php', { method: 'POST', body: fd })
+            .then(r => r.json()).then(() => loadAdminDashboard());
+    };
+
+    // Form interception to reload after adding article
+    const articleForm = document.getElementById('manage-article-form');
+    if(articleForm) {
+        articleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fd = new FormData(articleForm);
+            
+            // If checkbox is unchecked, FormData won't send it, so let's default to 0
+            if (!document.getElementById('form-article-status').checked) {
+                fd.append('status', '0');
+            }
+            
+            fetch('article_controller.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.success) {
+                        articleForm.reset();
+                        document.getElementById('form-article-action').value = 'create';
+                        document.getElementById('form-article-id').value = '';
+                        document.getElementById('article-form-card').style.display = 'none';
+                        loadAdminDashboard();
+                    } else {
+                        alert(res.error || 'Erreur');
+                    }
+                });
+        });
+    }
+
+    // Initial load
+    loadAdminDashboard();
+});
+</script>
+
+</body>
+</html>
