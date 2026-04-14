@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartPlate - Produits</title>
+    <link rel="stylesheet" href="templates/template.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <img src="Images/logo.jpg" alt="Logo" height="150" width="150">
+        <h2>SmartPlate</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+        <span class="nav-section-title">Menu Principal</span>
+        
+        <a href="Journal.html" class="nav-item">
+            <span class="icon">🍽️</span>
+            <span>Journal Alimentaire</span>
+        </a>
+        
+        <a href="Objectif.html" class="nav-item">
+            <span class="icon">🎯</span>
+            <span>Mes Objectifs</span>
+        </a>
+        
+        <a href="Progression.html" class="nav-item">
+            <span class="icon">📈</span>
+            <span>Ma Progression</span>
+        </a>
+
+        <a href="Produits.html" class="nav-item active">
+            <span class="icon">🛒</span>
+            <span>Produits</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-badge">
+            <img src="https://ui-avatars.com/api/?name=Malek&background=d4f283&color=1a1a1a&rounded=true" alt="Avatar">
+            <div class="user-info">
+                <span class="user-name">Malek</span>
+                <span class="user-status">Connectée</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- CONTENU PRINCIPAL -->
+<div class="dashboard">
+
+    <header class="dashboard-header">
+        <h1>Produits</h1>
+        <span class="date-badge">Mis à jour le 06 Avril</span>
+    </header>
+
+    <!-- Barre de recherche + filtre -->
+    <div class="card">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un produit...">
+            </div>
+
+            <div class="form-group">
+                <select id="filterCategory" class="form-control">
+                    <option value="all">Toutes les catégories</option>
+                    <option value="Yaourt">Smart Yaourt</option>
+                    <option value="Barre_énergétique">Smart Barre énergétique</option>
+                    <option value="Bsissa">Smart Bsissa</option>
+                    <option value="ChocoPlate">Smart ChocoPlate</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons pagination + filtrer -->
+<div class="header-actions">
+    <select class="btn-filtrer">
+            <option value="" disabled selected>Filtrer</option>
+            <option >Par prix Croissant</option>
+            <option >Par prix Décroissant</option>
+    </select>
+    <div class="pagination-container" id="paginationTop"></div>
+</div>
+
+    <!-- Liste des produits -->
+<div class="products-grid" id="productsGrid">
+    <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Smart EnergyBar</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Smart Yogofraise</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/vanille.png" alt="Healthy Smart Yogurt">
+        <h3>Smart YogoVanille</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/YogoBanane.png" alt="Healthy Smart Yogurt">
+        <h3>Smart YogoBanane</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/choco.png" alt="Healthy Smart Yogurt">
+        <h3>Smart ChocoYogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/ChocoNoisette.png" alt="Healthy Smart Yogurt">
+        <h3>Smart ChocoPlate Noisette</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+    
+            <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/GranoSmart.png" alt="Healthy Smart Yogurt">
+        <h3>GranoSmart</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Bsissa" data-category="legume">
+        <img src="Images/Bsissa.png" alt="Healthy Smart Bsissa">
+        <h3>Smart Bsissa</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Bsissa', 'Riche en vitamines')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/YogoPêche.png" alt="Barre énergétique">
+        <h3>Smart YogoPêche</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/SmartChoco.png" alt="Healthy Smart Yogurt">
+        <h3>Smart ChocoPlate Nature</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Smart YogoPomme</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/YogoBananeMiel.png" alt="Barre énergétique">
+        <h3>Smart YogoBanane au miel</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+
+        <div class="product-card" data-name="Barre énergétique" data-category="fruit">
+        <img src="Images/Barre_énergétique.png" alt="Barre énergétique">
+        <h3>Barre énergétique</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Barre énergétique', 'Fruit riche en fibres')">Voir détails</button>
+            <button class="btn-panier">Ajouter au panier</button>
+        </div>
+    </div>
+
+    <div class="product-card" data-name="Healthy Smart Yogurt" data-category="protein">
+        <img src="Images/Yaourt.png" alt="Healthy Smart Yogurt">
+        <h3>Healthy Smart Yogurt</h3>
+        <div class="product-actions">
+            <button class="btn-action" onclick="showDetails('Healthy Smart Yogurt', 'Yaourt protéiné saveur fraise')">Voir détails</button>
+            <button class="btn-panier">
+                Ajouter au panier
+            </button>
+        </div>
+    </div>
+</div>
+<div class="pagination-container" id="paginationBottom"></div>
+
+    <!-- Popup détails -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <p id="modalDescription"></p>
+        </div>
+    </div>
+</div>
+
+<script src="js_produits.js"></script>
+</body>
+</html>
