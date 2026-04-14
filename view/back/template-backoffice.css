@@ -1,0 +1,352 @@
+:root {
+            --admin-green: #20c997;
+            --admin-green-dark: #12b886;
+            --bg-light: #f4f6f9;
+            --text-dark: #2d3436;
+            --text-gray: #636e72;
+            --white: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-light);
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR VERTE --- */
+        .admin-sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--admin-green) 0%, var(--admin-green-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-menu {
+            padding: 20px 0;
+            flex: 1;
+        }
+        .menu-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+        .menu-item {
+            padding: 12px 20px 12px 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white);
+            text-decoration: none;
+            transition: 0.2s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--white);
+        }
+
+        /* --- CONTENU PRINCIPAL --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* Topbar Blanche */
+        .topbar {
+            height: 70px;
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+        }
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .admin-profile img {
+            width: 40px; height: 40px; border-radius: 50%;
+        }
+
+        /* Conteneur du Dashboard */
+        .dashboard-container {
+            padding: 30px;
+        }
+        .page-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 { font-size: 1.5rem; color: var(--text-dark); }
+        .page-header p { color: var(--text-gray); font-size: 0.9rem; margin-top: 5px; }
+
+        /* Grille des KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid #eef0f5;
+        }
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .kpi-icon {
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem;
+        }
+        .kpi-icon.yellow { background: #fff8e1; color: #f1c40f; }
+        .kpi-icon.red { background: #feebeb; color: #e74c3c; }
+        .kpi-icon.green { background: #e8f8f5; color: var(--admin-green); }
+        .kpi-info h3 { font-size: 1.8rem; color: var(--text-dark); margin-bottom: 5px; }
+        .kpi-info span { font-size: 0.85rem; color: var(--text-gray); font-weight: 500; }
+        .trend { font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
+        .trend.up { color: var(--admin-green); }
+
+        /* Grille Graphique et Timeline */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        .card-header h2 { font-size: 1.1rem; color: var(--text-dark); }
+
+        /* Style Timeline pour les anomalies */
+        .timeline-item {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .timeline-item::before {
+            content: ''; position: absolute; left: 0; top: 5px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #e74c3c; border: 2px solid #feebeb;
+        }
+        .timeline-item::after {
+            content: ''; position: absolute; left: 4px; top: 15px;
+            width: 2px; height: calc(100% + 5px); background: #f1f2f6;
+        }
+        .timeline-item:last-child::after { display: none; }
+        .timeline-time { display: block; font-size: 0.75rem; color: var(--text-gray); margin-top: 3px; }
+
+        /* Bouton Action */
+        .btn-action {
+            background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 5px;
+        }
+
+        .btn-action-danger {
+            background: #e74c3c;
+        }
+
+        .admin-actions-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .admin-actions-inline form {
+            margin: 0;
+        }
+
+        .admin-table-wrap {
+            overflow-x: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .admin-table th,
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eef1f4;
+            text-align: left;
+            vertical-align: top;
+            color: var(--text-dark);
+        }
+        .admin-table th {
+            background: #f8fafc;
+            color: var(--text-gray);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-pill.pending {
+            background: #fff4d9;
+            color: #a66c00;
+        }
+        .status-pill.resolved {
+            background: #e8f8f5;
+            color: #0f7f62;
+        }
+        .status-note {
+            margin-top: 5px;
+            color: var(--text-gray);
+            font-size: 0.78rem;
+        }
+
+        .alert-admin {
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .alert-admin.success {
+            background: #e9f8f1;
+            border: 1px solid #cdeedb;
+            color: #0f7f62;
+        }
+        .alert-admin.error {
+            background: #fdecec;
+            border: 1px solid #f7d2d2;
+            color: #af2e2e;
+        }
+
+        .empty-admin {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        .reply-context p {
+            margin-top: 8px;
+            color: var(--text-dark);
+            line-height: 1.45;
+        }
+
+        .reply-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .reply-form label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .reply-form textarea {
+            border: 1px solid #dfe5eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            resize: vertical;
+            min-height: 120px;
+        }
+        .reply-form textarea:focus {
+            outline: none;
+            border-color: var(--admin-green);
+            box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.18);
+        }
+        .reply-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .response-list {
+            display: grid;
+            gap: 12px;
+        }
+        .response-item {
+            border: 1px solid #ebeff3;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fafcfd;
+        }
+        .response-date {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin-bottom: 6px;
+        }
+
+        .admin-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(16, 24, 32, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 9999;
+        }
+
+        .admin-modal-backdrop.is-open {
+            display: flex;
+        }
+
+        .admin-modal-card {
+            width: min(100%, 500px);
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid #e2e8ef;
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+            padding: 18px;
+        }
+
+        .admin-modal-title {
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .admin-modal-text {
+            color: var(--text-gray);
+            line-height: 1.45;
+        }
+
+        .admin-modal-actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
