@@ -103,3 +103,4 @@ function logoutCurrentUser(): void
 
     session_destroy();
 }
+ 
