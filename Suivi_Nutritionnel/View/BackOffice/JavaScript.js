@@ -169,3 +169,35 @@ function openEditForm(id, id_user, type, poids, debut, fin, statut) {
                 }
             });
         });
+
+        // Fonction pour ouvrir le formulaire
+function openAddForm() {
+    const section = document.getElementById("sectionAjout");
+    section.style.display = "block"; // On affiche la boîte
+    document.getElementById("adminJournalForm").reset(); // On vide les champs
+    
+    // Défilement doux vers le formulaire pour une meilleure UX
+    section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Fonction pour fermer le formulaire
+function closeForm() {
+    document.getElementById("sectionAjout").style.display = "none"; // On cache la boîte
+}
+
+ document.getElementById('searchId').addEventListener('input', function() {
+            let filter = this.value.toLowerCase().replace('#', ''); 
+            let rows = document.querySelectorAll('.admin-table tbody tr');
+
+            rows.forEach(row => {
+                // On vérifie que la ligne n'est pas le message "Aucun journal trouvé"
+                if (row.cells.length > 1) {
+                    let idCell = row.cells[0].textContent.toLowerCase(); 
+                    if (idCell.includes(filter)) {
+                        row.style.display = ''; 
+                    } else {
+                        row.style.display = 'none'; 
+                    }
+                }
+            });
+        });

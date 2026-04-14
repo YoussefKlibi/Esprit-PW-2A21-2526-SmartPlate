@@ -233,7 +233,7 @@ foreach($tousLesObjectifs as $obj) {
             </div>
             <div class="form-group">
                 <label>Poids cible (kg)</label>
-                <input type="number" step="0.1" name="poids_cible" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>">
+                <input step="0.1" name="poids_cible" class="form-control" value="<?php echo $objectifActuel ? $objectifActuel['poids_cible'] : ''; ?>">
             </div>
         </div>
 

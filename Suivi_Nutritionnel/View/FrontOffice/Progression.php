@@ -7,6 +7,66 @@
     <link rel="stylesheet" href="templates/template.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+<?php
+    // Import du contrôleur pour accéder aux méthodes de la base de données
+    include_once '../../Controller/ObjectifController.php';
+
+    // Simulation de l'utilisateur connecté
+    $id_utilisateur_connecte = 1; 
+
+    // Récupération de l'objectif actif pour l'utilisateur (utilisateur simulé = 1)
+    $id_utilisateur_connecte = 1;
+    $objectifActuel = Objectif::getActif($id_utilisateur_connecte);
+
+    // Préparer les valeurs par défaut au cas où il n'y aurait pas d'objectif actif
+    $debutAff = '—';
+    $finAff = '—';
+    $joursPasses = 0;
+    $joursRestants = 0;
+    $pourcentage = 0;
+
+    // Petit helper pour formater en français (abréviations)
+    function formatDateFrShort($dateStr) {
+        $mois = [1=> 'Jan', 'Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+        try {
+            $d = new DateTime($dateStr);
+            $num = (int)$d->format('n');
+            return $d->format('d') . ' ' . $mois[$num];
+        } catch (Exception $e) {
+            return $dateStr;
+        }
+    }
+
+    if ($objectifActuel) {
+        $dateDebut = $objectifActuel['date_debut'];
+        $dateFin = $objectifActuel['date_fin'];
+
+        // Format affichage
+        $debutAff = formatDateFrShort($dateDebut);
+        $finAff = formatDateFrShort($dateFin);
+
+        $dDebut = new DateTime($dateDebut);
+        $dFin = new DateTime($dateFin);
+        $aujourdhui = new DateTime();
+
+        // Total de jours (au moins 1 pour éviter division par zéro)
+        $intervalTotal = $dDebut->diff($dFin)->days;
+        $totalJours = max(1, $intervalTotal);
+
+        // Jours passés : si aujourd'hui < début => 0 ; si aujourd'hui > fin => total
+        if ($aujourdhui < $dDebut) {
+            $joursPasses = 0;
+        } elseif ($aujourdhui > $dFin) {
+            $joursPasses = $totalJours;
+        } else {
+            $joursPasses = $dDebut->diff($aujourdhui)->days;
+        }
+
+        $joursRestants = max(0, $totalJours - $joursPasses);
+        $pourcentage = (int) round(($joursPasses / $totalJours) * 100);
+        $pourcentage = min(100, max(0, $pourcentage));
+    }
+?>
 <body>
     <aside class="sidebar">
     <div class="sidebar-logo">
@@ -79,31 +139,34 @@
                 </div>
             </div>
         </div>
+        
 
         <div class="card health-card">
             <div class="card-header">
                 <h2>Temps Écoulé</h2>
-                <span class="badge white">14 Jours restants</span>
+                <span class="badge white"><?php echo $joursRestants; ?> Jours restants</span>
             </div>
             <div class="health-content">
                 
                 <div class="timeline-container">
                     <div class="timeline-dates">
-                        <span>Début : 01 Fév</span> <span>Aujourd'hui</span>
-                        <span>Fin : 30 Avr</span> </div>
-                    
+                        <span>Début : <?php echo $debutAff; ?></span>
+                        <span>Aujourd'hui</span>
+                        <span>Fin : <?php echo $finAff; ?></span>
+                    </div>
+
                     <div class="progress-bar-container mt-2">
-                        <div class="progress-bar" style="width: 70%;"></div>
+                        <div class="progress-bar" style="width: <?php echo $pourcentage; ?>%;"></div>
                     </div>
                 </div>
 
                 <div class="stats-row mt-2">
                     <div class="stat-box">
-                        <span class="stat-number">45</span>
+                        <span class="stat-number"><?php echo $joursPasses; ?></span>
                         <span class="stat-label">Jours passés</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-number">14</span>
+                        <span class="stat-number"><?php echo $joursRestants; ?></span>
                         <span class="stat-label">Jours restants</span>
                     </div>
                 </div>

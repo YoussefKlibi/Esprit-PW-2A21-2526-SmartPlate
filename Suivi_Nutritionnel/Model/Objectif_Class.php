@@ -92,8 +92,9 @@ class Objectif {
     // --- METHODE : RÉCUPÉRER L'OBJECTIF ACTIF ---
     public static function getActif($id_user) {
         $db = Config::getConnexion();
-        // On cherche uniquement un objectif "En cours" pour cet utilisateur
-        $sql = "SELECT * FROM objectif WHERE id_utilisateur = :id_user AND statut = 'En cours' LIMIT 1";
+        // On cherche uniquement un objectif "en cours" pour cet utilisateur.
+        // Normaliser les valeurs (ex: 'en_cours' ou 'En cours') en remplaçant '_' par ' ' et en passant en minuscule.
+        $sql = "SELECT * FROM objectif WHERE id_utilisateur = :id_user AND REPLACE(LOWER(statut),'_',' ') = 'en cours' LIMIT 1";
         try {
             $query = $db->prepare($sql);
             $query->execute(['id_user' => $id_user]);

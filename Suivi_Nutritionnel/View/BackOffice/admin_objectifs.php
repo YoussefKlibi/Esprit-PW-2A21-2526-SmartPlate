@@ -16,7 +16,7 @@
 
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <span><img src="../../Logo/logo.png" alt="Logo" height="30" style="vertical-align: middle;"></span> SmartPlate Admin
+            <span><img src="../assets/logo.png" alt="Logo" height="100" weight="40" style="vertical-align: middle;"></span> SmartPlate Admin
         </div>
         <div class="sidebar-menu">
             <div class="menu-category">Menu Principal</div>

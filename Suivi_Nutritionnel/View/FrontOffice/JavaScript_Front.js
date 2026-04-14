@@ -1,4 +1,4 @@
-// JavaScript.js
+// JavaScript_Front.js
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     // --- 1. CONTRÔLE DU JOURNAL (Date et Poids) ---
     // =========================================================================
-    const formJournal = document.querySelector('form[action="index.php?action=addJournal"]');
+    const formJournal = document.getElementById('journalAddForm');
     if (formJournal) {
         formJournal.addEventListener('submit', function(e) {
             let dateJournal = formJournal.querySelector('input[name="date_journal"]').value;
@@ -85,15 +85,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     // --- 2. CONTRÔLE DE L'AJOUT D'UN REPAS ---
     // =========================================================================
-    const formRepas = document.querySelector('form[action="index.php?action=addRepas"]');
+    const formRepas = document.getElementById('repasForm');
     if (formRepas) {
         formRepas.addEventListener('submit', function(e) {
-            let nom = document.getElementById('nom').value;
-            let qte = document.getElementById('qte').value;
-            let calories = document.getElementById('nbre_calories').value;
-            let proteine = document.getElementById('proteine').value;
-            let glucide = document.getElementById('glucide').value;
-            let lipide = document.getElementById('lipide').value;
+            let nomEl = document.getElementById('nom');
+            let qteEl = document.getElementById('qte');
+            let caloriesEl = document.getElementById('nbre_calories');
+            let proteineEl = document.getElementById('proteine');
+            let glucideEl = document.getElementById('glucide');
+            let lipideEl = document.getElementById('lipide');
+
+            let nom = nomEl ? nomEl.value : '';
+            let qte = qteEl ? qteEl.value : '';
+            let calories = caloriesEl ? caloriesEl.value : '';
+            let proteine = proteineEl ? proteineEl.value : '';
+            let glucide = glucideEl ? glucideEl.value : '';
+            let lipide = lipideEl ? lipideEl.value : '';
             
             let erreurs = [];
 
@@ -247,3 +254,244 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+
+
+        //Partie controle de saisie Journal
+        
+        
+        document.addEventListener('DOMContentLoaded', function() {
+    const journalForm = document.getElementById('journalAddForm');
+
+    if (journalForm) {
+        journalForm.addEventListener('submit', function(e) {
+            let isValid = true;
+
+            // 1. Nettoyage des anciennes erreurs
+            document.querySelectorAll('.error-text').forEach(el => el.remove());
+            journalForm.querySelectorAll('input').forEach(input => {
+                input.classList.remove('shake', 'input-error');
+                input.style.border = '1px solid #ddd';
+            });
+
+            // 2. Fonction pour afficher l'erreur avec animation
+            const showError = (id, message) => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.style.border = '2px solid #e74c3c';
+                    field.classList.add('shake');
+                    
+                    const error = document.createElement('span');
+                    error.className = 'error-text';
+                    error.style.color = '#e74c3c';
+                    error.style.fontSize = '0.8rem';
+                    error.innerHTML = '⚠️ ' + message;
+                    field.parentNode.appendChild(error);
+                    isValid = false;
+                }
+            };
+
+            // 3. RÈGLES DE VALIDATION
+            // 🔍 Vérification des champs
+
+    const poids = document.getElementById("poids_actuel");
+            const sommeil = document.getElementById("heures_sommeil");
+
+            if (!poids || poids.value.trim() === "") {
+                showError("poids_actuel", "Le poids est obligatoire");
+            }
+
+            if (!sommeil || sommeil.value.trim() === "") {
+                showError("heures_sommeil", "Les heures de sommeil sont obligatoires");
+
+            }
+            // Aucun contrôle des champs de repas ici — ce formulaire gère uniquement le journal (date, poids, sommeil, humeur)
+
+            // Bloquer l'envoi si une erreur existe
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        // 4. PROTECTION EN TEMPS RÉEL (Empêcher de taper autre chose que des chiffres)
+        const inputsNumber = journalForm.querySelectorAll('input[type="number"]');
+        inputsNumber.forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+            });
+        });
+    }
+});
+
+// ============================================================
+    // 1. RESTRICTION DYNAMIQUE (FILTRAGE PENDANT LA SAISIE)
+    // ============================================================
+    
+    // Bind meal-specific validations only to the meal form (`repasForm`)
+    const repasFormBind = document.getElementById('repasForm');
+
+    if (repasFormBind) {
+        // --- A. Restriction pour les LETTRES UNIQUEMENT (Nom de l'aliment) ---
+        const nomAliment = repasFormBind.querySelector('[name="nom"]');
+        if (nomAliment) {
+            nomAliment.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+            });
+        }
+
+        // --- B. Restriction pour les CHIFFRES UNIQUEMENT (Calories, Macros) ---
+        const champsNumeriquesRepas = repasFormBind.querySelectorAll('input[type="number"], input[type="text"], input[id*="nbre_"], input[id*="qte"], input[id*="proteine"], input[id*="glucide"], input[id*="lipide"]');
+        champsNumeriquesRepas.forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+            });
+        });
+
+        // Contrôle à la soumission du formulaire repas
+        repasFormBind.addEventListener('submit', function(e) {
+            let isValid = true;
+            // Nettoyage des erreurs précédentes
+            document.querySelectorAll('.error-text').forEach(el => el.remove());
+
+            const showError = (id, message) => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.style.border = '2px solid #e74c3c';
+                    field.classList.add('shake');
+                    const error = document.createElement('span');
+                    error.className = 'error-text';
+                    error.style.color = '#e74c3c';
+                    error.style.fontSize = '0.8rem';
+                    error.style.display = 'block';
+                    error.style.marginTop = '5px';
+                    error.innerHTML = '⚠️ ' + message;
+                    field.parentNode.appendChild(error);
+                    isValid = false;
+                }
+            };
+
+            const nom = repasFormBind.querySelector('[name="nom"]');
+            if (!nom || nom.value.trim().length < 3) {
+                showError(nom ? nom.id : 'nom', 'Le nom du repas est obligatoire et doit faire au moins 3 caractères.');
+            }
+
+            const calories = repasFormBind.querySelector('#nbre_calories');
+            if (calories && (calories.value === '' || parseFloat(calories.value) < 0)) {
+                showError('nbre_calories', 'Veuillez saisir un nombre de calories valide.');
+            }
+
+            if (!isValid) e.preventDefault();
+        });
+    }
+document.addEventListener("DOMContentLoaded", function () {
+
+    // 🔥 Fonction pour déclencher le shake
+    function shakeField(field) {
+        field.classList.add("shake", "input-error");
+
+        setTimeout(() => {
+            field.classList.remove("shake", "input-error");
+        }, 300);
+    }
+
+    // 🔢 Champs numériques
+    const numericFields = [
+        "poids_actuel",
+        "qte",
+        "nbre_calories",
+        "proteine",
+        "glucide",
+        "lipide",
+        "heures_sommeil" // ✅ ajouté
+    ];
+
+    numericFields.forEach(function(name) {
+        let inputs = document.querySelectorAll(`[name="${name}"]`);
+
+        inputs.forEach(function(input) {
+            input.addEventListener("input", function () {
+                let oldValue = this.value;
+
+                // Autoriser seulement chiffres + point
+                this.value = this.value.replace(/[^0-9.]/g, "");
+
+                // Si modification → erreur → shake
+                if (oldValue !== this.value) {
+                    shakeField(this);
+                }
+
+                // Empêcher plusieurs points
+                if ((this.value.match(/\./g) || []).length > 1) {
+                    this.value = this.value.slice(0, -1);
+                    shakeField(this);
+                }
+            });
+        });
+    });
+
+    // 🔤 Champs texte
+    const textFields = ["nom"];
+
+    textFields.forEach(function(name) {
+        let inputs = document.querySelectorAll(`[name="${name}"]`);
+
+        inputs.forEach(function(input) {
+            input.addEventListener("input", function () {
+                let oldValue = this.value;
+
+                // Autoriser seulement lettres + espaces + accents
+                this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, "");
+
+                // Si modification → erreur → shake
+                if (oldValue !== this.value) {
+                    shakeField(this);
+                }
+            });
+        });
+    });
+
+});
+
+// Handler pour remplir le formulaire d'ajout quand on clique sur "Modifier" dans le petit bloc
+document.addEventListener('DOMContentLoaded', function() {
+    const modifyBtns = document.querySelectorAll('.btn-modify');
+    const journalForm = document.getElementById('journalAddForm');
+    if (!journalForm) return;
+
+    const addBtn = document.getElementById('journalAddBtn');
+    const updateBtn = document.getElementById('journalUpdateBtn');
+
+    modifyBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id || '';
+            const date = this.dataset.date || '';
+            const poids = this.dataset.poids || '';
+            const heures = this.dataset.heures || '';
+            const humeur = this.dataset.humeur || '';
+
+            const dateEl = document.getElementById('date_journal');
+            const poidsEl = document.getElementById('poids_actuel');
+            const heuresEl = document.getElementById('heures_sommeil');
+            const humeurEl = document.getElementById('humeur');
+
+            if (dateEl) dateEl.value = date;
+            if (poidsEl) poidsEl.value = poids;
+            if (heuresEl) heuresEl.value = heures;
+            if (humeurEl) {
+                Array.from(humeurEl.options).forEach(opt => opt.selected = (opt.value === humeur));
+            }
+
+            // Préparer le bouton update pour soumettre vers l'action update avec l'id
+            if (updateBtn) {
+                updateBtn.style.display = 'inline-block';
+                if (window.JOURNAL_CONTROLLER_URL) {
+                    updateBtn.formAction = window.JOURNAL_CONTROLLER_URL + '?action=update&id=' + encodeURIComponent(id);
+                } else {
+                    updateBtn.formAction = '../../Controller/JournalController.php?action=update&id=' + encodeURIComponent(id);
+                }
+            }
+
+            // Optionnel : scroller vers le formulaire
+            journalForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+});
