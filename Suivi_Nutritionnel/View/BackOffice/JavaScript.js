@@ -1,203 +1,346 @@
 // On attend que la page soit totalement chargée
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ==========================================
-    // 1. RECHERCHE EN TEMPS RÉEL (Filtrage)
-    // ==========================================
     const searchInput = document.getElementById('searchInput');
-    if(searchInput) {
+    if (searchInput) {
         searchInput.addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase().replace('#', ''); 
-            let rows = document.querySelectorAll('.admin-table tbody tr');
-
-            rows.forEach(row => {
-                let idCell = row.cells[0].textContent.toLowerCase(); 
-                if (idCell.includes(filter)) {
-                    row.style.display = ''; 
-                } else {
-                    row.style.display = 'none'; 
-                }
+            const filter = this.value.toLowerCase().replace('#', '');
+            document.querySelectorAll('.admin-table tbody tr').forEach(function(row) {
+                if (!row.cells || row.cells.length === 0) return;
+                const idCell = row.cells[0].textContent.toLowerCase();
+                row.style.display = idCell.includes(filter) ? '' : 'none';
             });
         });
     }
 
-    // ==========================================
-    // 2. CONTRÔLE DE SAISIE CRÉATIF ET CAPTIVANT
-    // ==========================================
-    const form = document.getElementById('objectifForm');
+    const clearErrors = function(scopeEl) {
+        scopeEl.querySelectorAll('.error-text').forEach(function(el) { el.remove(); });
+        scopeEl.querySelectorAll('.input-error').forEach(function(el) {
+            el.classList.remove('input-error', 'shake');
+        });
+    };
 
-    if(form) {
-        form.addEventListener('submit', function(e) {
+    const attachValidation = function(formEl, rulesFn) {
+        if (!formEl) return;
+        formEl.addEventListener('submit', function(e) {
             let isValid = true;
+            clearErrors(formEl);
 
-            // NÉTTOYAGE : Enlever les anciennes erreurs avant de revérifier
-            document.querySelectorAll('.error-text').forEach(el => el.remove());
-            document.querySelectorAll('.input-error').forEach(el => {
-                el.classList.remove('input-error', 'shake');
-            });
-
-            // FONCTION OUTIL : Pour générer le message d'erreur et l'animation
-            const showError = (inputId, message) => {
+            const showError = function(inputId, message) {
                 const input = document.getElementById(inputId);
-                
-                // On déclenche l'animation de tremblement et la bordure rouge
+                if (!input) return;
                 input.classList.add('input-error');
-                
-                // Petit hack pour relancer l'animation CSS à chaque fois
                 input.classList.remove('shake');
-                void input.offsetWidth; 
+                void input.offsetWidth;
                 input.classList.add('shake');
-
-                // On crée le texte d'erreur sous l'input
                 const errorSpan = document.createElement('span');
                 errorSpan.className = 'error-text';
-                errorSpan.innerHTML = '⚠️ ' + message;
+                errorSpan.textContent = '⚠️ ' + message;
                 input.parentNode.appendChild(errorSpan);
-                
                 isValid = false;
             };
 
-            // --- LES RÈGLES DE VALIDATION ---
+            rulesFn(showError);
+            if (!isValid) e.preventDefault();
+        });
+    };
 
-            // 1. Type d'objectif obligatoire
-            const type = document.getElementById('type').value;
-            if (type === "") {
-                showError('type', 'Veuillez sélectionner le type d\'objectif.');
-            }
+    attachValidation(document.getElementById('objectifForm'), function(showError) {
+        const idUserEl = document.getElementById('id_utilisateur');
+        const typeEl = document.getElementById('type');
+        const poidsCibleEl = document.getElementById('poids_cible');
+        const debutEl = document.getElementById('Date_Debut');
+        const finEl = document.getElementById('Date_Fin');
+        const statutEl = document.getElementById('statut');
 
-            // 2. Poids : doit être un nombre positif, logique pour un humain (ex: entre 30 et 250kg)
-            const poids = document.getElementById('poids_cible').value;
-            if (!poids || isNaN(poids) || poids < 30 || poids > 250) {
-                showError('poids_cible', 'Entrez un poids cible réaliste (entre 30kg et 250kg).');
-            }
+        if (idUserEl && !idUserEl.value) showError('id_utilisateur', 'Veuillez renseigner l\'ID utilisateur.');
+        if (typeEl && typeEl.value === '') showError('type', 'Veuillez sélectionner le type d\'objectif.');
 
-            // 3. Date de début obligatoire
-            const debut = document.getElementById('Date_Debut').value;
-            if (!debut) {
-                showError('Date_Debut', 'La date de démarrage est indispensable.');
-            }
+        if (poidsCibleEl) {
+            const p = Number(poidsCibleEl.value);
+            if (poidsCibleEl.value === '') showError('poids_cible', 'Le poids cible est obligatoire.');
+            else if (Number.isNaN(p) || p < 30 || p > 250) showError('poids_cible', 'Entrez un poids cible réaliste (entre 30kg et 250kg).');
+        }
 
-            // 4. Date de fin : Si elle existe, elle doit être APRÈS la date de début
-            const fin = document.getElementById('Date_Fin').value;
-            if (debut && fin) {
-                const dateDebutObj = new Date(debut);
-                const dateFinObj = new Date(fin);
-                
-                if (dateFinObj <= dateDebutObj) {
-                    showError('Date_Fin', 'La date de fin doit être ultérieure à la date de début 🕰️.');
-                }
-            }
+        const debut = debutEl ? debutEl.value : '';
+        if (!debut) showError('Date_Debut', 'La date de démarrage est indispensable.');
 
-            // Si au moins une règle a échoué, on bloque l'envoi au serveur (PHP)
-            if (!isValid) {
-                e.preventDefault();
-            }
+        const fin = finEl ? finEl.value : '';
+        if (debut && fin) {
+            const d1 = new Date(debut + 'T00:00:00');
+            const d2 = new Date(fin + 'T00:00:00');
+            if (d2 <= d1) showError('Date_Fin', 'La date de fin doit être ultérieure à la date de début.');
+        }
+
+        if (statutEl && statutEl.value === '') showError('statut', 'Veuillez sélectionner le statut.');
+    });
+
+    attachValidation(document.getElementById('adminJournalForm'), function(showError) {
+        const idUserEl = document.getElementById('id_utilisateur');
+        const dateEl = document.getElementById('date_journal');
+        const poidsEl = document.getElementById('poids_actuel');
+        const sommeilEl = document.getElementById('Heure_Sommeil') || document.getElementsByName('heures_sommeil')[0];
+        const humeurEl = document.getElementById('humeur') || document.getElementsByName('humeur')[0];
+
+        if (!idUserEl || !idUserEl.value) showError('id_utilisateur', 'L\'ID utilisateur est obligatoire.');
+
+        const dateVal = dateEl ? dateEl.value : '';
+        if (!dateVal) showError('date_journal', 'La date du journal est obligatoire.');
+        else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const chosen = new Date(dateVal + 'T00:00:00');
+            if (chosen.getTime() > today.getTime()) showError('date_journal', 'La date du journal ne peut pas être dans le futur.');
+        }
+
+        if (!poidsEl || poidsEl.value === '') showError('poids_actuel', 'Le poids actuel est obligatoire.');
+        else {
+            const p = Number(poidsEl.value);
+            if (Number.isNaN(p) || p < 30 || p > 250) showError('poids_actuel', 'Entrez un poids actuel réaliste (entre 30kg et 250kg).');
+        }
+
+        if (!sommeilEl || sommeilEl.value === '') showError('Heure_Sommeil', 'Les heures de sommeil sont obligatoires.');
+        else {
+            const h = Number(sommeilEl.value);
+            if (Number.isNaN(h) || h < 3 || h > 14) showError('Heure_Sommeil', 'Entrez des heures de sommeil plausibles (entre 3h et 14h).');
+        }
+
+        const humeur = humeurEl ? humeurEl.value : '';
+        if (!humeurEl || humeur === '') showError('humeur', 'Veuillez sélectionner une humeur.');
+    });
+
+    const searchJournal = document.getElementById('searchJournalId');
+    if (searchJournal) {
+        searchJournal.addEventListener('input', function() {
+            const filter = this.value.toLowerCase().replace('#', '');
+            document.querySelectorAll('#journauxTable tbody tr').forEach(function(row) {
+                if (!row.cells || row.cells.length === 0) return;
+                const idCell = row.cells[0].textContent.toLowerCase();
+                row.style.display = idCell.includes(filter) ? '' : 'none';
+            });
         });
     }
+
+    const searchRepas = document.getElementById('searchRepasId');
+    if (searchRepas) {
+        searchRepas.addEventListener('input', function() {
+            const filter = this.value.toLowerCase().replace('#', '');
+            document.querySelectorAll('#repasTable tbody tr').forEach(function(row) {
+                if (!row.cells || row.cells.length === 0) return;
+                const idCell = row.cells[0].textContent.toLowerCase();
+                row.style.display = idCell.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+
+    const voirLinks = document.querySelectorAll('.voir-repas');
+    const repasTable = document.getElementById('repasTable');
+    if (voirLinks.length && repasTable) {
+        voirLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const journalId = this.getAttribute('data-id');
+                const userId = this.getAttribute('data-user');
+                repasTable.querySelectorAll('tbody tr').forEach(function(r) {
+                    const rJournal = r.dataset.id_journal || '';
+                    const rUser = r.dataset.user || '';
+                    if (rJournal === journalId && (!userId || rUser === userId)) r.style.display = '';
+                    else r.style.display = 'none';
+                });
+                const btn = document.getElementById('btnShowAllRepas');
+                if (btn) btn.style.display = 'inline-block';
+            });
+        });
+    }
+
+    window.showAllRepas = function() {
+        if (!repasTable) return;
+        repasTable.querySelectorAll('tbody tr').forEach(function(r) { r.style.display = ''; });
+        const btn = document.getElementById('btnShowAllRepas');
+        if (btn) btn.style.display = 'none';
+    };
 });
 
-// ==========================================
-// 3. FONCTIONS GLOBALES (Pour les boutons onclick dans le HTML)
-// ==========================================
-
 window.openEditForm = function(id, id_user, type, poids, debut, fin, statut) {
-    document.getElementById("sectionAjout").style.display = "block";
-    document.getElementById("formTitle").innerText = "✏️ Modifier l'objectif #" + id;
-    document.getElementById("objectifForm").action = "../../Controller/ObjectifController.php?action=update&id=" + id;
-    
-    document.getElementById("id_utilisateur").value = id_user;
-    document.getElementById("type").value = type;
-    document.getElementById("poids_cible").value = poids;
-    document.getElementById("Date_Debut").value = debut;
-    document.getElementById("Date_Fin").value = fin;
-    document.getElementById("statut").value = statut;
-    
-    document.getElementById("sectionAjout").scrollIntoView({ behavior: 'smooth' });
+    const section = document.getElementById('sectionAjout');
+    const form = document.getElementById('objectifForm');
+    if (!section || !form) return;
+    section.style.display = 'block';
+    document.getElementById('formTitle').innerText = '✏️ Modifier l\'objectif #' + id;
+    form.action = '../../Controller/ObjectifController.php?action=update&id=' + id;
+    document.getElementById('id_utilisateur').value = id_user;
+    document.getElementById('type').value = type;
+    document.getElementById('poids_cible').value = poids;
+    document.getElementById('Date_Debut').value = debut;
+    document.getElementById('Date_Fin').value = fin;
+    document.getElementById('statut').value = statut;
+    section.scrollIntoView({ behavior: 'smooth' });
 };
 
-window.closeForm = function() {
-    document.getElementById("sectionAjout").style.display = "none";
-    document.getElementById("objectifForm").reset();
-    document.getElementById("formTitle").innerText = "➕ Ajouter un Nouvel Objectif";
-    document.getElementById("objectifForm").action = "../../Controller/ObjectifController.php?action=add";
-    
-    // On nettoie aussi les erreurs si on annule
-    document.querySelectorAll('.error-text').forEach(el => el.remove());
-    document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error', 'shake'));
+window.closeObjectifForm = function() {
+    const section = document.getElementById('sectionAjout');
+    const form = document.getElementById('objectifForm');
+    if (!section || !form) return;
+    section.style.display = 'none';
+    form.reset();
+    const title = document.getElementById('formTitle');
+    if (title) title.innerText = '➕ Ajouter un Nouvel Objectif';
+    form.action = '../../Controller/ObjectifController.php?action=add';
+    document.querySelectorAll('.error-text').forEach(function(el) { el.remove(); });
+    document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error', 'shake'); });
 };
 
 function openEditForm(id, id_user, type, poids, debut, fin, statut) {
-    // 1. On affiche la section si elle est cachée
-    document.getElementById("sectionAjout").style.display = "block";
-    
-    // 2. On change le titre et l'action du formulaire
-    document.getElementById("formTitle").innerText = "✏️ Modifier l'objectif #" + id;
-    document.getElementById("objectifForm").action = "../../Controller/ObjectifController.php?action=update&id=" + id;
-    
-    // 3. On remplit les champs
-    document.getElementById("id_utilisateur").value = id_user;
-    document.getElementById("type").value = type;
-    document.getElementById("poids_cible").value = poids;
-    document.getElementById("Date_Debut").value = debut;
-    document.getElementById("Date_Fin").value = fin;
-    document.getElementById("statut").value = statut;
-    
-    // 4. On scrolle vers le formulaire pour que l'admin le voie
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.openEditForm(id, id_user, type, poids, debut, fin, statut);
 }
 
- // 1. Fonction pour afficher/cacher le formulaire d'ajout
-        function toggleForm() {
-            var formSection = document.getElementById("sectionAjout");
-            if (formSection.style.display === "none") {
-                formSection.style.display = "block";
-            } else {
-                formSection.style.display = "none";
-            }
-        }
-        // 2. Fonction de recherche dynamique
-        document.getElementById('searchId').addEventListener('input', function() {
-            let filter = this.value.toLowerCase().replace('#', ''); 
-            let rows = document.querySelectorAll('.admin-table tbody tr');
+function toggleForm() {
+    const formSection = document.getElementById('sectionAjout');
+    if (!formSection) return;
+    formSection.style.display = formSection.style.display === 'none' ? 'block' : 'none';
+}
 
-            rows.forEach(row => {
-                let idCell = row.cells[0].textContent.toLowerCase(); 
-                if (idCell.includes(filter)) {
-                    row.style.display = ''; 
-                } else {
-                    row.style.display = 'none'; 
-                }
-            });
-        });
-
-        // Fonction pour ouvrir le formulaire
 function openAddForm() {
-    const section = document.getElementById("sectionAjout");
-    section.style.display = "block"; // On affiche la boîte
-    document.getElementById("adminJournalForm").reset(); // On vide les champs
-    
-    // Défilement doux vers le formulaire pour une meilleure UX
+    const section = document.getElementById('sectionAjout');
+    const form = document.getElementById('adminJournalForm');
+    const title = document.getElementById('formTitle');
+    const saveBtn = document.getElementById('adminSaveBtn');
+    if (!section || !form) return;
+    section.style.display = 'block';
+    if (title) title.textContent = '➕ Ajouter un Journal';
+    form.action = '../../Controller/JournalController.php?action=add';
+    form.reset();
+    if (saveBtn) saveBtn.textContent = '💾 Enregistrer';
     section.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Fonction pour fermer le formulaire
-function closeForm() {
-    document.getElementById("sectionAjout").style.display = "none"; // On cache la boîte
+function closeJournalForm() {
+    const section = document.getElementById('sectionAjout');
+    if (section) section.style.display = 'none';
 }
 
- document.getElementById('searchId').addEventListener('input', function() {
-            let filter = this.value.toLowerCase().replace('#', ''); 
-            let rows = document.querySelectorAll('.admin-table tbody tr');
+function openJournalEdit(btn) {
+    if (!btn) return;
+    const section = document.getElementById('sectionAjout');
+    const form = document.getElementById('adminJournalForm');
+    const title = document.getElementById('formTitle');
+    const saveBtn = document.getElementById('adminSaveBtn');
+    if (!section || !form) return;
 
-            rows.forEach(row => {
-                // On vérifie que la ligne n'est pas le message "Aucun journal trouvé"
-                if (row.cells.length > 1) {
-                    let idCell = row.cells[0].textContent.toLowerCase(); 
-                    if (idCell.includes(filter)) {
-                        row.style.display = ''; 
-                    } else {
-                        row.style.display = 'none'; 
-                    }
-                }
-            });
-        });
+    const id = btn.getAttribute('data-id');
+    const user = btn.getAttribute('data-user');
+    const date = btn.getAttribute('data-date');
+    const poids = btn.getAttribute('data-poids');
+    const heures = btn.getAttribute('data-heures');
+    const humeur = btn.getAttribute('data-humeur');
+
+    section.style.display = 'block';
+    if (title) title.textContent = '✏️ Modifier le Journal #' + id;
+    form.action = '../../Controller/JournalController.php?action=update&id=' + encodeURIComponent(id);
+
+    const elUser = document.getElementById('id_utilisateur');
+    const elDate = document.getElementById('date_journal');
+    const elPoids = document.getElementById('poids_actuel');
+    const elHeures = document.getElementById('Heure_Sommeil') || document.getElementsByName('heures_sommeil')[0];
+    const elHumeur = document.getElementById('humeur') || document.getElementsByName('humeur')[0];
+
+    if (elUser) elUser.value = user || '';
+
+    if (elDate) {
+        let normalized = '';
+        if (date) {
+            const m = date.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (m) normalized = m[1];
+            else {
+                const parts = date.split('/');
+                if (parts.length === 3) {
+                    normalized = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+                } else normalized = date;
+            }
+        }
+        elDate.value = normalized;
+    }
+
+    if (elPoids) elPoids.value = poids || '';
+    if (elHeures) elHeures.value = heures || '';
+    if (elHumeur) elHumeur.value = humeur || '';
+
+    if (saveBtn) saveBtn.textContent = 'Enregistrer les modifications';
+    section.scrollIntoView({ behavior: 'smooth' });
+}
+
+function openAddRepasForm() {
+    const f = document.getElementById('sectionAjoutRepas');
+    if (!f) return;
+    resetRepasFormToAdd();
+    f.style.display = 'block';
+    setTimeout(function() { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
+}
+
+function closeAddRepasForm() {
+    const f = document.getElementById('sectionAjoutRepas');
+    if (!f) return;
+    f.style.display = 'none';
+    resetRepasFormToAdd();
+}
+
+function resetRepasFormToAdd() {
+    const form = document.getElementById('adminRepasForm');
+    const title = document.getElementById('formRepasTitle');
+    const btn = document.getElementById('btnSubmitRepas');
+    if (title) title.textContent = '➕ Ajouter un nouveau Repas';
+    if (form) {
+        form.action = '../../Controller/RepasController.php?action=add';
+        form.reset();
+    }
+    if (btn) btn.textContent = '💾 Enregistrer le repas';
+}
+
+function openRepasEdit(btn) {
+    if (!btn) return;
+    const section = document.getElementById('sectionAjoutRepas');
+    const form = document.getElementById('adminRepasForm');
+    const title = document.getElementById('formRepasTitle');
+    const submitBtn = document.getElementById('btnSubmitRepas');
+    if (!section || !form) return;
+
+    const id = btn.getAttribute('data-id');
+    const idJournal = btn.getAttribute('data-id_journal');
+    const type = btn.getAttribute('data-type');
+    const heure = btn.getAttribute('data-heure');
+    const nom = btn.getAttribute('data-nom');
+    const quantite = btn.getAttribute('data-quantite');
+    const calories = btn.getAttribute('data-calories');
+    const proteine = btn.getAttribute('data-proteine');
+    const glucide = btn.getAttribute('data-glucide');
+    const lipide = btn.getAttribute('data-lipide');
+
+    section.style.display = 'block';
+    if (title) title.textContent = '✏️ Modifier le Repas #' + id;
+    form.action = '../../Controller/RepasController.php?action=update&id=' + encodeURIComponent(id);
+    if (submitBtn) submitBtn.textContent = '💾 Enregistrer les modifications';
+
+    const elJournal = document.getElementById('id_journal');
+    const elType = document.getElementById('type_repas');
+    const elHeure = document.getElementById('heure_repas');
+    const elNom = document.getElementById('nom');
+    const elQte = document.getElementById('quantite');
+    const elCal = document.getElementById('nbre_calories');
+    const elProt = document.getElementById('proteine');
+    const elGlu = document.getElementById('glucide');
+    const elLip = document.getElementById('lipide');
+    const elImg = document.getElementById('repas_image');
+
+    if (elJournal && idJournal) elJournal.value = idJournal;
+    if (elType && type) elType.value = type;
+    if (elHeure) elHeure.value = heure || '';
+    if (elNom) elNom.value = nom || '';
+    if (elQte) elQte.value = quantite || '';
+    if (elCal) elCal.value = calories || '';
+    if (elProt) elProt.value = proteine || '';
+    if (elGlu) elGlu.value = glucide || '';
+    if (elLip) elLip.value = lipide || '';
+    if (elImg) elImg.value = '';
+
+    setTimeout(function() { section.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
+}

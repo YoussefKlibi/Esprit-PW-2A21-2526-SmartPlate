@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -9,16 +9,54 @@
 </head>
 <?php
     include_once '../../Model/Journal_Class.php';
-    $id_utilisateur_connecte = 1; // Remplacer par l'ID de l'utilisateur connecté si disponible
+    include_once '../../Model/Repas_Class.php';
+    include_once '../../Model/Objectif_Class.php';
+    $id_utilisateur_connecte = 1; // Remplacer par l'ID de l'utilisateur connecte si disponible
     // Mode recherche par date
-    if (isset($_GET['date_recherche']) && !empty($_GET['date_recherche'])) {
+    if (isset($_GET['journal_id']) && !empty($_GET['journal_id'])) {
+        $latestJournal = Journal::getById((int)$_GET['journal_id']);
+    } elseif (isset($_GET['date_recherche']) && !empty($_GET['date_recherche'])) {
         $searchDate = $_GET['date_recherche'];
         $latestJournal = Journal::getByDate($id_utilisateur_connecte, $searchDate);
     } else {
         $latestJournal = Journal::getLatest($id_utilisateur_connecte);
     }
 
-    // Mode édition (pré-remplir le formulaire)
+    $repasList = [];
+    if (!empty($latestJournal['id_journal'])) {
+        $repasList = Repas::listeParJournal((int)$latestJournal['id_journal']);
+    }
+
+    $objectifActif = Objectif::getActif($id_utilisateur_connecte);
+    $objectifMessage = "Veuillez remplir un objectif pour afficher ces informations.";
+    $hasJournalDisponible = !empty($latestJournal['id_journal']);
+
+    if (!$objectifActif) {
+        $objectifsUtilisateur = array_values(array_filter(Objectif::liste(), function ($objectif) use ($id_utilisateur_connecte) {
+            return isset($objectif['id_utilisateur']) && (int)$objectif['id_utilisateur'] === (int)$id_utilisateur_connecte;
+        }));
+
+        if (!empty($objectifsUtilisateur)) {
+            usort($objectifsUtilisateur, function ($a, $b) {
+                return ((int)($b['id_objectif'] ?? 0)) <=> ((int)($a['id_objectif'] ?? 0));
+            });
+
+            $dernierStatut = strtolower(trim((string)($objectifsUtilisateur[0]['statut'] ?? '')));
+
+            if (in_array($dernierStatut, ['atteint', 'objectif atteint'], true)) {
+                $objectifMessage = "Votre dernier objectif est atteint. Veuillez remplir un nouvel objectif pour voir ces informations.";
+            } elseif (in_array($dernierStatut, ['abandonne'], true)) {
+                $objectifMessage = "Votre dernier objectif a ete abandonné. Veuillez remplir un nouvel objectif pour voir ces informations.";
+            }
+        }
+    }
+
+    $journalMessage = $objectifMessage;
+    $repasMessage = $hasJournalDisponible
+        ? ''
+        : "Aucun journal n'est affiché pour le moment. Veuillez enregistrer ou afficher un journal pour acceder aux repas.";
+
+    // Mode edition (pre-remplir le formulaire)
     $isEdit = false;
     $editJournal = null;
     if (isset($_GET['edit_id']) && !empty($_GET['edit_id'])) {
@@ -29,10 +67,10 @@
         }
     }
 
-    // Construire une URL absolue vers le contrôleur (évite les chemins relatifs qui causent 404)
+    // Construire une URL absolue vers le controleur (evite les chemins relatifs qui causent 404)
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    // Tenter de détecter la racine du projet en retirant '/View/...' si présent
+    // Tenter de detecter la racine du projet en retirant '/View/...' si present
     $phpSelf = $_SERVER['PHP_SELF'];
     $projectBase = '';
     $posView = strpos($phpSelf, '/View/');
@@ -43,6 +81,7 @@
         $projectBase = dirname($phpSelf, 2);
     }
     $controllerUrl = $scheme . '://' . $host . rtrim($projectBase, '/') . '/Controller/JournalController.php';
+    $repasControllerUrl = $scheme . '://' . $host . rtrim($projectBase, '/') . '/Controller/RepasController.php';
 
     function formatDateFrLong($dateStr) {
         try {
@@ -57,30 +96,41 @@
 <body>
     
     <aside class="sidebar">
-        <div class="sidebar-logo">
-            <img src="..\assets\logo.png" alt="Logo" height="80%" width="50%">
-            <h2>SmartPlate</h2>
-        </div>
+    <div class="sidebar-logo">
+    <img src="..\assets\logo.png" alt="Logo" height="150" width="150">
+    <h2>SmartPlate</h2>
+    </div>
 
-        <nav class="sidebar-nav">
-            <span class="nav-section-title">Menu Principal</span>
-            
-            <a href="Journal.php" class="nav-item active">
-                <span class="icon">🍽️</span>
-                <span>Journal Alimentaire</span>
-            </a>
-            
-            <a href="Objectif.php" class="nav-item">
-                <span class="icon">🎯</span>
-                <span>Mes Objectifs</span>
-            </a>
-            
-            <a href="Progression.php" class="nav-item">
-                <span class="icon">📈</span>
-                <span>Ma Progression</span>
-            </a>
-        </nav>
-    </aside>
+    <nav class="sidebar-nav">
+        <span class="nav-section-title">Menu Principal</span>
+        
+        <a href="Journal.php" class="nav-item">
+            <span class="icon">🍽️</span>
+            <span>Journal Alimentaire</span>
+        </a>
+        
+        <a href="Objectif.php" class="nav-item">
+            <span class="icon">🎯</span>
+            <span>Mon Objectif</span>
+        </a>
+        
+        <a href="Progression.php" class="nav-item">
+            <span class="icon">📈</span>
+            <span>Ma Progression</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-badge">
+            <img src="https://ui-avatars.com/api/?name=Youssef&background=d4f283&color=1a1a1a&rounded=true" alt="Avatar">
+            <div class="user-info">
+                <span class="user-name">Youssef</span>
+                <span class="user-status">Connecté</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
 
     <div class="dashboard">
         
@@ -101,70 +151,86 @@
             </div>
                 <div class="card">
     <div class="card-header">
-        <h2>📅 Enregistrer ma Journée</h2>
+        <h2>Enregistrer ma Journée</h2>
     </div>
 
     <?php
-        $submitLabel = $isEdit ? "Enregistrer les modifications" : "Enregistrer l'Entrée";
+        $submitLabel = $isEdit ? "Enregistrer les modifications" : "Enregistrer l'Entree";
         // Form action for adding
         $formActionAdd = $controllerUrl . '?action=add';
+        // Date par defaut : en edition = journal edite ; sinon alignee sur le journal affiche (evite decalage jour du formulaire vs repas du dernier journal)
+        if ($isEdit && $editJournal) {
+            $defaultDateJournal = date('Y-m-d', strtotime($editJournal['date_journal']));
+        } elseif (!empty($latestJournal['date_journal'])) {
+            $defaultDateJournal = date('Y-m-d', strtotime($latestJournal['date_journal']));
+        } else {
+            $defaultDateJournal = date('Y-m-d');
+        }
     ?>
+    <?php if ($objectifActif): ?>
     <form id="journalAddForm" action="<?php echo $formActionAdd; ?>" method="POST" class="modern-form" novalidate>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="date_journal">Date du jour</label>
-                <input type="date" id="date_journal" name="date_journal" class="form-control" value="<?php echo $isEdit ? htmlspecialchars($editJournal['date_journal']) : date('Y-m-d'); ?>">
+                <input type="date" id="date_journal" name="date_journal" class="form-control" value="<?php echo htmlspecialchars($defaultDateJournal); ?>">
             </div>
             <div class="form-group">
                 <label for="poids_actuel">Mon poids actuel (kg)</label>
-                <input id="poids_actuel" name="poids_actuel" class="form-control" placeholder="Ex: 75.2" step="0.1" value="<?php echo $isEdit ? htmlspecialchars($editJournal['poids_actuel']) : ''; ?>">
+                <input id="poids_actuel" name="poids_actuel" class="form-control" placeholder="Ex: 75.2" step="0.1" value="<?php echo $isEdit ? htmlspecialchars($editJournal['poids_actuel']) : htmlspecialchars(is_array($latestJournal) ? ($latestJournal['poids_actuel'] ?? '') : ''); ?>">
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-
         <div class="form-row" style="margin-top: 1rem; border-top: 1px solid #f1f2f6; padding-top: 1.5rem;">
             <div class="form-group">
-                <label for="heures_sommeil">Heures de sommeil 😴</label>
-                <input id="heures_sommeil" name="heures_sommeil" class="form-control" placeholder="Ex: 7.5" step="0.5" value="<?php echo $isEdit ? htmlspecialchars($editJournal['heures_sommeil']) : ''; ?>">
+                <label for="heures_sommeil">Heures de sommeil</label>
+                <input id="heures_sommeil" name="heures_sommeil" class="form-control" placeholder="Ex: 7.5" step="0.5" value="<?php echo $isEdit ? htmlspecialchars($editJournal['heures_sommeil']) : htmlspecialchars(is_array($latestJournal) ? ($latestJournal['heures_sommeil'] ?? '') : ''); ?>">
             </div>
             <div class="form-group">
-                <label for="humeur">Humeur du jour ✨</label>
+                <label for="humeur">Humeur du jour</label>
                 <select id="humeur" name="humeur" class="form-control">
-                    <option value="excellent" <?php echo ($isEdit && $editJournal['humeur'] === 'excellent') ? 'selected' : ''; ?>>🤩 Excellent</option>
-                    <option value="bien" <?php echo ($isEdit && $editJournal['humeur'] === 'bien') ? 'selected' : ''; ?>>😊 Bien</option>
-                    <option value="neutre" <?php echo ($isEdit && $editJournal['humeur'] === 'neutre') ? 'selected' : ''; ?>>😐 Neutre</option>
-                    <option value="fatigue" <?php echo ($isEdit && $editJournal['humeur'] === 'fatigue') ? 'selected' : ''; ?>>🥱 Fatigué(e)</option>
-                    <option value="stresse" <?php echo ($isEdit && $editJournal['humeur'] === 'stresse') ? 'selected' : ''; ?>>😟 Stressé(e)</option>
+                    <?php
+                    $hSel = $isEdit ? ($editJournal['humeur'] ?? 'neutre') : (is_array($latestJournal) ? ($latestJournal['humeur'] ?? 'excellent') : 'excellent');
+                    ?>
+                    <option value="excellent" <?php echo ($hSel === 'excellent') ? 'selected' : ''; ?>>🤩​ Excellent</option>
+                    <option value="bien" <?php echo ($hSel === 'bien') ? 'selected' : ''; ?>>🙂​ Bien</option>
+                    <option value="neutre" <?php echo ($hSel === 'neutre') ? 'selected' : ''; ?>>😐​ Neutre</option>
+                    <option value="fatigue" <?php echo ($hSel === 'fatigue') ? 'selected' : ''; ?>>😴​ Fatigue(e)</option>
+                    <option value="stresse" <?php echo ($hSel === 'stresse') ? 'selected' : ''; ?>>😰​ Stresse(e)</option>
                 </select>
             </div>
         </div>
 
         <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-            <button type="reset" class="btn-secondary">Effacer</button>
+            <button type="button" id="journalResetBtn" class="btn-secondary">Effacer</button>
             <!-- Bouton pour ajouter un nouveau journal -->
-            <button type="submit" id="journalAddBtn" class="btn-main">Enregistrer l'Entrée</button>
+            <button type="submit" id="journalAddBtn" class="btn-main">Enregistrer l'Entree</button>
 
-            <!-- Bouton pour enregistrer les modifications (caché par défaut) -->
+            <!-- Bouton pour enregistrer les modifications (cache par defaut) -->
             <?php $updateFormActionTemplate = $controllerUrl . '?action=update&id='; ?>
             <button type="submit" id="journalUpdateBtn" class="btn-main" style="display: <?php echo $isEdit ? 'inline-block' : 'none'; ?>; background:#111827; color:#fff;" formaction="<?php echo $isEdit ? ($updateFormActionTemplate . urlencode($editJournal['id_journal'])) : ''; ?>">Enregistrer les modifications</button>
         </div>
     </form>
-</div>
-</div>
-</div>
+    <?php else: ?>
+    <div style="padding: 1.5rem 0; color: var(--text-gray);">
+        <p style="margin: 0 0 0.75rem; font-weight: 600;">Le formulaire du journal est indisponible.</p>
+        <p style="margin: 0 0 1rem;"><?php echo htmlspecialchars($journalMessage); ?></p>
+        <a href="Objectif.php" class="btn-secondary" style="display: inline-flex; text-decoration: none;">Remplir un objectif</a>
+    </div>
+    <?php endif; ?>
+                </div>
             <div class="active-journal-bar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: var(--shadow); border-left: 4px solid var(--green-light);">
                 <div class="journal-info-left" style="display: flex; align-items: center; gap: 1rem;">
                     <?php if ($latestJournal): ?>
-                        <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">📅 <?php echo htmlspecialchars(formatDateFrLong($latestJournal['date_journal'])); ?></span>
-                        <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">⚖️ <?php echo htmlspecialchars($latestJournal['poids_actuel']); ?> kg</span>
+                        <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;"><?php echo htmlspecialchars(formatDateFrLong($latestJournal['date_journal'])); ?></span>
+                        <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;"><?php echo htmlspecialchars($latestJournal['poids_actuel']); ?> kg</span>
+                        <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;"> <?php echo htmlspecialchars(!empty($latestJournal['heures_sommeil']) ? ($latestJournal['heures_sommeil'] . ' h') : '-'); ?></span>
+                        <span class="badge" style="background:#f3f4f6; font-weight:600; padding:0.35rem 0.6rem; border-radius:12px;"><?php echo htmlspecialchars(ucfirst($latestJournal['humeur'] ?? '-')); ?></span>
                         <span class="badge green-light">Journal Actif</span>
                     <?php else: ?>
                         <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">Aucun journal</span>
-                        <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">—</span>
-                        <span class="badge yellow-light">Créez un journal</span>
+                        <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;">-</span>
+                        <span class="badge yellow-light">Creez un journal</span>
                     <?php endif; ?>
                 </div>
                 
@@ -178,14 +244,14 @@
                                 data-poids="<?php echo htmlspecialchars($latestJournal['poids_actuel']); ?>"
                                 data-heures="<?php echo htmlspecialchars($latestJournal['heures_sommeil'] ?? ''); ?>"
                                 data-humeur="<?php echo htmlspecialchars($latestJournal['humeur'] ?? 'neutre'); ?>">
-                            ✏️ Modifier
+                            Modifier
                         </button>
                         <a href="../../Controller/JournalController.php?action=delete&id=<?php echo urlencode($latestJournal['id_journal']); ?>" class="btn-icon danger" style="text-decoration: none; color: #e53e3e; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 8px;" onclick="return confirm('Voulez-vous vraiment supprimer ce journal et ses repas ?');">
-                            🗑️ Supprimer
+                            Supprimer
                         </a>
                     <?php else: ?>
-                        <button class="btn-icon" disabled style="opacity:0.6;">✏️ Modifier</button>
-                        <button class="btn-icon" disabled style="opacity:0.6;">🗑️ Supprimer</button>
+                        <button class="btn-icon" disabled style="opacity:0.6;">Modifier</button>
+                        <button class="btn-icon" disabled style="opacity:0.6;">Supprimer</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -196,20 +262,30 @@
             <div class="card progress-card">
                 <div class="card-header">
                     <h2>Total Calorique</h2>
-                    <span class="badge yellow">Objectif : 2000 kcal</span>
+                    <?php if ($objectifActif): ?>
+                        <span class="badge yellow">Objectif : 2000 kcal</span>
+                    <?php endif; ?>
                 </div>
                 <div class="progress-content">
+                    <?php if ($objectifActif): ?>
                     <div class="circle-chart">
                         <div class="circle-inner">
                             <span class="percentage">75%</span>
-                            <span class="label">Complété</span>
+                            <span class="label">Complete</span>
                         </div>
                     </div>
                     <div class="macros-summary">
                         <div class="macro-item"><span class="dot blue"></span> Glucides <span>150g / 200g</span></div>
-                        <div class="macro-item"><span class="dot yellow"></span> Protéines <span>90g / 120g</span></div>
+                        <div class="macro-item"><span class="dot yellow"></span> Proteines <span>90g / 120g</span></div>
                         <div class="macro-item"><span class="dot green"></span> Lipides <span>45g / 65g</span></div>
                     </div>
+                    <?php else: ?>
+                    <div style="padding: 1.5rem 0; color: var(--text-gray);">
+                        <p style="margin: 0 0 0.75rem; font-weight: 600;">Aucune donnee d'objectif disponible.</p>
+                        <p style="margin: 0 0 1rem;"><?php echo htmlspecialchars($objectifMessage); ?></p>
+                        <a href="Objectif.php" class="btn-secondary" style="display: inline-flex; text-decoration: none;">Remplir un objectif</a>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -218,14 +294,21 @@
                     <h2>Score Nutritionnel</h2>
                 </div>
                 <div class="health-content">
+                    <?php if ($objectifActif): ?>
                     <div class="score-display">
                         <span class="score-number">82%</span>
-                        <span class="badge white">Très Équilibré</span>
+                        <span class="badge white">Tres Equilibre</span>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar" style="width: 82%;"></div>
                     </div>
-                    <p class="encouragement">Continue comme ça pour atteindre ton objectif !</p>
+                    <p class="encouragement">Continue comme ca pour atteindre ton objectif !</p>
+                    <?php else: ?>
+                    <div style="padding: 1.5rem 0; color: #1f2937;">
+                        <p style="margin: 0 0 0.75rem; font-weight: 600;">Score nutritionnel indisponible.</p>
+                        <p style="margin: 0;"><?php echo htmlspecialchars($objectifMessage); ?></p>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -233,47 +316,76 @@
                 <div class="section-header">
                     <h2>Mes Repas</h2>
                 </div>
+                <?php if ($hasJournalDisponible && !empty($latestJournal['date_journal'])): ?>
+                    <p style="color: var(--text-gray); font-size: 0.85rem; margin: -0.75rem 0 1rem;">Repas lies au journal du <strong><?php echo htmlspecialchars(date('d/m/Y', strtotime($latestJournal['date_journal']))); ?></strong>.</p>
+                <?php endif; ?>
 
+                <?php if (!$hasJournalDisponible): ?>
+                    <div class="card" style="margin-top: 1rem;">
+                        <div style="padding: 1.5rem 0; color: var(--text-gray);">
+                            <p style="margin: 0 0 0.75rem; font-weight: 600;">Le bloc repas est indisponible.</p>
+                            <p style="margin: 0;"><?php echo htmlspecialchars($repasMessage); ?></p>
+                        </div>
+                    </div>
+                <?php elseif (empty($repasList)): ?>
+                    <p style="color: var(--text-gray); padding: 1rem;">Aucun repas enregistre pour ce journal. Ajoute un repas ci-dessous.</p>
+                <?php else: ?>
+                    <?php foreach ($repasList as $r): ?>
+                        <?php
+                        $imgSrc = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=150&q=80';
+                        if (!empty($r['image_repas'])) {
+                            $imgSrc = '../../uploads/repas/' . rawurlencode($r['image_repas']);
+                        }
+                        ?>
                 <div class="meal-card">
                     <div class="meal-image">
-                        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=150&q=80" alt="Repas">
+                        <img src="<?php echo htmlspecialchars($imgSrc); ?>" alt="Repas">
                     </div>
                     <div class="meal-info">
                         <div class="meal-tags">
-                            <span class="badge green-light">Déjeuner</span>
-                            <span class="time-info">12:30</span>
+                            <span class="badge green-light"><?php echo htmlspecialchars($r['type_repas'] ?? ''); ?></span>
+                            <span class="time-info"><?php echo htmlspecialchars($r['heure_repas'] ?? ''); ?></span>
                         </div>
-                        <h3>Salade Saumon & Quinoa</h3>
-                        <p>Saumon au four, brocolis vapeur et quinoa.</p>
+                        <h3><?php echo htmlspecialchars($r['nom'] ?? 'Repas'); ?></h3>
+                        <p><?php echo htmlspecialchars(($r['quantite'] ?? '') !== '' ? 'Quantite : ' . $r['quantite'] . ' g' : ''); ?></p>
                     </div>
                     <div class="meal-stats">
                         <div class="stat-col">
-                            <span class="stat-val">450 Cal</span>
-                            <span class="stat-val">40g Glucides</span>
+                            <span class="stat-val"><?php echo htmlspecialchars($r['nbre_calories'] ?? '-'); ?> kcal</span>
+                            <span class="stat-val"><?php echo htmlspecialchars($r['glucide'] ?? '-'); ?>g Glucides</span>
                         </div>
                         <div class="stat-col">
-                            <span class="stat-val">35g Protéines</span>
-                            <span class="stat-val">15g Lipides</span>
+                            <span class="stat-val"><?php echo htmlspecialchars($r['proteine'] ?? '-'); ?>g Proteines</span>
+                            <span class="stat-val"><?php echo htmlspecialchars($r['lipide'] ?? '-'); ?>g Lipides</span>
                         </div>
-                        <button class="btn-action">+ Détails</button>
+                        <div class="meal-actions">
+                            <button type="button" class="btn-icon btn-meal-modify" data-id="<?php echo htmlspecialchars($r['id_repas']); ?>" data-journal-id="<?php echo htmlspecialchars($r['id_journal']); ?>" data-type="<?php echo htmlspecialchars($r['type_repas'] ?? ''); ?>" data-heure="<?php echo htmlspecialchars($r['heure_repas'] ?? ''); ?>" data-nom="<?php echo htmlspecialchars($r['nom'] ?? ''); ?>" data-quantite="<?php echo htmlspecialchars($r['quantite'] ?? ''); ?>" data-calories="<?php echo htmlspecialchars($r['nbre_calories'] ?? ''); ?>" data-proteine="<?php echo htmlspecialchars($r['proteine'] ?? ''); ?>" data-glucide="<?php echo htmlspecialchars($r['glucide'] ?? ''); ?>" data-lipide="<?php echo htmlspecialchars($r['lipide'] ?? ''); ?>">Modifier</button>
+                            <a href="<?php echo htmlspecialchars($repasControllerUrl . '?action=delete&id=' . urlencode($r['id_repas'])); ?>" class="btn-icon danger" onclick="return confirm('Voulez-vous vraiment supprimer ce repas ?');">Supprimer</a>
+                        </div>
                     </div>
                 </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
 
+               <?php if ($hasJournalDisponible): ?>
                <div class="card" style="margin-top: 2rem; border: 2px solid var(--green-light);">
     <div class="card-header">
         <h2>Enregistrer un nouveau repas</h2>
     </div>
     
-    <form id="repasForm" action="index.php?action=addRepas" method="POST" enctype="multipart/form-data" class="modern-form">
-        
+    <form id="repasForm" action="<?php echo htmlspecialchars($repasControllerUrl . '?action=add'); ?>" method="POST" enctype="multipart/form-data" class="modern-form">
+        <?php if (!empty($latestJournal['id_journal'])): ?>
+            <input type="hidden" name="id_journal" value="<?php echo htmlspecialchars($latestJournal['id_journal']); ?>">
+        <?php endif; ?>
+
         <div class="form-row">
             <div class="form-group">
                 <label for="type_repas">Type de repas</label>
                 <select id="type_repas" name="type_repas" class="form-control">
-                    <option value="Petit-Déjeuner">Petit-Déjeuner 🍳</option>
-                    <option value="Déjeuner">Déjeuner 🍱</option>
-                    <option value="Dîner">Dîner 🍲</option>
-                    <option value="Collation">Collation 🍎</option>
+                    <option value="Petit-Dejeuner">Petit-Dejeuner</option>
+                    <option value="Dejeuner">Dejeuner</option>
+                    <option value="Diner">Diner</option>
+                    <option value="Collation">Collation</option>
                 </select>
             </div>
             <div class="form-group">
@@ -288,8 +400,8 @@
                 <input type="text" id="nom" name="nom" class="form-control" placeholder="Ex: Blanc de poulet">
             </div>
             <div class="form-group">
-                <label for="qte">Quantité (g ou portion)</label>
-                <input id="qte" name="qte" class="form-control" placeholder="Ex: 150">
+                <label for="quantite">Quantite (g ou portion)</label>
+                <input id="quantite" name="quantite" class="form-control" placeholder="Ex: 150">
             </div>
         </div>
 
@@ -300,7 +412,7 @@
             </div>
             <div class="form-group" style="display:flex;align-items:center;">
                 <div id="repasImagePreview" style="max-width:120px;max-height:80px;border:1px dashed #e2e8f0;padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#94a3b8;">
-                    Aperçu
+                    Apercu
                 </div>
             </div>
         </div>
@@ -311,7 +423,7 @@
                 <input id="nbre_calories" name="nbre_calories" class="form-control" placeholder="Ex: 250">
             </div>
             <div class="form-group">
-                <label for="proteine">Protéines (g)</label>
+                <label for="proteine">Proteines (g)</label>
                 <input id="proteine" name="proteine" class="form-control" placeholder="Ex: 30">
             </div>
         </div>
@@ -328,11 +440,15 @@
         </div>
 
         <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-            <button type="reset" class="btn-secondary">Effacer les champs</button>
-            <button type="submit" class="btn-main">Ajouter au journal</button>
+            <button type="reset" id="repasResetBtn" class="btn-secondary">Effacer les champs</button>
+            <div class="right-actions">
+                <button type="submit" id="repasAddBtn" class="btn-main" <?php echo empty($latestJournal['id_journal']) ? 'disabled title="Creez d abord un journal pour aujourd hui"' : ''; ?>>Ajouter au journal</button>
+                <button type="submit" id="repasUpdateBtn" class="btn-main" style="display:none; background:#111827; color:#fff;">Enregistrer les modifications</button>
+            </div>
         </div>
     </form>
 </div>
+                <?php endif; ?>
 
             </div>
         </div>
@@ -340,34 +456,10 @@
 
     <script src="JavaScript_Front.js"></script>
     <script>
-        // Fournit l'URL absolue du contrôleur au JS
+        // Fournit l'URL absolue du controleur au JS
         window.JOURNAL_CONTROLLER_URL = '<?php echo $controllerUrl; ?>';
+        window.REPAS_CONTROLLER_URL = '<?php echo $repasControllerUrl; ?>';
     </script>
-
-    <script>
-        // Aperçu de l'image sélectionnée pour un repas
-        (function(){
-            var input = document.getElementById('repas_image');
-            var preview = document.getElementById('repasImagePreview');
-            if(!input || !preview) return;
-            input.addEventListener('change', function(e){
-                var file = this.files && this.files[0];
-                if(!file){ preview.innerHTML = 'Aperçu'; return; }
-                if(!file.type.startsWith('image/')){ preview.innerHTML = 'Fichier non image'; return; }
-                var reader = new FileReader();
-                reader.onload = function(ev){
-                    preview.innerHTML = '';
-                    var img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.style.maxWidth = '100%';
-                    img.style.maxHeight = '100%';
-                    img.style.display = 'block';
-                    preview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        })();
-    </script>
-
 </body>
 </html>
+

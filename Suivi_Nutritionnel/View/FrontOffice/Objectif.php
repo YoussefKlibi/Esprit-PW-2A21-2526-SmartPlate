@@ -10,6 +10,7 @@
 <?php
     // 1. Inclure le contrôleur (qui inclut déjà la classe Objectif et la Config)
     include_once '../../Controller/ObjectifController.php';
+    include_once '../../Model/Journal_Class.php';
 
     // 2. Récupérer l'utilisateur connecté (Simulé à 1 pour l'instant)
     $id_utilisateur_connecte = 1; 
@@ -38,7 +39,21 @@ foreach($tousLesObjectifs as $obj) {
     $calories = 0; $proteines = 0; $glucides = 0; $lipides = 0; $diffPoids = 0;
     if ($objectifActuel) {
     // Valeurs de base
-    $poidsActuel = 75; 
+    // Récupérer le premier poids saisi par l'utilisateur dans le journal (poids initial)
+    $poidsActuel = 75; // fallback
+    try {
+        $db = Config::getConnexion();
+        $sql = "SELECT poids_actuel FROM journal_alimentaire WHERE id_utilisateur = :id_user AND poids_actuel IS NOT NULL ORDER BY date_journal ASC LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id_user' => $id_utilisateur_connecte]);
+        $row = $stmt->fetch();
+        if ($row && isset($row['poids_actuel']) && $row['poids_actuel'] !== null && $row['poids_actuel'] !== '') {
+            $poidsActuel = $row['poids_actuel'];
+        }
+    } catch (Exception $e) {
+        // garder le fallback si la requête échoue
+        $poidsActuel = 75;
+    }
     $typeObjectif = $objectifActuel ? $objectifActuel['type_objectif'] : 'maintien';
     $poidsCible = $objectifActuel ? $objectifActuel['poids_cible'] : 0;
     $diffPoids = $objectifActuel ? abs($poidsActuel - $poidsCible) : 0;
@@ -83,10 +98,9 @@ foreach($tousLesObjectifs as $obj) {
     
     <aside class="sidebar">
     <div class="sidebar-logo">
-        <img src="C:\Youssef\2A\ProjetWeb\SmartPlate\Logo\logo.png" alt="Avatar" height="80%" width="50%">
+        <img src="..\assets\logo.png" alt="Logo" height="150" width="150">
         <h2>SmartPlate</h2>
     </div>
-
     <nav class="sidebar-nav">
         <span class="nav-section-title">Menu Principal</span>
         
@@ -95,9 +109,9 @@ foreach($tousLesObjectifs as $obj) {
             <span>Journal Alimentaire</span>
         </a>
         
-        <a href="Objectif.html" class="nav-item">
+        <a href="Objectif.php" class="nav-item">
             <span class="icon">🎯</span>
-            <span>Mes Objectifs</span>
+            <span>Mon Objectif</span>
         </a>
         
         <a href="Progression.php" class="nav-item">
@@ -119,7 +133,7 @@ foreach($tousLesObjectifs as $obj) {
 <div class="dashboard">
     
     <header class="dashboard-header">
-        <h1>Mes Objectifs</h1>
+        <h1>Mon Objectif</h1>
         <span class="date-badge">Mis à jour le 15 Mars</span>
     </header>
 

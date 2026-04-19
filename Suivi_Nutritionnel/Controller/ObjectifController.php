@@ -1,6 +1,6 @@
 <?php
-include_once 'C:\Users\MSI\Desktop\SmartPlate\Suivi_Nutritionnel\config.php';
-include_once 'C:\Users\MSI\Desktop\SmartPlate\Suivi_Nutritionnel\Model\Objectif_Class.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Model/Objectif_Class.php';
 
 class ObjectifController {
     

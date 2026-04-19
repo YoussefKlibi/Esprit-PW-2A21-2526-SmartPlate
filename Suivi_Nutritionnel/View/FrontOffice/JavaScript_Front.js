@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (formRepas) {
         formRepas.addEventListener('submit', function(e) {
             let nomEl = document.getElementById('nom');
-            let qteEl = document.getElementById('qte');
+            let qteEl = document.getElementById('quantite');
             let caloriesEl = document.getElementById('nbre_calories');
             let proteineEl = document.getElementById('proteine');
             let glucideEl = document.getElementById('glucide');
@@ -334,12 +334,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const nomAliment = repasFormBind.querySelector('[name="nom"]');
         if (nomAliment) {
             nomAliment.addEventListener('input', function() {
-                this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+                this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s'-]/g, '');
             });
         }
 
         // --- B. Restriction pour les CHIFFRES UNIQUEMENT (Calories, Macros) ---
-        const champsNumeriquesRepas = repasFormBind.querySelectorAll('input[type="number"], input[type="text"], input[id*="nbre_"], input[id*="qte"], input[id*="proteine"], input[id*="glucide"], input[id*="lipide"]');
+        const champsNumeriquesRepas = repasFormBind.querySelectorAll('#quantite, #nbre_calories, #proteine, #glucide, #lipide');
         champsNumeriquesRepas.forEach(input => {
             input.addEventListener('input', function() {
                 this.value = this.value.replace(/[^0-9.]/g, '');
@@ -396,7 +396,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // 🔢 Champs numériques
     const numericFields = [
         "poids_actuel",
-        "qte",
+        "quantite",
         "nbre_calories",
         "proteine",
         "glucide",
@@ -495,3 +495,304 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const repasForm = document.getElementById('repasForm');
+    if (!repasForm) return;
+
+    const repasModifyBtns = document.querySelectorAll('.btn-meal-modify');
+    const repasAddBtn = document.getElementById('repasAddBtn');
+    const repasUpdateBtn = document.getElementById('repasUpdateBtn');
+    const repasResetBtn = document.getElementById('repasResetBtn');
+    const idJournalInput = repasForm.querySelector('input[name="id_journal"]');
+    const imagePreview = document.getElementById('repasImagePreview');
+
+    function setMealEditMode(isEdit, repasId) {
+        if (!repasAddBtn || !repasUpdateBtn) return;
+
+        repasAddBtn.style.display = isEdit ? 'none' : 'inline-block';
+        repasUpdateBtn.style.display = isEdit ? 'inline-block' : 'none';
+
+        if (isEdit && repasId) {
+            const baseUrl = window.REPAS_CONTROLLER_URL || '../../Controller/RepasController.php';
+            repasUpdateBtn.formAction = baseUrl + '?action=update&id=' + encodeURIComponent(repasId);
+        } else {
+            repasUpdateBtn.removeAttribute('formaction');
+        }
+    }
+
+    repasModifyBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const typeEl = document.getElementById('type_repas');
+            const heureEl = document.getElementById('heure_repas');
+            const nomEl = document.getElementById('nom');
+            const quantiteEl = document.getElementById('quantite');
+            const caloriesEl = document.getElementById('nbre_calories');
+            const proteineEl = document.getElementById('proteine');
+            const glucideEl = document.getElementById('glucide');
+            const lipideEl = document.getElementById('lipide');
+
+            if (idJournalInput && this.dataset.journalId) idJournalInput.value = this.dataset.journalId;
+            if (typeEl) typeEl.value = this.dataset.type || '';
+            if (heureEl) heureEl.value = this.dataset.heure || '';
+            if (nomEl) nomEl.value = this.dataset.nom || '';
+            if (quantiteEl) quantiteEl.value = this.dataset.quantite || '';
+            if (caloriesEl) caloriesEl.value = this.dataset.calories || '';
+            if (proteineEl) proteineEl.value = this.dataset.proteine || '';
+            if (glucideEl) glucideEl.value = this.dataset.glucide || '';
+            if (lipideEl) lipideEl.value = this.dataset.lipide || '';
+
+            if (imagePreview) {
+                imagePreview.innerHTML = 'Image actuelle conservee';
+            }
+
+            setMealEditMode(true, this.dataset.id || '');
+            repasForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+
+    if (repasResetBtn) {
+        repasResetBtn.addEventListener('click', function() {
+            setMealEditMode(false);
+            if (imagePreview) {
+                imagePreview.innerHTML = 'Apercu';
+            }
+        });
+    }
+});
+
+// Apercu de l'image selectionnee pour un repas
+        (function(){
+            var input = document.getElementById('repas_image');
+            var preview = document.getElementById('repasImagePreview');
+            if(!input || !preview) return;
+            input.addEventListener('change', function(e){
+                var file = this.files && this.files[0];
+                if(!file){ preview.innerHTML = 'Apercu'; return; }
+                if(!file.type.startsWith('image/')){ preview.innerHTML = 'Fichier non image'; return; }
+                var reader = new FileReader();
+                reader.onload = function(ev){
+                    preview.innerHTML = '';
+                    var img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
+                    img.style.display = 'block';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+
+(function(){
+                var resetBtn = document.getElementById('journalResetBtn');
+                if(!resetBtn) return;
+                resetBtn.addEventListener('click', function(){
+                    var form = document.getElementById('journalAddForm');
+                    if(!form) return;
+                    var poids = form.querySelector('#poids_actuel');
+                    if(poids) poids.value = '';
+                    var heures = form.querySelector('#heures_sommeil');
+                    if(heures) heures.value = '';
+                    var humeur = form.querySelector('#humeur');
+                    if(humeur) humeur.value = 'excellent';
+                    var dateEl = form.querySelector('#date_journal');
+                    if(dateEl){
+                        var today = new Date();
+                        var yyyy = today.getFullYear();
+                        var mm = String(today.getMonth()+1).padStart(2,'0');
+                        var dd = String(today.getDate()).padStart(2,'0');
+                        dateEl.value = yyyy + '-' + mm + '-' + dd;
+                    }
+                    // Ensure we're in add mode
+                    var updateBtn = document.getElementById('journalUpdateBtn');
+                    var addBtn = document.getElementById('journalAddBtn');
+                    if(updateBtn) updateBtn.style.display = 'none';
+                    if(addBtn) addBtn.style.display = 'inline-block';
+                });
+            })();
+
+            //page progression
+             window.CHATBOT_CONTROLLER_URL = '<?php echo $chatbotControllerUrl; ?>';
+
+    (function() {
+        var messagesEl = document.getElementById('spChatMessages');
+        var formEl = document.getElementById('spChatForm');
+        var inputEl = document.getElementById('spChatInput');
+        var sendBtn = document.getElementById('spChatSend');
+
+        if (!messagesEl || !formEl || !inputEl || !sendBtn) return;
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function scrollToBottom() {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function addMessage(role, text, meta) {
+            var row = document.createElement('div');
+            row.className = 'sp-chat-row ' + (role === 'user' ? 'user' : 'bot');
+
+            var bubble = document.createElement('div');
+            bubble.className = 'sp-chat-bubble';
+            bubble.innerHTML = escapeHtml(text || '');
+
+            row.appendChild(bubble);
+
+            if (meta) {
+                var m = document.createElement('div');
+                m.className = 'sp-chat-meta';
+                m.textContent = meta;
+                bubble.appendChild(m);
+            }
+
+            messagesEl.appendChild(row);
+            scrollToBottom();
+        }
+
+        function setSending(isSending) {
+            sendBtn.disabled = !!isSending;
+            inputEl.disabled = !!isSending;
+            if (isSending) sendBtn.textContent = 'Envoi...';
+            else sendBtn.textContent = 'Envoyer';
+        }
+
+        function loadHistory() {
+            try {
+                var raw = localStorage.getItem('sp_chat_history_v1');
+                if (!raw) return null;
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return null;
+                return parsed;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveHistory(history) {
+            try {
+                localStorage.setItem('sp_chat_history_v1', JSON.stringify(history.slice(-40)));
+            } catch (e) {}
+        }
+
+        var history = loadHistory() || [];
+        if (history.length === 0) {
+            addMessage('bot', "Bonjour ! Pose-moi une question sur ta progression, ton objectif, ou des idées de repas.");
+        } else {
+            history.forEach(function(msg) {
+                addMessage(msg.role, msg.text);
+            });
+        }
+
+        async function ask(question) {
+            var url = window.CHATBOT_CONTROLLER_URL || '../../Controller/ChatbotController.php';
+            var body = new URLSearchParams();
+            body.set('action', 'ask');
+            body.set('question', question);
+            body.set('context', 'progression');
+
+            var resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: body.toString()
+            });
+
+            var rawText = await resp.text();
+            var data = null;
+            try {
+                data = rawText ? JSON.parse(rawText) : null;
+            } catch (e) {
+                throw new Error('Réponse serveur invalide (pas du JSON).');
+            }
+
+            function formatServerError() {
+                var msg = (data && data.error) ? data.error : ('HTTP ' + resp.status);
+                if (data && data.details != null) {
+                    var d = data.details;
+                    if (typeof d === 'object' && d !== null) {
+                        var inner = d.error && typeof d.error === 'object' ? d.error : d;
+                        if (inner.message) {
+                            msg += ' — ' + inner.message;
+                        } else {
+                            msg += ' — ' + JSON.stringify(d).slice(0, 500);
+                        }
+                    } else {
+                        msg += ' — ' + String(d).slice(0, 400);
+                    }
+                }
+                return msg;
+            }
+
+            if (!resp.ok) {
+                throw new Error(formatServerError());
+            }
+
+            if (!data || !data.ok) {
+                throw new Error(formatServerError());
+            }
+            return data;
+        }
+
+        formEl.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var q = (inputEl.value || '').trim();
+            if (!q) return;
+
+            addMessage('user', q);
+            history.push({ role: 'user', text: q });
+            saveHistory(history);
+
+            inputEl.value = '';
+            setSending(true);
+
+            var thinkingId = 'thinking_' + Date.now();
+            addMessage('bot', 'Je réfléchis…');
+
+            try {
+                var data = await ask(q);
+                // Remplacer le dernier message bot "Je réfléchis…"
+                var rows = messagesEl.querySelectorAll('.sp-chat-row.bot');
+                var lastBot = rows[rows.length - 1];
+                if (lastBot) {
+                    var bubble = lastBot.querySelector('.sp-chat-bubble');
+                    if (bubble) bubble.innerHTML = escapeHtml(data.answer || '');
+                } else {
+                    addMessage('bot', data.answer || '');
+                }
+
+                history.push({ role: 'bot', text: data.answer || '' });
+                saveHistory(history);
+            } catch (err) {
+                // Remplacer le dernier message bot "Je réfléchis…"
+                var rows2 = messagesEl.querySelectorAll('.sp-chat-row.bot');
+                var lastBot2 = rows2[rows2.length - 1];
+                var msg = "Désolé, je n'arrive pas à répondre pour le moment. (" + (err && err.message ? err.message : 'Erreur') + ")";
+                if (lastBot2) {
+                    var bubble2 = lastBot2.querySelector('.sp-chat-bubble');
+                    if (bubble2) bubble2.innerHTML = escapeHtml(msg);
+                } else {
+                    addMessage('bot', msg);
+                }
+            } finally {
+                setSending(false);
+                inputEl.focus();
+            }
+        });
+
+        inputEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // Le form submit gère
+            }
+        });
+    })();
+    
+    

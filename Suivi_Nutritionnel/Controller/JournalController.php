@@ -1,7 +1,7 @@
 <?php
 // On inclut la configuration et le modèle (vérifie bien tes chemins selon ton dossier)
-include_once 'C:\Users\MSI\Desktop\SmartPlate\Suivi_Nutritionnel\config.php';
-include_once 'C:\Users\MSI\Desktop\SmartPlate\Suivi_Nutritionnel\Model\Journal_Class.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Model/Journal_Class.php';
 
 class JournalController {
     

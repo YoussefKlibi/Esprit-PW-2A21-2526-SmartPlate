@@ -10,9 +10,23 @@
 <?php
     // Import du contrôleur pour accéder aux méthodes de la base de données
     include_once '../../Controller/ObjectifController.php';
+    include_once '../../Model/Journal_Class.php';
 
     // Simulation de l'utilisateur connecté
     $id_utilisateur_connecte = 1; 
+
+    // URL absolue vers le contrôleur Chatbot (évite les soucis de chemins relatifs)
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $phpSelf = $_SERVER['PHP_SELF'] ?? '';
+    $projectBase = '';
+    $posView = strpos($phpSelf, '/View/');
+    if ($posView !== false) {
+        $projectBase = substr($phpSelf, 0, $posView);
+    } else {
+        $projectBase = dirname($phpSelf, 2);
+    }
+    $chatbotControllerUrl = $scheme . '://' . $host . rtrim($projectBase, '/') . '/Controller/ChatbotController.php';
 
     // Récupération de l'objectif actif pour l'utilisateur (utilisateur simulé = 1)
     $id_utilisateur_connecte = 1;
@@ -24,6 +38,16 @@
     $joursPasses = 0;
     $joursRestants = 0;
     $pourcentage = 0;
+
+    // Poids (départ / actuel / cible) + % avancement réel
+    $poidsDepart = null;
+    $poidsActuel = null;
+    $poidsCible = null;
+    $pourcentageAvancement = 0;
+
+    // Série de poids pour le graphique (labels = dates, data = poids)
+    $weightLabels = [];
+    $weightSeries = [];
 
     // Petit helper pour formater en français (abréviations)
     function formatDateFrShort($dateStr) {
@@ -40,6 +64,7 @@
     if ($objectifActuel) {
         $dateDebut = $objectifActuel['date_debut'];
         $dateFin = $objectifActuel['date_fin'];
+        $poidsCible = isset($objectifActuel['poids_cible']) ? (float)$objectifActuel['poids_cible'] : null;
 
         // Format affichage
         $debutAff = formatDateFrShort($dateDebut);
@@ -65,13 +90,133 @@
         $joursRestants = max(0, $totalJours - $joursPasses);
         $pourcentage = (int) round(($joursPasses / $totalJours) * 100);
         $pourcentage = min(100, max(0, $pourcentage));
+
+        // Récupérer le 1er poids (départ) et le dernier poids (actuel) depuis la table journal_alimentaire
+        // Priorité: mesures dans l'intervalle de l'objectif; fallback: toutes les mesures de l'utilisateur.
+        try {
+            $db = Config::getConnexion();
+
+            $sqlFirstInRange = "SELECT poids_actuel FROM journal_alimentaire
+                                WHERE id_utilisateur = :id_user
+                                  AND poids_actuel IS NOT NULL
+                                  AND poids_actuel <> ''
+                                  AND date_journal >= :date_debut
+                                  AND date_journal <= :date_fin
+                                ORDER BY date_journal ASC
+                                LIMIT 1";
+            $q1 = $db->prepare($sqlFirstInRange);
+            $q1->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
+            $rowFirst = $q1->fetch();
+
+            $sqlLastInRange = "SELECT poids_actuel FROM journal_alimentaire
+                               WHERE id_utilisateur = :id_user
+                                 AND poids_actuel IS NOT NULL
+                                 AND poids_actuel <> ''
+                                 AND date_journal >= :date_debut
+                                 AND date_journal <= :date_fin
+                               ORDER BY date_journal DESC
+                               LIMIT 1";
+            $q2 = $db->prepare($sqlLastInRange);
+            $q2->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
+            $rowLast = $q2->fetch();
+
+            if (!$rowFirst) {
+                $q1b = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
+                                     WHERE id_utilisateur = :id_user
+                                       AND poids_actuel IS NOT NULL
+                                       AND poids_actuel <> ''
+                                     ORDER BY date_journal ASC
+                                     LIMIT 1");
+                $q1b->execute(['id_user' => $id_utilisateur_connecte]);
+                $rowFirst = $q1b->fetch();
+            }
+
+            if (!$rowLast) {
+                $q2b = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
+                                     WHERE id_utilisateur = :id_user
+                                       AND poids_actuel IS NOT NULL
+                                       AND poids_actuel <> ''
+                                     ORDER BY date_journal DESC
+                                     LIMIT 1");
+                $q2b->execute(['id_user' => $id_utilisateur_connecte]);
+                $rowLast = $q2b->fetch();
+            }
+
+            if ($rowFirst && isset($rowFirst['poids_actuel']) && $rowFirst['poids_actuel'] !== '') {
+                $poidsDepart = (float)$rowFirst['poids_actuel'];
+            }
+            if ($rowLast && isset($rowLast['poids_actuel']) && $rowLast['poids_actuel'] !== '') {
+                $poidsActuel = (float)$rowLast['poids_actuel'];
+            }
+        } catch (Exception $e) {
+            // En cas de problème DB, on garde les valeurs null/0 (affichage neutre)
+        }
+
+        // Calcul du % d'avancement réel basé sur (départ -> cible) et le poids actuel
+        if ($poidsDepart !== null && $poidsActuel !== null && $poidsCible !== null) {
+            $den = $poidsCible - $poidsDepart;
+            $num = $poidsActuel - $poidsDepart;
+
+            if (abs($den) < 0.000001) {
+                $pourcentageAvancement = (abs($poidsActuel - $poidsCible) < 0.000001) ? 100 : 0;
+            } else {
+                $raw = $num / $den; // 0 au départ, 1 à la cible (prise ou perte)
+                $raw = max(0.0, min(1.0, $raw));
+                $pourcentageAvancement = (int)round($raw * 100);
+            }
+        } else {
+            $pourcentageAvancement = 0;
+        }
+
+        // Données du graphique : poids saisis (priorité sur la période de l'objectif)
+        try {
+            $db = Config::getConnexion();
+            $sqlSeries = "SELECT date_journal, poids_actuel
+                          FROM journal_alimentaire
+                          WHERE id_utilisateur = :id_user
+                            AND poids_actuel IS NOT NULL
+                            AND poids_actuel <> ''
+                            AND date_journal >= :date_debut
+                            AND date_journal <= :date_fin
+                          ORDER BY date_journal ASC";
+            $qs = $db->prepare($sqlSeries);
+            $qs->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
+            $rows = $qs->fetchAll();
+
+            if (!$rows || count($rows) === 0) {
+                $qs2 = $db->prepare("SELECT date_journal, poids_actuel
+                                     FROM journal_alimentaire
+                                     WHERE id_utilisateur = :id_user
+                                       AND poids_actuel IS NOT NULL
+                                       AND poids_actuel <> ''
+                                     ORDER BY date_journal ASC");
+                $qs2->execute(['id_user' => $id_utilisateur_connecte]);
+                $rows = $qs2->fetchAll();
+            }
+
+            if ($rows && count($rows) > 0) {
+                foreach ($rows as $r) {
+                    if (!isset($r['date_journal']) || !isset($r['poids_actuel'])) continue;
+                    $dateStr = (string)$r['date_journal'];
+                    $val = $r['poids_actuel'];
+                    if ($val === '' || $val === null) continue;
+
+                    // Label court "dd Mon" comme le reste de la page
+                    $weightLabels[] = formatDateFrShort($dateStr);
+                    $weightSeries[] = (float)$val;
+                }
+            }
+        } catch (Exception $e) {
+            $weightLabels = [];
+            $weightSeries = [];
+        }
     }
 ?>
 <body>
     <aside class="sidebar">
     <div class="sidebar-logo">
-        <img src="C:\Youssef\2A\ProjetWeb\SmartPlate\Logo\logo.png" alt="Avatar" height="80%" width="50%">
-        <h2>SmartPlate</h2>
+    <img src="..\assets\logo.png" alt="Logo" height="150" width="150">
+    <h2>SmartPlate</h2>
     </div>
 
     <nav class="sidebar-nav">
@@ -84,7 +229,7 @@
         
         <a href="Objectif.php" class="nav-item">
             <span class="icon">🎯</span>
-            <span>Mes Objectifs</span>
+            <span>Mon Objectif</span>
         </a>
         
         <a href="Progression.php" class="nav-item">
@@ -121,21 +266,21 @@
                 </select>
             </div>
             <div class="progress-content">
-                <div class="circle-chart">
+                <div class="circle-chart" style="background: conic-gradient(var(--green-light) 0% <?php echo (int)$pourcentageAvancement; ?>%, #eee <?php echo (int)$pourcentageAvancement; ?>% 100%);">
                     <div class="circle-inner">
-                        <span class="percentage">65%</span>
+                        <span class="percentage"><?php echo (int)$pourcentageAvancement; ?>%</span>
                         <span class="label">Complété</span>
                     </div>
                 </div>
                 <div class="macros-summary">
                     <div class="macro-item">
-                        <span class="dot blue"></span> Poids de départ <span>80 kg</span>
+                        <span class="dot blue"></span> Poids de départ <span><?php echo $poidsDepart !== null ? rtrim(rtrim(number_format($poidsDepart, 1, '.', ''), '0'), '.') . ' kg' : '—'; ?></span>
                     </div>
                     <div class="macro-item">
-                        <span class="dot yellow"></span> Poids actuel <span>76.5 kg</span>
+                        <span class="dot yellow"></span> Poids actuel <span><?php echo $poidsActuel !== null ? rtrim(rtrim(number_format($poidsActuel, 1, '.', ''), '0'), '.') . ' kg' : '—'; ?></span>
                     </div>
                     <div class="macro-item">
-                        <span class="dot green"></span> Poids cible <span>70 kg</span> </div>
+                        <span class="dot green"></span> Poids cible <span><?php echo $poidsCible !== null ? rtrim(rtrim(number_format((float)$poidsCible, 1, '.', ''), '0'), '.') . ' kg' : '—'; ?></span> </div>
                 </div>
             </div>
         </div>
@@ -179,22 +324,117 @@
                 <h2>Évolution du Poids</h2>
             </div>
             <div class="chart-container">
-                <div class="chart-placeholder">
-                    <svg width="100%" height="200" viewBox="0 0 500 200" preserveAspectRatio="none">
-                        <path d="M0,150 L100,140 L200,160 L300,110 L400,90 L500,70" fill="none" stroke="var(--text-dark)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="100" cy="140" r="5" fill="var(--green-light)" stroke="var(--text-dark)" stroke-width="2"/>
-                        <circle cx="200" cy="160" r="5" fill="var(--green-light)" stroke="var(--text-dark)" stroke-width="2"/>
-                        <circle cx="300" cy="110" r="5" fill="var(--green-light)" stroke="var(--text-dark)" stroke-width="2"/>
-                        <circle cx="400" cy="90" r="5" fill="var(--green-light)" stroke="var(--text-dark)" stroke-width="2"/>
-                        <circle cx="500" cy="70" r="5" fill="var(--yellow-light)" stroke="var(--text-dark)" stroke-width="2"/>
-                    </svg>
-                    <p class="chart-note">Intègre <a href="https://www.chartjs.org/" target="_blank">Chart.js</a> ici pour rendre cette courbe dynamique avec tes données PHP.</p>
+                <div class="chart-placeholder" style="height: 260px;">
+                    <?php if (count($weightSeries) >= 2): ?>
+                        <canvas id="weightChart" aria-label="Courbe d'évolution du poids" role="img"></canvas>
+                    <?php elseif (count($weightSeries) === 1): ?>
+                        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-gray);font-style:italic;">
+                            Ajoute au moins 2 journaux avec un poids pour afficher la courbe.
+                        </div>
+                    <?php else: ?>
+                        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-gray);font-style:italic;">
+                            Aucun poids trouvé dans tes journaux pour le moment.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card full-width-card">
+            <div class="card-header">
+                <h2>Assistant IA</h2>
+                <span class="badge blue-light">Chat</span>
+            </div>
+
+            <div class="sp-chat">
+                <div class="sp-chat-messages" id="spChatMessages" aria-live="polite"></div>
+
+                <form class="sp-chat-composer" id="spChatForm" autocomplete="off">
+                    <input
+                        id="spChatInput"
+                        class="form-control sp-chat-input"
+                        type="text"
+                        placeholder="Écris ta question… (ex: Que puis-je manger ce soir pour atteindre mon objectif ?)"
+                        aria-label="Votre question"
+                    />
+                    <button class="btn-main sp-chat-send" id="spChatSend" type="submit">Envoyer</button>
+                </form>
+
+                <div class="sp-chat-hint">
+                    Astuce : tu peux demander un menu, une estimation de calories ou des conseils pour ton objectif.
                 </div>
             </div>
         </div>
 
     </div>
 </div>
+<script src="JavaScript_Front.js"></script>
+<!-- Chart.js (courbe évolution du poids) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    (function() {
+        var el = document.getElementById('weightChart');
+        if (!el) return;
+
+        var labels = <?php echo json_encode($weightLabels, JSON_UNESCAPED_UNICODE); ?>;
+        var data = <?php echo json_encode($weightSeries, JSON_UNESCAPED_UNICODE); ?>;
+        if (!Array.isArray(labels) || !Array.isArray(data) || labels.length < 2 || data.length < 2) return;
+
+        // léger padding visuel pour l'axe Y
+        var min = Math.min.apply(null, data);
+        var max = Math.max.apply(null, data);
+        var pad = Math.max(0.5, (max - min) * 0.15);
+
+        new Chart(el.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Poids (kg)',
+                    data: data,
+                    borderColor: '#111827',
+                    backgroundColor: 'rgba(210, 255, 118, 0.25)',
+                    pointBackgroundColor: '#d4f283',
+                    pointBorderColor: '#111827',
+                    pointRadius: 4,
+                    pointHoverRadius: 5,
+                    borderWidth: 3,
+                    tension: 0.28,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                var v = ctx.parsed && typeof ctx.parsed.y === 'number' ? ctx.parsed.y : ctx.raw;
+                                return ' ' + String(v).replace('.', ',') + ' kg';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, autoSkip: true }
+                    },
+                    y: {
+                        suggestedMin: min - pad,
+                        suggestedMax: max + pad,
+                        ticks: {
+                            callback: function(value) { return String(value).replace('.', ',') + ' kg'; }
+                        },
+                        grid: { color: 'rgba(148, 163, 184, 0.35)' }
+                    }
+                }
+            }
+        });
+    })();
+</script>
 
 </body>
 </html>

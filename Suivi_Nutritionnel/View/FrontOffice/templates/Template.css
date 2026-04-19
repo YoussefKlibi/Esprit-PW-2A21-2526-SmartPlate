@@ -232,6 +232,16 @@ body {
     font-size: 0.85rem;
     color: var(--text-gray);
 }
+.meal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-left: 0.5rem;
+}
+.meal-actions .btn-icon {
+    justify-content: center;
+    min-width: 110px;
+}
 .stat-col {
     display: flex;
     flex-direction: column;
@@ -264,6 +274,13 @@ body {
         width: 100%;
         justify-content: space-between;
         margin-top: 1rem;
+    }
+    .meal-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+    .meal-actions .btn-icon {
+        width: 100%;
     }
 }
 
@@ -585,6 +602,7 @@ body {
 .sidebar-logo {
     display: flex;
     align-items: center;
+    flex-direction: column;
     gap: 0.8rem;
     margin-bottom: 3rem;
     padding-left: 0.5rem;
@@ -783,3 +801,87 @@ body {
 .input-error {
     border: 2px solid red;
 }
+
+.sp-chat {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .sp-chat-messages {
+        height: 360px;
+        overflow: auto;
+        padding: 1rem;
+        border-radius: 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .sp-chat-row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .sp-chat-row.user {
+        justify-content: flex-end;
+    }
+
+    .sp-chat-bubble {
+        max-width: 78%;
+        padding: 0.8rem 1rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        line-height: 1.35;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .sp-chat-row.user .sp-chat-bubble {
+        background: var(--text-dark);
+        color: #fff;
+        border-bottom-right-radius: 6px;
+    }
+
+    .sp-chat-row.bot .sp-chat-bubble {
+        background: #fff;
+        color: var(--text-dark);
+        border-bottom-left-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .sp-chat-meta {
+        font-size: 0.75rem;
+        color: var(--text-gray);
+        margin-top: 0.35rem;
+    }
+
+    .sp-chat-composer {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .sp-chat-input {
+        flex: 1;
+    }
+
+    .sp-chat-send[disabled] {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .sp-chat-hint {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        padding: 0 0.25rem;
+    }
+
+    @media (max-width: 600px) {
+        .sp-chat-messages { height: 300px; }
+        .sp-chat-composer { flex-direction: column; align-items: stretch; }
+    }

@@ -28,6 +28,7 @@
         .sidebar-header {
             padding: 20px;
             font-size: 1.5rem;
+            flex-direction: column;
             font-weight: 700;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
@@ -226,4 +227,120 @@ html, body {
 .main-content {
     min-height: 100vh;
     overflow-x: hidden;
+}
+
+/* --- Formulaires BackOffice --- */
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.form-group {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.form-group.form-group-wide {
+    flex: 2 1 0;
+}
+
+.form-group label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    font-size: 0.98rem;
+    background: #ffffff;
+    color: var(--text-dark);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--admin-green);
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.15);
+    background-color: #fcfffe;
+}
+
+select.form-control {
+    appearance: auto;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #edf2f7;
+}
+
+.btn-main {
+    background: var(--admin-green);
+    color: white;
+    border: none;
+    padding: 11px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.btn-secondary {
+    background: #f8fafc;
+    color: var(--text-dark);
+    border: 1px solid #d9e2ec;
+    padding: 11px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.btn-main:hover,
+.btn-secondary:hover {
+    filter: brightness(0.98);
+}
+
+.admin-soft-card {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid var(--admin-green);
+}
+
+.file-input-control {
+    padding: 9px 12px;
+}
+
+@media (max-width: 900px) {
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-group,
+    .form-group.form-group-wide {
+        min-width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
