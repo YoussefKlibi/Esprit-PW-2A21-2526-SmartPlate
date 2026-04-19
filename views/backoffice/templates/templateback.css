@@ -10,21 +10,22 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
-        body {
-            display: flex;
-            height: 100vh;
-            background-color: var(--bg-light);
-            overflow: hidden;
-        }
+       body {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-light);
+}
 
         /* --- SIDEBAR VERTE --- */
         .admin-sidebar {
-            width: 260px;
-            background: linear-gradient(180deg, var(--admin-green) 0%, var(--admin-green-dark) 100%);
-            color: var(--white);
-            display: flex;
-            flex-direction: column;
-        }
+    width: 260px;
+    background: linear-gradient(180deg, var(--admin-green) 0%, var(--admin-green-dark) 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+}
         .sidebar-header {
             padding: 20px;
             font-size: 1.5rem;
@@ -64,11 +65,17 @@
 
         /* --- CONTENU PRINCIPAL --- */
         .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    margin-left: 260px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100vh;
+}
+        .dashboard-container {
+    padding: 30px;
+    padding-bottom: 80px;
+    }
 
         /* Topbar Blanche */
         .topbar {
@@ -287,4 +294,22 @@
 
 .btn-success:hover {
     background-color: var(--admin-green-dark);
+}
+.msg{
+font-size:13px;
+margin-bottom:5px;
+font-weight:500;
+}
+
+.input-error{
+border:2px solid red;
+}
+
+.input-valid{
+border:2px solid green;
+}
+
+#compteur_desc{
+font-size:12px;
+color:#555;
 }
