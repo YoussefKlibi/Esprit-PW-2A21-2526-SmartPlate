@@ -2,6 +2,7 @@
 // On inclut la configuration et le modèle (vérifie bien tes chemins selon ton dossier)
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Model/Journal_Class.php';
+require_once __DIR__ . '/../Model/Objectif_Class.php';
 
 class JournalController {
     
@@ -15,12 +16,39 @@ class JournalController {
             $sommeil = isset($_POST['heures_sommeil']) ? $_POST['heures_sommeil'] : null;
             $id_user = isset($_POST['id_utilisateur']) ? $_POST['id_utilisateur'] : 1;
 
+            // Si l'admin force un id_objectif depuis le form, on le prend. Sinon côté Front, on tente
+            // de récupérer l'objectif actif de l'utilisateur et d'attacher son id.
+            $id_objectif = null;
+            if (isset($_POST['id_objectif']) && $_POST['id_objectif'] !== '') {
+                $id_objectif = $_POST['id_objectif'];
+                // Vérifier que l'objectif existe réellement pour éviter les erreurs de FK
+                try {
+                    $db = Config::getConnexion();
+                    $q = $db->prepare('SELECT id_objectif FROM objectif WHERE id_objectif = :id');
+                    $q->execute(['id' => $id_objectif]);
+                    $exists = $q->fetch();
+                    if (!$exists) {
+                        // objectif invalide fourni par le formulaire -> ignorer
+                        $id_objectif = null;
+                    }
+                } catch (Exception $e) {
+                    $id_objectif = null;
+                }
+            } else {
+                // Chercher un objectif en cours pour cet utilisateur
+                $actif = Objectif::getActif($id_user);
+                if ($actif && isset($actif['id_objectif'])) {
+                    $id_objectif = $actif['id_objectif'];
+                }
+            }
+
             $journal = new Journal(
                 $date,
                 $poids,
                 $humeur,
                 $sommeil,
-                $id_user
+                $id_user,
+                $id_objectif
             );
             $journal->ajouter();
             

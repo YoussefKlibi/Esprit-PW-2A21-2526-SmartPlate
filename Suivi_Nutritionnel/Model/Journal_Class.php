@@ -10,13 +10,15 @@ class Journal {
     private ?string $humeur = null;
     private ?int $heures_sommeil = null;
     private ?int $id_utilisateur = null;
+    private ?int $id_objectif = null;
 
-    public function __construct($date, $poids, $humeur, $sommeil, $id_user = 1) {
+    public function __construct($date, $poids, $humeur, $sommeil, $id_user = 1, $id_objectif = null) {
         $this->date_journal = $date;
         $this->poids_actuel = $poids;
         $this->humeur = $humeur;
         $this->heures_sommeil = $sommeil;
         $this->id_utilisateur = $id_user;
+        $this->id_objectif = $id_objectif;
     }
 
     // --- Delete : supprimer un journal et ses repas associés ---
@@ -42,9 +44,10 @@ class Journal {
     // --- Create : Ajouter un journal ---
     public function ajouter() {
         $db = Config::getConnexion();
+        // Si la colonne id_objectif existe et que nous avons une valeur, l'insérer, sinon laisser NULL
         $sql = "INSERT INTO journal_alimentaire 
-                (date_journal, poids_actuel, humeur, heures_sommeil, id_utilisateur) 
-                VALUES (:date_j, :poids, :humeur, :sommeil, :id_user)";
+                (date_journal, poids_actuel, humeur, heures_sommeil, id_utilisateur, id_objectif) 
+                VALUES (:date_j, :poids, :humeur, :sommeil, :id_user, :id_objectif)";
         try {
             $query = $db->prepare($sql);
             $query->execute([
@@ -52,7 +55,8 @@ class Journal {
                 'poids' => $this->poids_actuel,
                 'humeur' => $this->humeur,
                 'sommeil' => $this->heures_sommeil,
-                'id_user' => $this->id_utilisateur
+                'id_user' => $this->id_utilisateur,
+                'id_objectif' => $this->id_objectif
             ]);
         } catch (Exception $e) {
             die('Erreur : ' . $e->getMessage());

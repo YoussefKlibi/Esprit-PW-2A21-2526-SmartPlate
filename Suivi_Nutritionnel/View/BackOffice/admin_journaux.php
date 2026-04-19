@@ -41,6 +41,7 @@ if (!empty($listeJournaux)) {
             <a href="admin_journaux.php" class="menu-item active">🍽️ Journaux Utilisateurs</a>
         </div>
     </aside>
+    
 
     <main class="main-content" style="padding: 20px; overflow-y: auto; width: 100%;">
 
@@ -64,6 +65,13 @@ if (!empty($listeJournaux)) {
                     <div style="flex: 1;">
                         <label for="date_journal" style="display: block; margin-bottom: 5px; font-weight: 500;">Date du journal</label>
                         <input type="date" id="date_journal" name="date_journal" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div style="flex: 1;">
+                        <label for="id_objectif" style="display: block; margin-bottom: 5px; font-weight: 500;">ID Objectif</label>
+                        <input id="id_objectif" name="id_objectif" placeholder="Ex: 12" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
                 </div>
 

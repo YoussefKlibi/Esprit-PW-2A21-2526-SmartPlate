@@ -20,6 +20,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+    // Helpers: restreindre la saisie en temps réel et déclencher l'effet 'shake'
+    const enforceNumericInput = function(el) {
+        if (!el) return;
+        el.addEventListener('input', function() {
+            const old = this.value;
+            this.value = this.value.replace(/[^0-9.]/g, '');
+            if (old !== this.value) {
+                this.classList.add('input-error');
+                this.classList.remove('shake');
+                void this.offsetWidth;
+                this.classList.add('shake');
+                setTimeout(() => { this.classList.remove('input-error'); }, 400);
+            }
+            if ((this.value.match(/\./g) || []).length > 1) {
+                // Empêcher plusieurs points
+                this.value = this.value.replace(/\.(?=.*\.)/g, '');
+                this.classList.remove('shake');
+                void this.offsetWidth;
+                this.classList.add('shake');
+            }
+        });
+    };
+
+    const enforceAlphaInput = function(el) {
+        if (!el) return;
+        el.addEventListener('input', function() {
+            const old = this.value;
+            this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s'\-]/g, '');
+            if (old !== this.value) {
+                this.classList.add('input-error');
+                this.classList.remove('shake');
+                void this.offsetWidth;
+                this.classList.add('shake');
+                setTimeout(() => { this.classList.remove('input-error'); }, 400);
+            }
+        });
+    };
+
     const attachValidation = function(formEl, rulesFn) {
         if (!formEl) return;
         formEl.addEventListener('submit', function(e) {
@@ -159,6 +197,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('btnShowAllRepas');
         if (btn) btn.style.display = 'none';
     };
+
+    // --- Attacher les protections de saisie en temps réel aux champs importants ---
+    (function attachRealtimeRestrictions() {
+        const numericIds = ['id_utilisateur','poids_cible','poids_actuel','Heure_Sommeil','heures_sommeil','quantite','nbre_calories','proteine','glucide','lipide'];
+        numericIds.forEach(function(id) {
+            let el = document.getElementById(id) || document.getElementsByName(id)[0];
+            if (el) enforceNumericInput(el);
+        });
+
+        // champs texte (nom de repas etc.)
+        const alphaIds = ['nom'];
+        alphaIds.forEach(function(name) {
+            // peut être name ou id selon le formulaire
+            let el = document.getElementById(name) || document.getElementsByName(name)[0];
+            if (el) enforceAlphaInput(el);
+        });
+    })();
 });
 
 window.openEditForm = function(id, id_user, type, poids, debut, fin, statut) {

@@ -334,7 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const nomAliment = repasFormBind.querySelector('[name="nom"]');
         if (nomAliment) {
             nomAliment.addEventListener('input', function() {
+                shakeField(this); // Appelle la fonction de tremblement pour indiquer une erreur
                 this.value = this.value.replace(/[^a-zA-ZÀ-ÿ\s'-]/g, '');
+
             });
         }
 
@@ -342,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const champsNumeriquesRepas = repasFormBind.querySelectorAll('#quantite, #nbre_calories, #proteine, #glucide, #lipide');
         champsNumeriquesRepas.forEach(input => {
             input.addEventListener('input', function() {
+                    shakeField(this); // Appelle la fonction de tremblement pour indiquer une erreur
                 this.value = this.value.replace(/[^0-9.]/g, '');
             });
         });

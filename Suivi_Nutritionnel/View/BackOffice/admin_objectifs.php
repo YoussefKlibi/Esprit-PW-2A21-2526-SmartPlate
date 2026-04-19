@@ -43,7 +43,7 @@
                     <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                         <div style="flex: 1;">
                             <label for="id_utilisateur" style="display: block; margin-bottom: 5px; font-weight: 500; color: var(--admin-green-dark);">👤 ID Utilisateur</label>
-                            <input type="number" id="id_utilisateur" name="id_utilisateur" placeholder="Ex: 1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <input id="id_utilisateur" name="id_utilisateur" placeholder="Ex: 1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
                         <div style="flex: 1;">
                             <label for="type" style="display: block; margin-bottom: 5px; font-weight: 500;">Type d'objectif</label>
@@ -55,7 +55,7 @@
                         </div>
                         <div style="flex: 1;">
                             <label for="poids_cible" style="display: block; margin-bottom: 5px; font-weight: 500;">Poids cible (kg)</label>
-                            <input type="number" id="poids_cible" name="poids_cible" step="0.1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <input id="poids_cible" name="poids_cible" step="0.1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
                     </div>
 
