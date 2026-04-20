@@ -21,6 +21,141 @@ class Journal {
         $this->id_objectif = $id_objectif;
     }
 
+    // --- Read : récupérer le premier poids saisi pour un utilisateur (utilisé par les vues) ---
+    public static function getFirstWeight($id_user = 1) {
+        $db = Config::getConnexion();
+        $sql = "SELECT poids_actuel FROM journal_alimentaire WHERE id_utilisateur = :id_user AND poids_actuel IS NOT NULL ORDER BY date_journal ASC LIMIT 1";
+        try {
+            $query = $db->prepare($sql);
+            $query->execute(['id_user' => $id_user]);
+            $row = $query->fetch();
+            if ($row && isset($row['poids_actuel']) && $row['poids_actuel'] !== null && $row['poids_actuel'] !== '') {
+                return $row['poids_actuel'];
+            }
+            return null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    // --- Read : récupérer le dernier poids saisi pour un utilisateur ---
+    public static function getLastWeight($id_user = 1) {
+        $db = Config::getConnexion();
+        $sql = "SELECT poids_actuel FROM journal_alimentaire WHERE id_utilisateur = :id_user AND poids_actuel IS NOT NULL ORDER BY date_journal DESC LIMIT 1";
+        try {
+            $query = $db->prepare($sql);
+            $query->execute(['id_user' => $id_user]);
+            $row = $query->fetch();
+            if ($row && isset($row['poids_actuel']) && $row['poids_actuel'] !== null && $row['poids_actuel'] !== '') {
+                return $row['poids_actuel'];
+            }
+            return null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    // --- Read : récupérer le premier et dernier poids dans une plage (avec fallback global) ---
+    public static function getFirstLastWeightInRange($id_user = 1, $date_debut = null, $date_fin = null) {
+        $db = Config::getConnexion();
+        $result = ['first' => null, 'last' => null];
+        try {
+            if ($date_debut !== null && $date_fin !== null) {
+                $sqlFirstInRange = "SELECT poids_actuel FROM journal_alimentaire
+                                    WHERE id_utilisateur = :id_user
+                                      AND poids_actuel IS NOT NULL
+                                      AND poids_actuel <> ''
+                                      AND date_journal >= :date_debut
+                                      AND date_journal <= :date_fin
+                                    ORDER BY date_journal ASC
+                                    LIMIT 1";
+                $q1 = $db->prepare($sqlFirstInRange);
+                $q1->execute(['id_user' => $id_user, 'date_debut' => $date_debut, 'date_fin' => $date_fin]);
+                $rowFirst = $q1->fetch();
+
+                $sqlLastInRange = "SELECT poids_actuel FROM journal_alimentaire
+                                   WHERE id_utilisateur = :id_user
+                                     AND poids_actuel IS NOT NULL
+                                     AND poids_actuel <> ''
+                                     AND date_journal >= :date_debut
+                                     AND date_journal <= :date_fin
+                                   ORDER BY date_journal DESC
+                                   LIMIT 1";
+                $q2 = $db->prepare($sqlLastInRange);
+                $q2->execute(['id_user' => $id_user, 'date_debut' => $date_debut, 'date_fin' => $date_fin]);
+                $rowLast = $q2->fetch();
+            } else {
+                $rowFirst = null;
+                $rowLast = null;
+            }
+
+            if (empty($rowFirst)) {
+                $rowFirst = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
+                                         WHERE id_utilisateur = :id_user
+                                           AND poids_actuel IS NOT NULL
+                                           AND poids_actuel <> ''
+                                         ORDER BY date_journal ASC
+                                         LIMIT 1");
+                $rowFirst->execute(['id_user' => $id_user]);
+                $rowFirst = $rowFirst->fetch();
+            }
+
+            if (empty($rowLast)) {
+                $rowLast = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
+                                         WHERE id_utilisateur = :id_user
+                                           AND poids_actuel IS NOT NULL
+                                           AND poids_actuel <> ''
+                                         ORDER BY date_journal DESC
+                                         LIMIT 1");
+                $rowLast->execute(['id_user' => $id_user]);
+                $rowLast = $rowLast->fetch();
+            }
+
+            if ($rowFirst && isset($rowFirst['poids_actuel']) && $rowFirst['poids_actuel'] !== '') {
+                $result['first'] = $rowFirst['poids_actuel'];
+            }
+            if ($rowLast && isset($rowLast['poids_actuel']) && $rowLast['poids_actuel'] !== '') {
+                $result['last'] = $rowLast['poids_actuel'];
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            return $result;
+        }
+    }
+
+    // --- Read : récupérer la série de poids dans une plage (fallback à toutes les mesures) ---
+    public static function getWeightsSeries($id_user = 1, $date_debut = null, $date_fin = null) {
+        $db = Config::getConnexion();
+        try {
+            if ($date_debut !== null && $date_fin !== null) {
+                $sql = "SELECT date_journal, poids_actuel
+                        FROM journal_alimentaire
+                        WHERE id_utilisateur = :id_user
+                          AND poids_actuel IS NOT NULL
+                          AND poids_actuel <> ''
+                          AND date_journal >= :date_debut
+                          AND date_journal <= :date_fin
+                        ORDER BY date_journal ASC";
+                $stmt = $db->prepare($sql);
+                $stmt->execute(['id_user' => $id_user, 'date_debut' => $date_debut, 'date_fin' => $date_fin]);
+                $rows = $stmt->fetchAll();
+                if ($rows && count($rows) > 0) return $rows;
+            }
+
+            $stmt2 = $db->prepare("SELECT date_journal, poids_actuel
+                                     FROM journal_alimentaire
+                                     WHERE id_utilisateur = :id_user
+                                       AND poids_actuel IS NOT NULL
+                                       AND poids_actuel <> ''
+                                     ORDER BY date_journal ASC");
+            $stmt2->execute(['id_user' => $id_user]);
+            return $stmt2->fetchAll();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
     // --- Delete : supprimer un journal et ses repas associés ---
     public static function supprimer($id) {
         $db = Config::getConnexion();

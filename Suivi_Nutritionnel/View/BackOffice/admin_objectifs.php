@@ -27,7 +27,14 @@
         </div>
     </aside>
 
-    <main class="main-content" style="padding: 20px; overflow-y: auto; width: 100%;">
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-bar"></div>
+            <div class="admin-profile">
+                <span>Youssef</span>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=20c997&color=fff" alt="Profile">
+            </div>
+        </header>
         
         <header style="margin-bottom: 20px;">
             <h1>Administration des Objectifs</h1>

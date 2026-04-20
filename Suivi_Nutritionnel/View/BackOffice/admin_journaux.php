@@ -43,10 +43,17 @@ if (!empty($listeJournaux)) {
     </aside>
     
 
-    <main class="main-content" style="padding: 20px; overflow-y: auto; width: 100%;">
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-bar"></div>
+            <div class="admin-profile">
+                <span>Youssef</span>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=20c997&color=fff" alt="Profile">
+            </div>
+        </header>
 
-        <header style="margin-bottom: 20px;">
-            <h1>Administration des Journaux</h1>
+        <header style="gap: 8px;">
+            <h2>Administration des Journaux</h2>
             <p style="color: var(--text-gray);">Consultez et modérez les journaux de suivi quotidien des utilisateurs.</p>
         </header>
 
@@ -249,7 +256,7 @@ if (!empty($listeJournaux)) {
             </div>
         </div>
 
-        <h1 style="margin: 28px 0 8px;">Administration des Repas</h1>
+        <h2 style="margin: 28px 0 8px;">Administration des Repas</h2>
         <p style="color: var(--text-gray);">Consultez et modérez les repas des utilisateurs.</p>
 
         <div class="card full-width-card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: var(--shadow);">

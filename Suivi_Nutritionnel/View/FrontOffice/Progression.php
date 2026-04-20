@@ -91,66 +91,10 @@
         $pourcentage = (int) round(($joursPasses / $totalJours) * 100);
         $pourcentage = min(100, max(0, $pourcentage));
 
-        // Récupérer le 1er poids (départ) et le dernier poids (actuel) depuis la table journal_alimentaire
-        // Priorité: mesures dans l'intervalle de l'objectif; fallback: toutes les mesures de l'utilisateur.
-        try {
-            $db = Config::getConnexion();
-
-            $sqlFirstInRange = "SELECT poids_actuel FROM journal_alimentaire
-                                WHERE id_utilisateur = :id_user
-                                  AND poids_actuel IS NOT NULL
-                                  AND poids_actuel <> ''
-                                  AND date_journal >= :date_debut
-                                  AND date_journal <= :date_fin
-                                ORDER BY date_journal ASC
-                                LIMIT 1";
-            $q1 = $db->prepare($sqlFirstInRange);
-            $q1->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
-            $rowFirst = $q1->fetch();
-
-            $sqlLastInRange = "SELECT poids_actuel FROM journal_alimentaire
-                               WHERE id_utilisateur = :id_user
-                                 AND poids_actuel IS NOT NULL
-                                 AND poids_actuel <> ''
-                                 AND date_journal >= :date_debut
-                                 AND date_journal <= :date_fin
-                               ORDER BY date_journal DESC
-                               LIMIT 1";
-            $q2 = $db->prepare($sqlLastInRange);
-            $q2->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
-            $rowLast = $q2->fetch();
-
-            if (!$rowFirst) {
-                $q1b = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
-                                     WHERE id_utilisateur = :id_user
-                                       AND poids_actuel IS NOT NULL
-                                       AND poids_actuel <> ''
-                                     ORDER BY date_journal ASC
-                                     LIMIT 1");
-                $q1b->execute(['id_user' => $id_utilisateur_connecte]);
-                $rowFirst = $q1b->fetch();
-            }
-
-            if (!$rowLast) {
-                $q2b = $db->prepare("SELECT poids_actuel FROM journal_alimentaire
-                                     WHERE id_utilisateur = :id_user
-                                       AND poids_actuel IS NOT NULL
-                                       AND poids_actuel <> ''
-                                     ORDER BY date_journal DESC
-                                     LIMIT 1");
-                $q2b->execute(['id_user' => $id_utilisateur_connecte]);
-                $rowLast = $q2b->fetch();
-            }
-
-            if ($rowFirst && isset($rowFirst['poids_actuel']) && $rowFirst['poids_actuel'] !== '') {
-                $poidsDepart = (float)$rowFirst['poids_actuel'];
-            }
-            if ($rowLast && isset($rowLast['poids_actuel']) && $rowLast['poids_actuel'] !== '') {
-                $poidsActuel = (float)$rowLast['poids_actuel'];
-            }
-        } catch (Exception $e) {
-            // En cas de problème DB, on garde les valeurs null/0 (affichage neutre)
-        }
+                // Récupérer le 1er poids (départ) et le dernier poids (actuel) via le modèle
+                $firstLast = Journal::getFirstLastWeightInRange($id_utilisateur_connecte, $dateDebut, $dateFin);
+                if (!empty($firstLast['first'])) $poidsDepart = (float)$firstLast['first'];
+                if (!empty($firstLast['last'])) $poidsActuel = (float)$firstLast['last'];
 
         // Calcul du % d'avancement réel basé sur (départ -> cible) et le poids actuel
         if ($poidsDepart !== null && $poidsActuel !== null && $poidsCible !== null) {
@@ -169,46 +113,18 @@
         }
 
         // Données du graphique : poids saisis (priorité sur la période de l'objectif)
-        try {
-            $db = Config::getConnexion();
-            $sqlSeries = "SELECT date_journal, poids_actuel
-                          FROM journal_alimentaire
-                          WHERE id_utilisateur = :id_user
-                            AND poids_actuel IS NOT NULL
-                            AND poids_actuel <> ''
-                            AND date_journal >= :date_debut
-                            AND date_journal <= :date_fin
-                          ORDER BY date_journal ASC";
-            $qs = $db->prepare($sqlSeries);
-            $qs->execute(['id_user' => $id_utilisateur_connecte, 'date_debut' => $dateDebut, 'date_fin' => $dateFin]);
-            $rows = $qs->fetchAll();
+        $rows = Journal::getWeightsSeries($id_utilisateur_connecte, $dateDebut, $dateFin);
+        if ($rows && count($rows) > 0) {
+            foreach ($rows as $r) {
+                if (!isset($r['date_journal']) || !isset($r['poids_actuel'])) continue;
+                $dateStr = (string)$r['date_journal'];
+                $val = $r['poids_actuel'];
+                if ($val === '' || $val === null) continue;
 
-            if (!$rows || count($rows) === 0) {
-                $qs2 = $db->prepare("SELECT date_journal, poids_actuel
-                                     FROM journal_alimentaire
-                                     WHERE id_utilisateur = :id_user
-                                       AND poids_actuel IS NOT NULL
-                                       AND poids_actuel <> ''
-                                     ORDER BY date_journal ASC");
-                $qs2->execute(['id_user' => $id_utilisateur_connecte]);
-                $rows = $qs2->fetchAll();
+                // Label court "dd Mon" comme le reste de la page
+                $weightLabels[] = formatDateFrShort($dateStr);
+                $weightSeries[] = (float)$val;
             }
-
-            if ($rows && count($rows) > 0) {
-                foreach ($rows as $r) {
-                    if (!isset($r['date_journal']) || !isset($r['poids_actuel'])) continue;
-                    $dateStr = (string)$r['date_journal'];
-                    $val = $r['poids_actuel'];
-                    if ($val === '' || $val === null) continue;
-
-                    // Label court "dd Mon" comme le reste de la page
-                    $weightLabels[] = formatDateFrShort($dateStr);
-                    $weightSeries[] = (float)$val;
-                }
-            }
-        } catch (Exception $e) {
-            $weightLabels = [];
-            $weightSeries = [];
         }
     }
 ?>

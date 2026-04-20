@@ -27,9 +27,76 @@
         $repasList = Repas::listeParJournal((int)$latestJournal['id_journal']);
     }
 
+    // Initialiser l'objectif actif (nécessaire avant les calculs ci-dessous)
     $objectifActif = Objectif::getActif($id_utilisateur_connecte);
     $objectifMessage = "Veuillez remplir un objectif pour afficher ces informations.";
     $hasJournalDisponible = !empty($latestJournal['id_journal']);
+
+    // Récupérer l'objectif actif dès maintenant (utilisé pour calculs ci-dessous)
+    
+
+    // Calculer les totaux consommés à partir des repas du journal
+    $totalCaloriesConsommees = 0;
+    $totalProteinesConsommees = 0;
+    $totalGlucidesConsommees = 0;
+    $totalLipidesConsommees = 0;
+    foreach ($repasList as $rp) {
+        $totalCaloriesConsommees += floatval($rp['nbre_calories'] ?? 0);
+        $totalProteinesConsommees += floatval($rp['proteine'] ?? 0);
+        $totalGlucidesConsommees += floatval($rp['glucide'] ?? 0);
+        $totalLipidesConsommees += floatval($rp['lipide'] ?? 0);
+    }
+
+    // Calculer les cibles journalières à partir de l'objectif actif (reprise de la logique de Objectif.php)
+    $cibleCalories = 0; $cibleProteines = 0; $cibleGlucides = 0; $cibleLipides = 0;
+    if ($objectifActif) {
+        // récupérer le poids de référence via le modèle (déplacé hors de la vue)
+        $poidsRef = Journal::getFirstWeight($id_utilisateur_connecte) ?? 75;
+
+        $typeObjectif = $objectifActif ? $objectifActif['type_objectif'] : 'maintien';
+        if ($typeObjectif == 'perte_poids') {
+            $cibleCalories = $poidsRef * 22;
+            $cibleProteines = $poidsRef * 2.2;
+            $cibleLipides = $poidsRef * 0.8;
+        } elseif ($typeObjectif == 'prise_masse') {
+            $cibleCalories = $poidsRef * 30;
+            $cibleProteines = $poidsRef * 1.8;
+            $cibleLipides = $poidsRef * 1;
+        } else {
+            $cibleCalories = $poidsRef * 25;
+            $cibleProteines = $poidsRef * 1.5;
+            $cibleLipides = $poidsRef * 0.9;
+        }
+        $caloriesRestantes = $cibleCalories - ($cibleProteines * 4) - ($cibleLipides * 9);
+        $cibleGlucides = $caloriesRestantes / 4;
+
+        // Arrondir
+        $cibleCalories = round($cibleCalories);
+        $cibleProteines = round($cibleProteines);
+        $cibleGlucides = round($cibleGlucides);
+        $cibleLipides = round($cibleLipides);
+    }
+
+    // Pourcentage de l'objectif calorique atteint (capé à 100)
+    $percentCalories = $cibleCalories > 0 ? round(min(100, ($totalCaloriesConsommees / $cibleCalories) * 100)) : 0;
+
+    // Calcul d'un score nutritionnel réaliste
+    // On compare consommé vs cible pour calories et macronutriments et on combine
+    function _comp_score($cons, $target) {
+        if ($target <= 0) return ($cons <= 0) ? 1 : 0;
+        $diff = abs($cons - $target) / $target; // fraction d'écart
+        $score = max(0, 1 - $diff); // 1 parfait, 0 mauvais
+        return $score;
+    }
+
+    $w_cal = 0.4; $w_prot = 0.25; $w_glu = 0.2; $w_lip = 0.15;
+    $comp_cal = _comp_score($totalCaloriesConsommees, $cibleCalories);
+    $comp_prot = _comp_score($totalProteinesConsommees, $cibleProteines);
+    $comp_glu = _comp_score($totalGlucidesConsommees, $cibleGlucides);
+    $comp_lip = _comp_score($totalLipidesConsommees, $cibleLipides);
+    $nutritionScore = round(100 * ($w_cal * $comp_cal + $w_prot * $comp_prot + $w_glu * $comp_glu + $w_lip * $comp_lip));
+    if ($nutritionScore < 0) $nutritionScore = 0;
+    if ($nutritionScore > 100) $nutritionScore = 100;
 
     if (!$objectifActif) {
         $objectifsUtilisateur = array_values(array_filter(Objectif::liste(), function ($objectif) use ($id_utilisateur_connecte) {
@@ -225,7 +292,39 @@
                         <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;"><?php echo htmlspecialchars(formatDateFrLong($latestJournal['date_journal'])); ?></span>
                         <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;"><?php echo htmlspecialchars($latestJournal['poids_actuel']); ?> kg</span>
                         <span class="badge white" style="border: 1px solid #e2e8f0; font-weight: 600;"> <?php echo htmlspecialchars(!empty($latestJournal['heures_sommeil']) ? ($latestJournal['heures_sommeil'] . ' h') : '-'); ?></span>
-                        <span class="badge" style="background:#f3f4f6; font-weight:600; padding:0.35rem 0.6rem; border-radius:12px;"><?php echo htmlspecialchars(ucfirst($latestJournal['humeur'] ?? '-')); ?></span>
+                        <?php
+$humeur = $latestJournal['humeur'] ?? '';
+
+switch ($humeur) {
+     case 'Excellent':
+        $humeurLabel = '🤩 Excellent';
+        $humeurClass = 'badge-humeur-excellent';
+        break;
+    case 'Bien':
+        $humeurLabel = '🙂 Bien';
+        $humeurClass = 'badge-humeur-bien';
+        break;
+    case 'Neutre':
+        $humeurLabel = '😐 Neutre';
+        $humeurClass = 'badge-humeur-neutre';
+        break;
+    case 'Fatigué':
+        $humeurLabel = '😴 Fatigué(e)';
+        $humeurClass = 'badge-humeur-fatigue';
+        break;
+    case 'Stressé':
+        $humeurLabel = '😰 Stressé(e)';
+        $humeurClass = 'badge-humeur-stresse';
+        break;
+    default:
+        $humeurLabel = '-';
+        $humeurClass = '';
+}
+?>
+                        <span class="badge <?php echo $humeurClass; ?>" 
+      style="font-weight:600; padding:0.35rem 0.6rem; border-radius:12px;">
+    <?php echo htmlspecialchars($humeurLabel); ?>
+</span>
                         <span class="badge green-light">Journal Actif</span>
                     <?php else: ?>
                         <span class="date-badge" style="font-size: 1.1rem; font-weight: 600;">Aucun journal</span>
@@ -263,21 +362,21 @@
                 <div class="card-header">
                     <h2>Total Calorique</h2>
                     <?php if ($objectifActif): ?>
-                        <span class="badge yellow">Objectif : 2000 kcal</span>
+                        <span class="badge yellow">Objectif : <?php echo htmlspecialchars($cibleCalories); ?> kcal</span>
                     <?php endif; ?>
                 </div>
                 <div class="progress-content">
                     <?php if ($objectifActif): ?>
                     <div class="circle-chart">
                         <div class="circle-inner">
-                            <span class="percentage">75%</span>
+                            <span class="percentage"><?php echo htmlspecialchars($percentCalories); ?>%</span>
                             <span class="label">Complete</span>
                         </div>
                     </div>
                     <div class="macros-summary">
-                        <div class="macro-item"><span class="dot blue"></span> Glucides <span>150g / 200g</span></div>
-                        <div class="macro-item"><span class="dot yellow"></span> Proteines <span>90g / 120g</span></div>
-                        <div class="macro-item"><span class="dot green"></span> Lipides <span>45g / 65g</span></div>
+                        <div class="macro-item"><span class="dot blue"></span> Glucides <span><?php echo htmlspecialchars(round($totalGlucidesConsommees)); ?>g / <?php echo htmlspecialchars($cibleGlucides); ?>g</span></div>
+                        <div class="macro-item"><span class="dot yellow"></span> Proteines <span><?php echo htmlspecialchars(round($totalProteinesConsommees)); ?>g / <?php echo htmlspecialchars($cibleProteines); ?>g</span></div>
+                        <div class="macro-item"><span class="dot green"></span> Lipides <span><?php echo htmlspecialchars(round($totalLipidesConsommees)); ?>g / <?php echo htmlspecialchars($cibleLipides); ?>g</span></div>
                     </div>
                     <?php else: ?>
                     <div style="padding: 1.5rem 0; color: var(--text-gray);">
@@ -295,14 +394,29 @@
                 </div>
                 <div class="health-content">
                     <?php if ($objectifActif): ?>
+                    <?php
+if ($nutritionScore >= 85) {
+    $scoreLabel = 'Très équilibré';
+    $badgeClass = 'badge-nutrition-green';
+} elseif ($nutritionScore >= 70) {
+    $scoreLabel = 'Équilibré';
+    $badgeClass = 'badge-nutrition-light-green';
+} elseif ($nutritionScore >= 50) {
+    $scoreLabel = 'Moyen';
+    $badgeClass = 'badge-nutrition-orange';
+} else {
+    $scoreLabel = 'À améliorer';
+    $badgeClass = 'badge-nutrition-red';
+}
+?>
                     <div class="score-display">
-                        <span class="score-number">82%</span>
-                        <span class="badge white">Tres Equilibre</span>
+                        <span class="score-number"><?php echo htmlspecialchars($nutritionScore); ?>%</span>
+                        <span class="badge <?php echo $badgeClass; ?>"><?php echo htmlspecialchars($scoreLabel); ?></span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: 82%;"></div>
+                        <div class="progress-bar" style="width: <?php echo htmlspecialchars($nutritionScore); ?>%;"></div>
                     </div>
-                    <p class="encouragement">Continue comme ca pour atteindre ton objectif !</p>
+                    <p class="encouragement"><?php echo ($nutritionScore >= 50) ? 'Continue comme ça pour atteindre ton objectif !' : 'Ajustez vos apports pour se rapprocher de vos cibles.'; ?></p>
                     <?php else: ?>
                     <div style="padding: 1.5rem 0; color: #1f2937;">
                         <p style="margin: 0 0 0.75rem; font-weight: 600;">Score nutritionnel indisponible.</p>
