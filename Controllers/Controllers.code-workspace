@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Models"
+		},
+		{
+			"path": "../Views"
+		},
+		{
+			"path": "../xpdf"
+		}
+	]
+}
