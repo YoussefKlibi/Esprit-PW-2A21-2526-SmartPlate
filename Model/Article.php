@@ -43,6 +43,18 @@ class Article
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function search(string $keyword, bool $publishedOnly = true): array
+    {
+        $keyword = '%' . $keyword . '%';
+        if ($publishedOnly) {
+            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at FROM articles WHERE name LIKE ? AND status = 1 ORDER BY created_at DESC');
+        } else {
+            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, status FROM articles WHERE name LIKE ? ORDER BY created_at DESC');
+        }
+        $stmt->execute([$keyword]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function update(int $id, array $data): bool
     {
         $validated = $this->validateArticleData($data, true);
@@ -101,9 +113,6 @@ class Article
 
         if (array_key_exists('image_url', $data)) {
             $image_url = trim($data['image_url'] ?? '');
-            if ($image_url !== '' && !filter_var($image_url, FILTER_VALIDATE_URL)) {
-                throw new InvalidArgumentException('Image URL is not a valid URL.');
-            }
             $validated['image_url'] = $image_url;
         } elseif (!$isUpdate) {
             $validated['image_url'] = '';
@@ -143,5 +152,4 @@ class Article
         return $validated;
     }
 }
-
 ?>

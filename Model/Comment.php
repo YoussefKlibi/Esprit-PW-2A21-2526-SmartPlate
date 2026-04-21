@@ -67,6 +67,20 @@ class Comment
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
     }
-}
 
+    /**
+     * Get comment counts per article (for statistics).
+     */
+    public function countByArticle(): array
+    {
+        $sql = 'SELECT a.id, a.name, COUNT(c.id) AS comment_count 
+                FROM articles a 
+                LEFT JOIN comments c ON c.article_id = a.id 
+                WHERE a.status = 1 
+                GROUP BY a.id, a.name 
+                ORDER BY comment_count DESC';
+        $stmt = $this->pdo->query($sql);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+}
 ?>

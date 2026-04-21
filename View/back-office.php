@@ -5,6 +5,7 @@
     <title>Admin - Gestion du Blog Smart Plate</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/template-backoffice.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -88,6 +89,16 @@
                     <p style="padding: 15px;">Chargement des commentaires...</p>
                 </div>
             </div>
+
+            <!-- STATISTIQUES: Commentaires par article -->
+            <div class="card" style="grid-column: span 2; margin-top: 16px;">
+                <div class="card-header">
+                    <h2>📊 Statistiques — Commentaires par article</h2>
+                </div>
+                <div style="padding: 20px; position: relative; height: 350px;">
+                    <canvas id="chart-comments-by-article"></canvas>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -107,39 +118,53 @@
         <div class="card" id="article-form-card" style="margin-top:16px; display: none;">
             <div class="card-header"><h2 id="article-form-title">Créer un article</h2></div>
             <div style="padding:16px;">
-                <form id="manage-article-form" action="article_controller.php" method="post" novalidate>
+                <form id="manage-article-form" action="index.php?controller=article" method="post" enctype="multipart/form-data" novalidate>
                     <input type="hidden" name="id" id="form-article-id" value="">
                     <input type="hidden" name="action" id="form-article-action" value="create">
                     
                     <div class="form-group">
                         <input type="text" name="name" id="form-article-name" placeholder="Nom de l'article" style="width:100%; padding:8px;">
+                        <div id="error-article-name"></div>
                     </div>
                     <div class="form-group" style="margin-top:8px;">
                         <input type="text" name="type" id="form-article-type" placeholder="Type (ex: Veggie, Viande, etc.)" style="width:100%; padding:8px;">
+                        <div id="error-article-type"></div>
                     </div>
                     <div class="form-group" style="margin-top:8px;">
-                        <input type="text" name="image_url" id="form-article-image" placeholder="URL de l'image" style="width:100%; padding:8px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 0.9rem;">Image de l'article</label>
+                        <div id="image-preview-container" style="display: none; margin-bottom: 8px; position: relative; width: fit-content;">
+                            <img id="image-preview" src="" style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 2px solid #e2e8f0; object-fit: cover;">
+                            <button type="button" id="btn-remove-image" style="position: absolute; top: -8px; right: -8px; background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                        </div>
+                        <input type="file" name="image" id="form-article-image" accept="image/jpeg,image/png,image/gif,image/webp" style="width:100%; padding:8px; border: 2px dashed #e2e8f0; border-radius: 8px; cursor: pointer;">
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Formats acceptés : JPG, PNG, GIF, WEBP (max 5 Mo)</div>
                     </div>
                     <div class="form-group" style="margin-top:8px;">
                         <input type="text" name="author" id="form-article-author" placeholder="Auteur" style="width:100%; padding:8px;" value="Admin">
                     </div>
                     <div class="form-group" style="margin-top:8px;">
                         <textarea name="content" id="form-article-content" rows="6" placeholder="Contenu" style="width:100%; padding:8px;"></textarea>
+                        <div id="error-article-content"></div>
                     </div>
                     <div style="margin-top:8px;">
                         <label><input type="checkbox" name="status" id="form-article-status" value="1" checked> Publier maintenant</label>
                     </div>
+                    <div id="article-form-error" style="margin-top: 4px;"></div>
                     <div style="margin-top:12px; display: flex; gap: 10px;">
                         <button type="submit" class="btn-action" style="background:#20c997">Enregistrer</button>
-                        <button type="button" class="btn-action" style="background:#95a5a6" onclick="toggleArticleForm()">Annuler</button>
+                        <button type="button" id="btn-cancel-article" class="btn-action" style="background:#95a5a6">Annuler</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <div class="card" style="margin-top: 16px;">
-            <div class="card-header">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <h2>Articles publiés et brouillons</h2>
+                <div style="position: relative; width: 300px;">
+                    <input type="text" id="search-articles" placeholder="🔍 Rechercher par nom..." 
+                        style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s ease, box-shadow 0.2s ease; outline: none; background: #fff;">
+                </div>
             </div>
             <div style="overflow-x: auto; padding: 15px;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -211,6 +236,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }); 
     }
 
+    // Inline error message helper — replaces all alert() popups
+    function showInlineError(containerId, message, duration) {
+        duration = duration || 5000;
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-left: 4px solid #e74c3c; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; margin-top: 8px; animation: fadeInUp 0.3s ease-out; display: flex; align-items: center; gap: 8px;"><span style="font-size: 1.1rem;">⚠️</span><span>' + escapeHtml(message) + '</span></div>';
+        if (duration > 0) {
+            setTimeout(function() {
+                if (container) container.innerHTML = '';
+            }, duration);
+        }
+    }
+
+    function clearInlineError(containerId) {
+        var container = document.getElementById(containerId);
+        if (container) container.innerHTML = '';
+    }
+
     // track current view
     window.currentAdminView = 'dashboard';
 
@@ -265,26 +308,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function loadAdminDashboard() {
+    function loadAdminDashboard(keyword) {
         // Fetch all articles
-        fetch('article_controller.php?action=list&all=1')
+        var articleUrl = 'index.php?controller=article&action=list&all=1';
+        if (keyword && keyword.trim() !== '') {
+            articleUrl = 'index.php?controller=article&action=search&keyword=' + encodeURIComponent(keyword.trim()) + '&all=1';
+        }
+        fetch(articleUrl)
             .then(res => res.json())
             .then(articles => {
                 if (articles.error) throw new Error(articles.error);
 
-                // Update Article KPI (total)
-                document.getElementById('kpi-articles').textContent = articles.length || 0;
-
-                // Update Drafts KPI
-                const draftsCount = (articles.filter ? articles.filter(a => a.status == 0).length : 0);
-                const kpiDraftsEl = document.getElementById('kpi-drafts');
-                if (kpiDraftsEl) kpiDraftsEl.textContent = draftsCount || 0;
+                // Only update KPIs when not searching (full load)
+                if (!keyword || keyword.trim() === '') {
+                    document.getElementById('kpi-articles').textContent = articles.length || 0;
+                    const draftsCount = (articles.filter ? articles.filter(a => a.status == 0).length : 0);
+                    const kpiDraftsEl = document.getElementById('kpi-drafts');
+                    if (kpiDraftsEl) kpiDraftsEl.textContent = draftsCount || 0;
+                }
 
                 const articlesContainer = document.getElementById('admin-articles-list');
                 articlesContainer.innerHTML = '';
 
                 if (!articles.length) {
-                    articlesContainer.innerHTML = '<tr><td colspan="8" style="padding: 15px;">Aucun article trouvé.</td></tr>';
+                    if (keyword && keyword.trim() !== '') {
+                        articlesContainer.innerHTML = '<tr><td colspan="8" style="padding: 30px; text-align: center; color: #94a3b8;">🔍 Aucun article trouvé pour "<strong>' + escapeHtml(keyword) + '</strong>"</td></tr>';
+                    } else {
+                        articlesContainer.innerHTML = '<tr><td colspan="8" style="padding: 15px;">Aucun article trouvé.</td></tr>';
+                    }
                 } else {
                     let listHtml = '';
                     articles.forEach(a => {
@@ -329,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error("Erreur chargement articles:", err));
 
         // Fetch all comments and display them (pending first) with actions
-        fetch('comment_controller.php?action=list&all=1')
+        fetch('index.php?controller=comment&action=list&all=1')
             .then(res => res.json())
             .then(comments => {
                 if (comments.error) throw new Error(comments.error);
@@ -376,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load drafts-only view
     function loadDraftsView() {
-        fetch('article_controller.php?action=list&all=1')
+        fetch('index.php?controller=article&action=list&all=1')
             .then(r => r.json())
             .then(articles => {
                 if (articles.error) throw new Error(articles.error);
@@ -406,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td style="padding: 15px;">${date}</td>
                         <td style="padding: 15px; text-align: right;">
                             <button class="btn-action" style="background: #3498db; margin-right: 5px; padding: 5px 10px;" onclick="editArticle(${a.id}, '${encodedName}', '${encodedType}', '${encodedImage}', '${encodedAuthor}', '${encodedContent}', ${a.status})">Modifier</button>
-                            <button class="btn-action" style="background: #2ecc71; margin-right: 5px; padding: 5px 10px;" onclick="(function(){ if(confirm('Publier cet article ?')) { const fd=new FormData(); fd.append('action','update'); fd.append('id', ${a.id}); fd.append('status', 1); fetch('article_controller.php',{method:'POST', body: fd}).then(()=> loadDraftsView()); } })()">Publier</button>
+                            <button class="btn-action" style="background: #2ecc71; margin-right: 5px; padding: 5px 10px;" onclick="(function(){ if(confirm('Publier cet article ?')) { const fd=new FormData(); fd.append('action','update'); fd.append('id', ${a.id}); fd.append('status', 1); fetch('index.php?controller=article',{method:'POST', body: fd}).then(()=> loadDraftsView()); } })()">Publier</button>
                             <button class="btn-action" style="background: #e74c3c; padding: 5px 10px;" onclick="deleteArticle(${a.id})">Supprimer</button>
                         </td>
                     </tr>
@@ -430,6 +481,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('form-article-action').value = 'create';
             document.getElementById('form-article-id').value = '';
             document.getElementById('article-form-title').innerText = 'Créer un article';
+            // Reset image preview
+            document.getElementById('image-preview-container').style.display = 'none';
+            document.getElementById('image-preview').src = '';
         }
     };
 
@@ -438,11 +492,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('form-article-action').value = 'update';
         document.getElementById('form-article-name').value = name;
         document.getElementById('form-article-type').value = type;
-        document.getElementById('form-article-image').value = image;
         document.getElementById('form-article-author').value = author;
         document.getElementById('form-article-content').value = content;
         document.getElementById('form-article-status').checked = (status == 1);
         document.getElementById('article-form-title').innerText = 'Modifier l\'article #' + id;
+
+        // Show current image preview if exists
+        var previewContainer = document.getElementById('image-preview-container');
+        var previewImg = document.getElementById('image-preview');
+        if (image && image !== '') {
+            previewImg.src = image;
+            previewContainer.style.display = 'block';
+        } else {
+            previewContainer.style.display = 'none';
+            previewImg.src = '';
+        }
+        // Reset file input
+        document.getElementById('form-article-image').value = '';
 
         toggleArticleForm(true);
     };
@@ -452,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fd = new FormData();
         fd.append('action', 'delete');
         fd.append('id', id);
-        fetch('article_controller.php', { method: 'POST', body: fd })
+        fetch('index.php?controller=article', { method: 'POST', body: fd })
             .then(r => r.json()).then(() => {
                 if (window.currentAdminView === 'drafts') loadDraftsView(); else loadAdminDashboard();
             });
@@ -466,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.style.display = 'table-row';
             container.innerHTML = '<p style="color: #666; font-style: italic;">Chargement des commentaires...</p>';
             
-            fetch('comment_controller.php?action=list&all=1&article_id=' + articleId)
+            fetch('index.php?controller=comment&action=list&all=1&article_id=' + articleId)
                 .then(r => r.json())
                 .then(comments => {
                     if (comments.error) throw new Error(comments.error);
@@ -528,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fd = new FormData();
         fd.append('action', 'delete');
         fd.append('id', commentId);
-        fetch('comment_controller.php', { method: 'POST', body: fd })
+        fetch('index.php?controller=comment', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(() => {
                 // Refresh both the dashboard stats and the specific opened view
@@ -543,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fd.append('action', 'update');
         fd.append('id', id);
         fd.append('status', status);
-        fetch('comment_controller.php', { method: 'POST', body: fd })
+        fetch('index.php?controller=comment', { method: 'POST', body: fd })
             .then(r => r.json()).then(() => loadAdminDashboard());
     };
 
@@ -552,40 +618,241 @@ document.addEventListener('DOMContentLoaded', function() {
         const fd = new FormData();
         fd.append('action', 'delete');
         fd.append('id', id);
-        fetch('comment_controller.php', { method: 'POST', body: fd })
+        fetch('index.php?controller=comment', { method: 'POST', body: fd })
             .then(r => r.json()).then(() => loadAdminDashboard());
     };
 
-    // Form interception to reload after adding article
+    // Form interception — validation for both CREATE and UPDATE
     const articleForm = document.getElementById('manage-article-form');
     if(articleForm) {
+        // Image file preview
+        var imageInput = document.getElementById('form-article-image');
+        var previewContainer = document.getElementById('image-preview-container');
+        var previewImg = document.getElementById('image-preview');
+        var btnRemoveImage = document.getElementById('btn-remove-image');
+
+        imageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        btnRemoveImage.addEventListener('click', function() {
+            imageInput.value = '';
+            previewImg.src = '';
+            previewContainer.style.display = 'none';
+        });
+        // Clear error on typing (JS) — each field clears its own error
+        var fieldErrorMap = {
+            'form-article-name': 'error-article-name',
+            'form-article-type': 'error-article-type',
+            'form-article-content': 'error-article-content'
+        };
+        Object.keys(fieldErrorMap).forEach(function(fieldId) {
+            var el = document.getElementById(fieldId);
+            if (el) {
+                el.addEventListener('input', function() {
+                    clearInlineError(fieldErrorMap[fieldId]);
+                });
+            }
+        });
+
+        // Cancel button (JS, not HTML onclick)
+        var btnCancel = document.getElementById('btn-cancel-article');
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function() {
+                toggleArticleForm();
+            });
+        }
+
+        // Submit: validation works for BOTH create AND update
         articleForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            // Clear all field errors
+            clearInlineError('error-article-name');
+            clearInlineError('error-article-type');
+            clearInlineError('error-article-content');
+            clearInlineError('article-form-error');
+
+            var action = document.getElementById('form-article-action').value;
+            var name = document.getElementById('form-article-name').value.trim();
+            var type = document.getElementById('form-article-type').value.trim();
+            var content = document.getElementById('form-article-content').value.trim();
+
+            // Validation: chaque erreur sous son champ
+            var hasError = false;
+            if (!name) {
+                showInlineError('error-article-name', 'Le nom de l\'article est obligatoire.', 0);
+                if (!hasError) document.getElementById('form-article-name').focus();
+                hasError = true;
+            }
+            if (!type) {
+                showInlineError('error-article-type', 'Le type de l\'article est obligatoire.', 0);
+                if (!hasError) document.getElementById('form-article-type').focus();
+                hasError = true;
+            }
+            if (!content) {
+                showInlineError('error-article-content', 'Le contenu de l\'article est obligatoire.', 0);
+                if (!hasError) document.getElementById('form-article-content').focus();
+                hasError = true;
+            }
+            if (hasError) return;
+
             const fd = new FormData(articleForm);
             
-            // If checkbox is unchecked, FormData won't send it, so let's default to 0
             if (!document.getElementById('form-article-status').checked) {
                 fd.append('status', '0');
             }
             
-            fetch('article_controller.php', { method: 'POST', body: fd })
+            fetch('index.php?controller=article', { method: 'POST', body: fd })
                 .then(r => r.json())
                 .then(res => {
                     if(res.success) {
                         articleForm.reset();
                         document.getElementById('form-article-action').value = 'create';
                         document.getElementById('form-article-id').value = '';
+                        document.getElementById('article-form-title').innerText = 'Créer un article';
                         document.getElementById('article-form-card').style.display = 'none';
+                        clearInlineError('error-article-name');
+                        clearInlineError('error-article-type');
+                        clearInlineError('error-article-content');
+                        clearInlineError('article-form-error');
                         loadAdminDashboard();
                     } else {
-                        alert(res.error || 'Erreur');
+                        showInlineError('article-form-error', res.error || 'Erreur lors de l\'enregistrement.', 0);
                     }
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    showInlineError('article-form-error', 'Erreur réseau. Veuillez réessayer.');
                 });
         });
     }
 
     // Initial load
     loadAdminDashboard();
+
+    // Search bar — debounce
+    var searchTimer = null;
+    var searchInput = document.getElementById('search-articles');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            var val = this.value;
+            searchTimer = setTimeout(function() {
+                loadAdminDashboard(val);
+            }, 300);
+        });
+        searchInput.addEventListener('focus', function() {
+            this.style.borderColor = '#20c997';
+            this.style.boxShadow = '0 0 0 3px rgba(32, 201, 151, 0.15)';
+        });
+        searchInput.addEventListener('blur', function() {
+            this.style.borderColor = '#e2e8f0';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // ===== CHART: Commentaires par article =====
+    var commentChart = null;
+    function loadCommentStats() {
+        fetch('index.php?controller=comment&action=stats')
+            .then(r => r.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) return;
+
+                var labels = data.map(d => d.name.length > 20 ? d.name.substring(0, 20) + '...' : d.name);
+                var counts = data.map(d => parseInt(d.comment_count));
+
+                // Gradient colors
+                var colors = [
+                    'rgba(32, 201, 151, 0.8)',
+                    'rgba(52, 152, 219, 0.8)',
+                    'rgba(155, 89, 182, 0.8)',
+                    'rgba(241, 196, 15, 0.8)',
+                    'rgba(231, 76, 60, 0.8)',
+                    'rgba(46, 204, 113, 0.8)',
+                    'rgba(26, 188, 156, 0.8)',
+                    'rgba(52, 73, 94, 0.8)'
+                ];
+                var bgColors = counts.map(function(_, i) { return colors[i % colors.length]; });
+                var borderColors = bgColors.map(function(c) { return c.replace('0.8', '1'); });
+
+                var ctx = document.getElementById('chart-comments-by-article');
+                if (!ctx) return;
+
+                if (commentChart) commentChart.destroy();
+
+                commentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Nombre de commentaires',
+                            data: counts,
+                            backgroundColor: bgColors,
+                            borderColor: borderColors,
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleFont: { size: 13 },
+                                bodyFont: { size: 12 },
+                                padding: 12,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    title: function(items) {
+                                        return data[items[0].dataIndex].name;
+                                    },
+                                    label: function(item) {
+                                        return item.raw + ' commentaire' + (item.raw > 1 ? 's' : '');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: { size: 12 },
+                                    color: '#64748b'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: { size: 11 },
+                                    color: '#64748b',
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(err => console.error('Erreur stats:', err));
+    }
+
+    // Load chart on dashboard load
+    loadCommentStats();
 });
 </script>
 
