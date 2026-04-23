@@ -797,5 +797,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     })();
+
+    function toggleNotifTime() {
+    const checkbox = document.getElementById('checkNotif');
+    const timeGroup = document.getElementById('timeInputGroup');
+    
+    if (checkbox.checked) {
+        timeGroup.style.display = 'block'; // On affiche
+        timeGroup.style.animation = 'fadeInDown 0.3s ease-out';
+    } else {
+        timeGroup.style.display = 'none'; // On cache
+    }
+}
     
     

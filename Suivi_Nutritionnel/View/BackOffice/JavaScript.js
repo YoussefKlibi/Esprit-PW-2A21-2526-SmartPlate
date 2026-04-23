@@ -399,3 +399,108 @@ function openRepasEdit(btn) {
 
     setTimeout(function() { section.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
 }
+
+//objectif search
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('searchId');
+    const tbody = document.querySelector('.admin-table tbody');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value;
+
+            // Appel AJAX vers le contrôleur
+            fetch(`../../Controller/ObjectifController.php?action=search&term=${encodeURIComponent(term)}`)
+                .then(response => response.json())
+                .then(data => {
+                    // On vide le contenu actuel du tableau
+                    tbody.innerHTML = '';
+
+                    // S'il n'y a aucun résultat
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="padding: 20px; text-align: center; color: #666;">Aucun objectif trouvé pour cette recherche.</td></tr>';
+                        return;
+                    }
+
+                    // On reconstruit les lignes pour chaque résultat trouvé
+                    data.forEach(obj => {
+                        // Formatage des dates au format JJ/MM/AAAA pour correspondre à ton affichage PHP
+                        const dateDebut = new Date(obj.date_debut).toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                        const dateFin = obj.date_fin ? new Date(obj.date_fin).toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '---';
+                        
+                        const idUser = obj.id_utilisateur ? obj.id_utilisateur : 'Inconnu';
+
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid #eee';
+                        
+                        // On réinjecte exactement le même HTML que ton PHP
+                        tr.innerHTML = `
+                            <td style="padding: 10px;">#${obj.id_objectif}</td>
+                            <td style="padding: 10px;"><strong>Utilisateur #${idUser}</strong></td>
+                            <td style="padding: 10px;">${obj.type_objectif}</td>
+                            <td style="padding: 10px;">${obj.poids_cible} kg</td>
+                            <td style="padding: 10px; font-size: 0.9rem; color: #666;">${dateDebut}</td>
+                            <td style="padding: 10px; font-size: 0.9rem; color: #666;">${dateFin}</td>
+                            <td style="padding: 10px;"><span class="badge yellow">${obj.statut}</span></td>
+                            <td style="padding: 10px; display: flex; gap: 8px; align-items: center;">
+                                <button type="button" class="btn-action" 
+                                    onclick="openEditForm('${obj.id_objectif}', '${obj.id_utilisateur}', '${obj.type_objectif}', '${obj.poids_cible}', '${obj.date_debut}', '${obj.date_fin}', '${obj.statut}')">
+                                    ✏️Editer
+                                </button>
+                                <a href="../../Controller/ObjectifController.php?action=delete&id=${obj.id_objectif}" 
+                                   style="color: white; text-decoration: none;" 
+                                   class="btn-action btn-danger-outline" 
+                                   onclick="return confirm('Supprimer cet objectif ?');">
+                                   🗑️ Suppr.
+                                </a>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la recherche:', error);
+                });
+        });
+    }
+});
+
+//statistiques objectifs
+document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('objectifsChart');
+        
+        if (ctx) {
+            // Récupération des données depuis les attributs data-* du canvas
+            const dataEncours = parseInt(ctx.getAttribute('data-encours')) || 0;
+            const dataAtteint = parseInt(ctx.getAttribute('data-atteint')) || 0;
+            const dataAbandonne = parseInt(ctx.getAttribute('data-abandonne')) || 0;
+
+            // Vérification si toutes les données sont à zéro
+            if (dataEncours === 0 && dataAtteint === 0 && dataAbandonne === 0) {
+                console.warn("Aucune donnée d'objectif à afficher.");
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['En cours', 'Atteints', 'Abandonnés'],
+                    datasets: [{
+                        data: [dataEncours, dataAtteint, dataAbandonne],
+                        backgroundColor: ['#3498db', '#20c997', '#e74c3c'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+    });

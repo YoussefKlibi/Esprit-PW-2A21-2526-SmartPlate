@@ -2,21 +2,14 @@
 include_once '../../Controller/JournalController.php';
 require_once __DIR__ . '/../../Model/Repas_Class.php';
 
-$listeJournaux = Journal::liste();
+// Gestion du tri : Date par défaut
+    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'date';
+    $listeJournaux = Journal::trier($sort);
 
-$listeRepas = [];
-if (!empty($listeJournaux)) {
-    foreach ($listeJournaux as $j) {
-        $r = Repas::listeParJournal($j['id_journal']);
-        if ($r && count($r) > 0) {
-            foreach ($r as $rep) {
-                $rep['id_utilisateur'] = $j['id_utilisateur'];
-                $rep['date_journal'] = $j['date_journal'];
-                $listeRepas[] = $rep;
-            }
-        }
-    }
-}
+    // 2. NOUVEAU : Tri des Repas (2ème tableau)
+    $sort_repas = isset($_GET['sort_repas']) ? $_GET['sort_repas'] : 'date';
+    $listeRepas = Repas::trierTousLesRepas($sort_repas);
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -117,9 +110,18 @@ if (!empty($listeJournaux)) {
         <div class="card full-width-card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: var(--shadow);">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>Historique des journaux</h2>
-                <input type="text" id="searchJournalId" placeholder="🔍 Rechercher par ID..."
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <input type="text" id="searchJournalId" placeholder="🔍 Rechercher par ID..."
                     style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ccc; width: 250px; font-family: inherit;">
                 <button type="button" onclick="openAddForm()" class="btn-main" style="background: var(--admin-green); color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">+ Nouveau Journal</button>
+                <form method="GET" action="admin_journaux.php" style="margin: 0;">
+                    <label style="font-weight: 600; margin-right: 8px;">Trier par :</label>
+                    <select name="sort" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer;">
+                        <option value="date" <?php echo ($sort == 'date') ? 'selected' : ''; ?>>📅 Date (Récent)</option>
+                        <option value="poids" <?php echo ($sort == 'poids') ? 'selected' : ''; ?>>⚖️ Poids saisi (Max)</option>
+                    </select>
+                </form>
+            </div>
             </div>
 
             <table id="journauxTable" class="admin-table" style="width: 100%; text-align: left; border-collapse: collapse;">
@@ -264,6 +266,15 @@ if (!empty($listeJournaux)) {
                 <h2>Historique des repas</h2>
                 <input type="text" id="searchRepasId" placeholder="🔍 Rechercher par ID..."
                     style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ccc; width: 250px; font-family: inherit;">
+                    <form method="GET" action="admin_journaux.php" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort); ?>">
+                
+                <label style="font-weight: 600;">Trier repas par :</label>
+                <select name="sort_repas" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+                    <option value="date" <?php echo ($sort_repas == 'date') ? 'selected' : ''; ?>>📅 Date du journal</option>
+                    <option value="quantite" <?php echo ($sort_repas == 'quantite') ? 'selected' : ''; ?>>⚖️ Quantité (Plus élevée)</option>
+                </select>
+            </form>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button type="button" id="btnShowAllRepas" onclick="showAllRepas()" class="btn-secondary" style="display:none; background:#f1f5f9; color:#111; padding:8px 12px; border:1px solid #e2e8f0; border-radius:5px;">Afficher tous les repas</button>
                     <button type="button" onclick="openAddRepasForm()" class="btn-main" style="background: var(--admin-green); color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">+ Nouveau Repas</button>

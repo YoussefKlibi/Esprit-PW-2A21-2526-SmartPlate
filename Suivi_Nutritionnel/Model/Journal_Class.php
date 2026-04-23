@@ -283,5 +283,90 @@ class Journal {
             die('Erreur lors de la mise à jour : ' . $e->getMessage());
         }
     }
+
+    // --- AJOUTER DANS Model/Journal_Class.php ---
+
+    public static function countAnomalies() {
+        $db = Config::getConnexion();
+        $sql = "SELECT COUNT(*) AS c FROM (
+                    SELECT j.id_journal
+                    FROM journal_alimentaire j
+                    LEFT JOIN repas r ON r.id_journal = j.id_journal
+                    GROUP BY j.id_journal
+                    HAVING COUNT(r.id_repas) = 0 OR COALESCE(SUM(r.nbre_calories),0) >= 4500
+               ) x";
+        try {
+            return (int)$db->query($sql)->fetch()['c'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public static function getActivityLastDays() {
+        $db = Config::getConnexion();
+        $sql = "SELECT j.date_journal AS d, COUNT(*) AS c
+                FROM journal_alimentaire j
+                WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
+                GROUP BY j.date_journal
+                ORDER BY j.date_journal ASC";
+        
+        $journalCounts = [];
+        // On initialise les 5 derniers jours à 0
+        for ($i = 4; $i >= 0; $i--) {
+            $day = (new DateTime())->sub(new DateInterval('P' . $i . 'D'))->format('Y-m-d');
+            $journalCounts[$day] = 0;
+        }
+
+        try {
+            $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as $r) {
+                $journalCounts[$r['d']] = (int)$r['c'];
+            }
+        } catch (Exception $e) {}
+        
+        return $journalCounts;
+    }
+
+    public static function getEmptyJournalAlerts() {
+        $db = Config::getConnexion();
+        $sql = "SELECT
+                    'Journal Vide' AS type_alerte,
+                    CONCAT('Journal ID #', j.id_journal, ' validé sans aucun repas.') AS description,
+                    CONCAT(j.date_journal, ' 00:00:00') AS dt,
+                    j.id_journal AS entity_id
+                FROM journal_alimentaire j
+                LEFT JOIN repas r ON r.id_journal = j.id_journal
+                GROUP BY j.id_journal
+                HAVING COUNT(r.id_repas) = 0
+                ORDER BY j.date_journal DESC
+                LIMIT 3";
+        try {
+            return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // --- METHODE : TRIER (Read / Sort) ---
+    public static function trier($critere) {
+        $db = Config::getConnexion();
+        
+        // Définition des tris autorisés
+        $tris_autorises = [
+            'poids' => 'poids_actuel DESC', 
+            'date' => 'date_journal DESC'
+        ];
+        
+        // Par défaut, on trie par date si le critère n'est pas reconnu
+        $orderBy = isset($tris_autorises[$critere]) ? $tris_autorises[$critere] : 'date_journal DESC';
+        
+        $sql = "SELECT * FROM journal_alimentaire ORDER BY " . $orderBy;
+        
+        try {
+            return $db->query($sql)->fetchAll();
+        } catch (Exception $e) {
+            die('Erreur lors du tri des journaux : ' . $e->getMessage());
+        }
+    }
 }
 ?>

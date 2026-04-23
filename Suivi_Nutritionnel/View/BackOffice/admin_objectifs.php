@@ -1,7 +1,13 @@
 <?php
     // 1. Connexion et récupération des données
     include_once '../../Controller/ObjectifController.php'; 
-    $listeObjectifsTousUtilisateurs = Objectif::liste();
+    
+    // NOUVEAU : On vérifie si un tri a été sélectionné dans l'URL
+    if (isset($_GET['sort']) && !empty($_GET['sort'])) {
+        $listeObjectifsTousUtilisateurs = Objectif::trier($_GET['sort']);
+    } else {
+        $listeObjectifsTousUtilisateurs = Objectif::liste();
+    }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -79,8 +85,8 @@
     <label for="statut" style="display: block; margin-bottom: 5px; font-weight: 500;">Statut</label>
     <select id="statut" name="statut" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
         <option value="en_cours">En cours</option>
-        <option value="Atteint">Atteint</option>
-        <option value="Abandonné">Abandonné</option>
+        <option value="atteint">Atteint</option>
+        <option value="abandonne">Abandonné</option>
     </select>
 </div>
                     </div>
@@ -96,8 +102,18 @@
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>Liste globale</h2>
                 
-                <input type="text" id="searchId" placeholder="🔍 Rechercher par ID..." 
-                       style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ccc; width: 250px; font-family: inherit;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <input type="text" id="searchId" placeholder="🔍 Rechercher par ID..." 
+                           style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ccc; width: 250px; font-family: inherit;">
+                    
+                    <form method="GET" action="admin_objectifs.php" style="margin: 0;">
+                        <select name="sort" onchange="this.form.submit()" style="padding: 8px 15px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; cursor: pointer; background-color: #f9f9f9;">
+                            <option value="">↕️ Trier par...</option>
+                            <option value="statut" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'statut') ? 'selected' : ''; ?>>Statut (Alphabétique)</option>
+                            <option value="date" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'date') ? 'selected' : ''; ?>>Date de début (Récent)</option>
+                        </select>
+                    </form>
+                </div>
                 
                 <button onclick="toggleForm()" class="btn-main" style="background: var(--admin-green); color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">+ Nouvel Objectif</button>
             </div>

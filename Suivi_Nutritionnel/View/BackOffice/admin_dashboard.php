@@ -1,129 +1,45 @@
 <?php
 require_once __DIR__ . '/../../config.php';
+// 1. On s'assure que le contrôleur/modèle est chargé
+require_once __DIR__ . '/../../Model/Objectif_Class.php';
+require_once __DIR__ . '/../../Model/Repas_Class.php';
+require_once __DIR__ . '/../../Model/Journal_Class.php';
 
-$db = Config::getConnexion();
+// Récupération des données via les modèles (séparation MVC)
+$statsObjectifs = Objectif::getStatsParStatut();
+$repas7j        = Repas::countRepasRecents();
+$repas7jPrev    = Repas::countRepasPrecedents();
+$calData        = Repas::getCaloriesSeptDerniersJours();
 
-$repas7j = 0;
-$repas7jPrev = 0;
-$trendPct = null;
-try {
-    $sql7 = "SELECT COUNT(*) AS c
-             FROM repas r
-             INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
-             WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
-    $repas7j = (int)$db->query($sql7)->fetch()['c'];
-
-    $sqlPrev = "SELECT COUNT(*) AS c
-                FROM repas r
-                INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
-                WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
-                  AND j.date_journal <  DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
-    $repas7jPrev = (int)$db->query($sqlPrev)->fetch()['c'];
-
-    if ($repas7jPrev > 0) {
-        $trendPct = (int)round((($repas7j - $repas7jPrev) / $repas7jPrev) * 100);
-    } elseif ($repas7j > 0) {
-        $trendPct = 100;
-    } else {
-        $trendPct = 0;
-    }
-} catch (Exception $e) {
-    $trendPct = 0;
+// Calcul de la tendance (présentation)
+$trendPct = 0;
+if ($repas7jPrev > 0) {
+    $trendPct = (int)round((($repas7j - $repas7jPrev) / $repas7jPrev) * 100);
+} elseif ($repas7j > 0) {
+    $trendPct = 100;
 }
 
-$objectifsAtteints = 0;
-try {
-    $sqlObj = "SELECT COUNT(*) AS c FROM objectif WHERE LOWER(statut) = 'atteint'";
-    $objectifsAtteints = (int)$db->query($sqlObj)->fetch()['c'];
-} catch (Exception $e) {
-}
-
-$journauxAnomalies = 0;
-try {
-    $sqlAnom = "SELECT COUNT(*) AS c FROM (
-                    SELECT j.id_journal
-                    FROM journal_alimentaire j
-                    LEFT JOIN repas r ON r.id_journal = j.id_journal
-                    GROUP BY j.id_journal
-                    HAVING COUNT(r.id_repas) = 0 OR COALESCE(SUM(r.nbre_calories),0) >= 4500
-               ) x";
-    $journauxAnomalies = (int)$db->query($sqlAnom)->fetch()['c'];
-} catch (Exception $e) {
-}
-
-$journalCounts = [];
-try {
-    $sqlAct = "SELECT j.date_journal AS d, COUNT(*) AS c
-               FROM journal_alimentaire j
-               WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
-               GROUP BY j.date_journal
-               ORDER BY j.date_journal ASC";
-    $rows = $db->query($sqlAct)->fetchAll();
-    for ($i = 4; $i >= 0; $i--) {
-        $day = (new DateTime())->sub(new DateInterval('P' . $i . 'D'))->format('Y-m-d');
-        $journalCounts[$day] = 0;
-    }
-    foreach ($rows as $r) {
-        $journalCounts[$r['d']] = (int)$r['c'];
-    }
-} catch (Exception $e) {
-    for ($i = 4; $i >= 0; $i--) {
-        $day = (new DateTime())->sub(new DateInterval('P' . $i . 'D'))->format('Y-m-d');
-        $journalCounts[$day] = 0;
-    }
-}
+// Activité des 5 derniers jours (Journal)
+$journalCounts = Journal::getActivityLastDays();
 
 $maxJ = max($journalCounts ?: [1]);
 if ($maxJ <= 0) {
     $maxJ = 1;
 }
 
-$alertes = [];
-try {
-    $sqlRepasSuspect = "SELECT
-            'Repas Suspect' AS type_alerte,
-            CONCAT('ID Repas #', r.id_repas, ': ', COALESCE(r.nbre_calories,0), ' kcal saisis en une fois.') AS description,
-            CONCAT(j.date_journal, ' ', COALESCE(r.heure_repas, '00:00:00')) AS dt,
-            r.id_repas AS entity_id
-        FROM repas r
-        INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
-        WHERE COALESCE(r.nbre_calories,0) >= 2500
-        ORDER BY j.date_journal DESC, r.heure_repas DESC
-        LIMIT 3";
-    $repasAlerts = $db->query($sqlRepasSuspect)->fetchAll();
+// Statistiques rapides
+$objectifsAtteints = $statsObjectifs['atteint'] ?? 0;
+$journauxAnomalies = Journal::countAnomalies();
 
-    $sqlObjIrr = "SELECT
-            'Objectif Irréaliste' AS type_alerte,
-            CONCAT('ID Objectif #', o.id_objectif, ': Poids cible de ', o.poids_cible, ' kg demandé.') AS description,
-            CONCAT(COALESCE(o.date_debut, CURDATE()), ' 00:00:00') AS dt,
-            o.id_objectif AS entity_id
-        FROM objectif o
-        WHERE (o.poids_cible IS NOT NULL AND (o.poids_cible < 35 OR o.poids_cible > 250))
-        ORDER BY o.id_objectif DESC
-        LIMIT 3";
-    $objAlerts = $db->query($sqlObjIrr)->fetchAll();
-
-    $sqlJournalVide = "SELECT
-            'Journal Vide' AS type_alerte,
-            CONCAT('Journal ID #', j.id_journal, ' validé sans aucun repas.') AS description,
-            CONCAT(j.date_journal, ' 00:00:00') AS dt,
-            j.id_journal AS entity_id
-        FROM journal_alimentaire j
-        LEFT JOIN repas r ON r.id_journal = j.id_journal
-        GROUP BY j.id_journal
-        HAVING COUNT(r.id_repas) = 0
-        ORDER BY j.date_journal DESC
-        LIMIT 3";
-    $journalAlerts = $db->query($sqlJournalVide)->fetchAll();
-
-    $alertes = array_merge($repasAlerts ?: [], $objAlerts ?: [], $journalAlerts ?: []);
-    usort($alertes, function ($a, $b) {
-        return strcmp($b['dt'], $a['dt']);
-    });
-    $alertes = array_slice($alertes, 0, 5);
-} catch (Exception $e) {
-    $alertes = [];
-}
+// Alertes (fusion des alertes fournies par les modèles)
+$repasAlerts = Repas::getSuspectAlerts();
+$objAlerts = Objectif::getUnrealisticAlerts();
+$journalAlerts = Journal::getEmptyJournalAlerts();
+$alertes = array_merge($repasAlerts ?: [], $objAlerts ?: [], $journalAlerts ?: []);
+usort($alertes, function ($a, $b) {
+    return strcmp($b['dt'], $a['dt']);
+});
+$alertes = array_slice($alertes, 0, 5);
 
 function sp_format_nombre($n) {
     return number_format((int)$n, 0, ',', ' ');
@@ -160,6 +76,7 @@ function sp_format_temps_alerte($dt) {
     <title>SmartPlate - Admin Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="templates/Template.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -247,6 +164,7 @@ function sp_format_temps_alerte($dt) {
                         <?php endforeach; ?>
                     </div>
                 </div>
+                
 
                 <div class="card">
                     <div class="card-header">
@@ -288,8 +206,22 @@ function sp_format_temps_alerte($dt) {
                 </div>
 
             </div>
+            <div class="content-grid" style="margin-top: 20px; grid-template-columns: 1fr;">
+                <div class="card" style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="card-header" style="width: 100%;">
+                        <h2>Répartition des Objectifs</h2>
+                    </div>
+                    <div style="width: 100%; max-width: 350px; padding: 20px;">
+                        <canvas id="objectifsChart" 
+                                data-encours="<?php echo $statsObjectifs['en_cours'] ?? 0; ?>"
+                                data-atteint="<?php echo $statsObjectifs['atteint'] ?? 0; ?>"
+                                data-abandonne="<?php echo $statsObjectifs['abandonne'] ?? 0; ?>">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
-
+<script src="JavaScript.js"></script>
 </body>
 </html>

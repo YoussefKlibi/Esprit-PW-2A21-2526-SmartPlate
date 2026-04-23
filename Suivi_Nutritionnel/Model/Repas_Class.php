@@ -99,4 +99,81 @@ class Repas {
         $query->execute();
         return true;
     }
+
+    // --- MÉTHODES POUR LE DASHBOARD ---
+
+public static function countRepasRecents() {
+    $db = Config::getConnexion();
+    $sql = "SELECT COUNT(*) AS c
+             FROM repas r
+             INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
+             WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
+    return (int)$db->query($sql)->fetch()['c'];
+}
+
+public static function countRepasPrecedents() {
+    $db = Config::getConnexion();
+    $sql = "SELECT COUNT(*) AS c
+                FROM repas r
+                INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
+                WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+                  AND j.date_journal <  DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
+    return (int)$db->query($sql)->fetch()['c'];
+}
+
+public static function getCaloriesSeptDerniersJours() {
+    $db = Config::getConnexion();
+    $sql = "SELECT j.date_journal, SUM(r.nbre_calories) as daily_calories 
+            FROM journal_alimentaire j 
+            LEFT JOIN repas r ON j.id_journal = r.id_journal 
+            WHERE j.date_journal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
+            GROUP BY j.date_journal 
+            ORDER BY j.date_journal ASC";
+    return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+}
+// --- AJOUTER DANS Model/Repas_Class.php ---
+
+    public static function getSuspectAlerts() {
+        $db = Config::getConnexion();
+        $sql = "SELECT
+                    'Repas Suspect' AS type_alerte,
+                    CONCAT('ID Repas #', r.id_repas, ': ', COALESCE(r.nbre_calories,0), ' kcal saisis en une fois.') AS description,
+                    CONCAT(j.date_journal, ' ', COALESCE(r.heure_repas, '00:00:00')) AS dt,
+                    r.id_repas AS entity_id
+                FROM repas r
+                INNER JOIN journal_alimentaire j ON j.id_journal = r.id_journal
+                WHERE COALESCE(r.nbre_calories,0) >= 2500
+                ORDER BY j.date_journal DESC, r.heure_repas DESC
+                LIMIT 3";
+        try {
+            return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // --- METHODE : TRIER TOUS LES REPAS (JOIN avec Journal) ---
+    public static function trierTousLesRepas($critere) {
+        $db = Config::getConnexion();
+        
+        // Définition des colonnes de tri
+        $tris = [
+            'quantite' => 'r.quantite DESC',
+            'date' => 'j.date_journal DESC, r.heure_repas DESC'
+        ];
+        
+        $orderBy = isset($tris[$critere]) ? $tris[$critere] : $tris['date'];
+        
+        // On récupère les infos du repas + la date et l'user du journal lié
+        $sql = "SELECT r.*, j.date_journal, j.id_utilisateur 
+                FROM repas r 
+                INNER JOIN journal_alimentaire j ON r.id_journal = j.id_journal 
+                ORDER BY " . $orderBy;
+        
+        try {
+            return $db->query($sql)->fetchAll();
+        } catch (Exception $e) {
+            die('Erreur tri repas: ' . $e->getMessage());
+        }
+    }
 }

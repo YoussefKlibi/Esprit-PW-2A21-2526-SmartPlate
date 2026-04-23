@@ -274,6 +274,17 @@ foreach($tousLesObjectifs as $obj) {
         <?php else: ?>
             <input type="hidden" name="statut" value="en_cours">
         <?php endif; ?>
+        <div class="form-group" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600;">
+        <input type="checkbox" name="is_notif_enabled" id="checkNotif" value="1" onchange="toggleNotifTime()" style="width: 18px; height: 18px;">
+        <span>🔔 Recevoir un rappel par mail pour créer mon journal</span>
+    </label>
+
+    <div id="timeInputGroup" style="display: none; margin-top: 15px; padding-left: 28px; border-left: 2px solid var(--admin-green);">
+        <label for="heure_notification" style="font-size: 0.9rem; color: var(--text-gray);">À quelle heure souhaitez-vous le rappel ?</label>
+        <input type="time" name="heure_notification" id="heure_notification" class="form-control" value="08:00" style="width: 150px; margin-top: 5px;">
+    </div>
+</div>
 
         <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: space-between;">
             
