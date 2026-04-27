@@ -47,7 +47,6 @@ class Database
     {
         $pdo = $this->getConnection();
         if (!$pdo) {
-            echo "Aucune connexion disponible pour créer les tables.";
             return false;
         }
 
@@ -58,6 +57,11 @@ class Database
             `comment` TEXT NOT NULL,
             `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `status` TINYINT(1) NOT NULL DEFAULT 0,
+            `agree_count` INT DEFAULT 0,
+            `disagree_count` INT DEFAULT 0,
+            `nuanced_count` INT DEFAULT 0,
+            `emoji` VARCHAR(255) DEFAULT NULL,
+            `parent_id` INT DEFAULT NULL,
             PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
@@ -70,6 +74,8 @@ class Database
             `author` VARCHAR(100) DEFAULT NULL,
             `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `status` TINYINT(1) NOT NULL DEFAULT 1,
+            `rating_sum` INT DEFAULT 0,
+            `rating_count` INT DEFAULT 0,
             PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
@@ -77,14 +83,32 @@ class Database
             $pdo->beginTransaction();
             $pdo->exec($sql_comments);
             $pdo->exec($sql_articles);
+            
+            // Check and add parent_id if table exists but column is missing
+            $this->checkAndAddColumn($pdo, 'comments', 'parent_id', 'INT DEFAULT NULL');
+            
+            // Clean up existing orphaned replies
+            $pdo->exec("DELETE FROM comments WHERE parent_id IS NOT NULL AND parent_id NOT IN (SELECT id FROM (SELECT id FROM comments) as tmp)");
+            
             $pdo->commit();
             return true;
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            echo "Erreur création tables : " . $e->getMessage();
             return false;
+        }
+    }
+
+    private function checkAndAddColumn($pdo, $table, $column, $definition)
+    {
+        try {
+            $query = $pdo->query("SHOW COLUMNS FROM `$table` LIKE '$column'");
+            if ($query->rowCount() == 0) {
+                $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+            }
+        } catch (PDOException $e) {
+            // Table might not exist yet, handled by CREATE TABLE IF NOT EXISTS
         }
     }
 }

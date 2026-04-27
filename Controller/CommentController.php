@@ -26,6 +26,10 @@ class CommentController
                 case 'create': $this->createComment(); break;
                 case 'update': $this->updateComment(); break;
                 case 'delete': $this->deleteComment(); break;
+                case 'vote':   $this->voteComment(); break;
+                case 'report': $this->reportComment(); break;
+                case 'reclassify': $this->reclassifyComment(); break;
+                case 'badge':  $this->assignBadge(); break;
                 default:
                     http_response_code(400);
                     echo json_encode(['error' => 'Unknown action']);
@@ -66,16 +70,40 @@ class CommentController
         $article_id = isset($_POST['article_id']) ? (int)$_POST['article_id'] : 0;
         $username   = $_POST['username'] ?? '';
         $comment    = $_POST['comment'] ?? '';
+        $emoji      = $_POST['emoji'] ?? null;
         $status     = isset($_POST['status']) ? (int)$_POST['status'] : 0;
+        $parent_id  = isset($_POST['parent_id']) && (int)$_POST['parent_id'] > 0 ? (int)$_POST['parent_id'] : null;
 
-        if ($article_id <= 0 || empty($username) || empty($comment)) {
+        if ($article_id <= 0 || empty($username) || empty(trim($comment))) {
             http_response_code(400);
             echo json_encode(['error' => 'Missing required fields']);
             return;
         }
 
-        $id = $this->model->create($article_id, $username, $comment, $status);
+        if (!preg_match('/[a-zA-Z\x{00C0}-\x{017F}]/u', $comment)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le commentaire doit contenir au moins une lettre.']);
+            return;
+        }
+
+        $id = $this->model->create($article_id, $username, $comment, $status, $emoji, $parent_id);
         echo json_encode(['success' => true, 'id' => $id]);
+    }
+
+    private function voteComment()
+    {
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $type = $_POST['type'] ?? '';
+        $oldType = $_POST['oldType'] ?? null;
+
+        if ($id <= 0 || !in_array($type, ['agree', 'disagree', 'nuanced'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid vote data']);
+            return;
+        }
+
+        $ok = $this->model->switchVote($id, $type, $oldType);
+        echo json_encode(['success' => (bool)$ok]);
     }
 
     private function updateComment()
@@ -86,6 +114,21 @@ class CommentController
             echo json_encode(['error' => 'Missing id']);
             return;
         }
+
+        if (isset($_POST['comment'])) {
+            $comment = $_POST['comment'];
+            if (empty(trim($comment))) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Comment cannot be empty']);
+                return;
+            }
+            if (!preg_match('/[a-zA-Z\x{00C0}-\x{017F}]/u', $comment)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Le commentaire doit contenir au moins une lettre.']);
+                return;
+            }
+        }
+
         $ok = $this->model->update($id, $_POST);
         echo json_encode(['success' => (bool)$ok]);
     }
@@ -99,6 +142,44 @@ class CommentController
             return;
         }
         $ok = $this->model->delete($id);
+        echo json_encode(['success' => (bool)$ok]);
+    }
+
+    private function reportComment()
+    {
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing id']);
+            return;
+        }
+        $ok = $this->model->report($id);
+        echo json_encode(['success' => (bool)$ok]);
+    }
+
+    private function reclassifyComment()
+    {
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $stance = $_POST['stance'] ?? '';
+        if ($id <= 0 || empty($stance)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing id or stance']);
+            return;
+        }
+        $ok = $this->model->voteReclassification($id, $stance);
+        echo json_encode(['success' => (bool)$ok]);
+    }
+
+    private function assignBadge()
+    {
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $badge = isset($_POST['badge']) ? $_POST['badge'] : '';
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing id']);
+            return;
+        }
+        $ok = $this->model->assignBadge($id, $badge);
         echo json_encode(['success' => (bool)$ok]);
     }
 }

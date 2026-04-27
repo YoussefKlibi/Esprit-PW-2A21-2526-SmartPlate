@@ -27,7 +27,7 @@ class Article
 
     public function get(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, status FROM articles WHERE id = ?');
+        $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, status, rating_sum, rating_count FROM articles WHERE id = ?');
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row === false ? null : $row;
@@ -36,9 +36,9 @@ class Article
     public function list(bool $publishedOnly = true): array
     {
         if ($publishedOnly) {
-            $stmt = $this->pdo->query('SELECT id, name, type, image_url, content, author, created_at FROM articles WHERE status = 1 ORDER BY created_at DESC');
+            $stmt = $this->pdo->query('SELECT id, name, type, image_url, content, author, created_at, rating_sum, rating_count FROM articles WHERE status = 1 ORDER BY created_at DESC');
         } else {
-            $stmt = $this->pdo->query('SELECT id, name, type, image_url, content, author, created_at, status FROM articles ORDER BY created_at DESC');
+            $stmt = $this->pdo->query('SELECT id, name, type, image_url, content, author, created_at, status, rating_sum, rating_count FROM articles ORDER BY created_at DESC');
         }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -47,9 +47,9 @@ class Article
     {
         $keyword = '%' . $keyword . '%';
         if ($publishedOnly) {
-            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at FROM articles WHERE name LIKE ? AND status = 1 ORDER BY created_at DESC');
+            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, rating_sum, rating_count FROM articles WHERE name LIKE ? AND status = 1 ORDER BY created_at DESC');
         } else {
-            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, status FROM articles WHERE name LIKE ? ORDER BY created_at DESC');
+            $stmt = $this->pdo->prepare('SELECT id, name, type, image_url, content, author, created_at, status, rating_sum, rating_count FROM articles WHERE name LIKE ? ORDER BY created_at DESC');
         }
         $stmt->execute([$keyword]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -83,6 +83,16 @@ class Article
         $stmt = $this->pdo->prepare('DELETE FROM articles WHERE id = ?');
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
+    }
+
+    public function addRating(int $id, int $stars): array
+    {
+        $stmt = $this->pdo->prepare('UPDATE articles SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 WHERE id = ?');
+        $stmt->execute([$stars, $id]);
+
+        $stmt2 = $this->pdo->prepare('SELECT rating_sum, rating_count FROM articles WHERE id = ?');
+        $stmt2->execute([$id]);
+        return $stmt2->fetch(PDO::FETCH_ASSOC) ?: ['rating_sum' => 0, 'rating_count' => 0];
     }
 
     private function validateArticleData(array $data, bool $isUpdate = false): array

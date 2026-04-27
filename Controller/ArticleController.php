@@ -26,6 +26,7 @@ class ArticleController
                 case 'create': $this->createArticle(); break;
                 case 'update': $this->updateArticle(); break;
                 case 'delete': $this->deleteArticle(); break;
+                case 'rate':   $this->rateArticle(); break;
                 default:
                     http_response_code(400);
                     echo json_encode(['error' => 'Unknown action']);
@@ -69,15 +70,33 @@ class ArticleController
 
     private function createArticle()
     {
-        $name    = $_POST['name'] ?? '';
-        $type    = $_POST['type'] ?? '';
-        $content = $_POST['content'] ?? '';
-        $author  = $_POST['author'] ?? 'Admin';
+        $name    = trim($_POST['name'] ?? '');
+        $type    = trim($_POST['type'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        $author  = trim($_POST['author'] ?? 'Admin');
         $status  = isset($_POST['status']) ? (int)$_POST['status'] : 1;
 
-        if (empty($name) || empty($content)) {
+        if (empty($name) || empty($type) || empty($content)) {
             http_response_code(400);
-            echo json_encode(['error' => 'Missing name or content']);
+            echo json_encode(['error' => 'Tous les champs sont obligatoires.']);
+            return;
+        }
+
+        if (mb_strlen($name) > 30) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le nom de l\'article ne doit pas dépasser 30 caractères.']);
+            return;
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9\s\x{00C0}-\x{017F}]+$/u', $type)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le type ne doit pas contenir de caractères spéciaux.']);
+            return;
+        }
+
+        if (mb_strlen($content) < 30) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le contenu de l\'article ne doit pas être inférieur à 30 caractères.']);
             return;
         }
 
@@ -97,6 +116,26 @@ class ArticleController
         }
 
         $data = $_POST;
+        
+        $name = trim($data['name'] ?? '');
+        $type = trim($data['type'] ?? '');
+        $content = trim($data['content'] ?? '');
+
+        if (isset($data['name']) && mb_strlen($name) > 30) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le nom de l\'article ne doit pas dépasser 30 caractères.']);
+            return;
+        }
+        if (isset($data['type']) && !preg_match('/^[a-zA-Z0-9\s\x{00C0}-\x{017F}]+$/u', $type)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le type ne doit pas contenir de caractères spéciaux.']);
+            return;
+        }
+        if (isset($data['content']) && mb_strlen($content) < 30) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Le contenu de l\'article ne doit pas être inférieur à 30 caractères.']);
+            return;
+        }
 
         // Handle image upload on update
         $newImage = $this->handleImageUpload();
@@ -122,6 +161,21 @@ class ArticleController
         }
         $ok = $this->model->delete($id);
         echo json_encode(['success' => (bool)$ok]);
+    }
+
+    private function rateArticle()
+    {
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $stars = isset($_POST['stars']) ? (int)$_POST['stars'] : 0;
+
+        if ($id <= 0 || $stars < 1 || $stars > 5) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid rating data']);
+            return;
+        }
+
+        $result = $this->model->addRating($id, $stars);
+        echo json_encode(['success' => true, 'rating_sum' => $result['rating_sum'], 'rating_count' => $result['rating_count']]);
     }
 
     /**

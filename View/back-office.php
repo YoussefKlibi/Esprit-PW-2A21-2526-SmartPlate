@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Admin - Gestion du Blog Smart Plate</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/template-backoffice.css">
+    <link rel="stylesheet" href="css/template-backoffice.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -226,9 +226,47 @@
 
     </div>
 
+    </div>
+
 </div>
 
+<!-- Floating Theme Toggle -->
+<button id="theme-toggle-bo" onclick="toggleDarkModeBO(event)" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; background: #1e293b; color: white; border: none; border-radius: 50px; padding: 12px 20px; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">🌙 Mode Sombre</button>
+
 <script>
+function initThemeBO() {
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        var btn = document.getElementById('theme-toggle-bo');
+        if (btn) btn.innerHTML = '☀️ Mode Clair';
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.color = '#f1f5f9';
+        }
+    }
+}
+function toggleDarkModeBO(e) {
+    if(e) e.preventDefault();
+    document.body.classList.toggle('dark-mode');
+    var isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    var btn = document.getElementById('theme-toggle-bo');
+    if (btn) btn.innerHTML = isDark ? '☀️ Mode Clair' : '🌙 Mode Sombre';
+    
+    if (typeof commentChart !== 'undefined' && commentChart !== null) {
+        Chart.defaults.color = isDark ? '#f1f5f9' : '#666';
+        if (commentChart.options.scales.x) {
+            commentChart.options.scales.x.ticks.color = isDark ? '#f1f5f9' : '#666';
+            commentChart.options.scales.x.grid.color = isDark ? '#334155' : '#eee';
+        }
+        if (commentChart.options.scales.y) {
+            commentChart.options.scales.y.ticks.color = isDark ? '#f1f5f9' : '#666';
+            commentChart.options.scales.y.grid.color = isDark ? '#334155' : '#eee';
+        }
+        commentChart.update();
+    }
+}
+initThemeBO();
+
 document.addEventListener('DOMContentLoaded', function() {
     function escapeHtml(s) { 
         return String(s || '').replace(/[&<>"']/g, function(m) { 
@@ -405,6 +443,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         const statusBadge = c.status == 1
                             ? '<span style="background:#2ecc71;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;">Validé</span>'
                             : '<span style="background:#f1c40f;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;">En attente</span>';
+                        
+                        const reportBadge = c.report_count > 0
+                            ? `<span style="background:#e74c3c;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;" title="${c.report_count} signalements">🚨 Signalé (${c.report_count})</span>`
+                            : '';
+
+                        const assignedBadge = c.badge 
+                            ? `<span style="background:#9b59b6;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;" title="Badge">🎖️ ${c.badge}</span>`
+                            : '';
+                            
+                        const badgeSelect = `
+                            <select onchange="assignBadge(${c.id}, this.value)" class="form-control badge-select" style="margin-left:8px; min-width: 190px;">
+                                <option value="">-- Badge --</option>
+                                <option value="Top Commentaire" ${c.badge === 'Top Commentaire' ? 'selected' : ''}>Top Commentaire</option>
+                                <option value="Expert" ${c.badge === 'Expert' ? 'selected' : ''}>Expert</option>
+                                <option value="Pertinent" ${c.badge === 'Pertinent' ? 'selected' : ''}>Pertinent</option>
+                            </select>
+                        `;
+
                         const actions = c.status == 0
                             ? `<button class="btn-action" style="background:#28a745; margin-left:8px;" onclick="updateCommentStatus(${c.id}, 1)">Valider</button><button class="btn-action" style="background:#e74c3c; margin-left:8px;" onclick="deleteComment(${c.id})">Supprimer</button>`
                             : `<button class="btn-action" style="background:#e74c3c; margin-left:8px;" onclick="deleteComment(${c.id})">Supprimer</button>`;
@@ -412,10 +468,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         div.innerHTML = `
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:8px 0; border-bottom: 1px solid #f1f1f1;">
                                 <div style="flex:1;">
-                                    <div style="margin-bottom:6px;"><strong>${escapeHtml(c.username)}</strong> <span style="color:#888; font-size:0.9rem;">• ${date}</span> ${statusBadge}</div>
+                                    <div style="margin-bottom:6px;"><strong>${escapeHtml(c.username)}</strong> <span style="color:#888; font-size:0.9rem;">• ${date}</span> ${statusBadge} ${reportBadge} ${assignedBadge}</div>
                                     <div style="color:#333;">${escapeHtml(c.comment)}</div>
                                 </div>
-                                <div style="display:flex; align-items:center;">${actions}</div>
+                                <div style="display:flex; align-items:center;">${badgeSelect} ${actions}</div>
                             </div>
                         `;
                         commentsContainer.appendChild(div);
@@ -457,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td style="padding: 15px;">${date}</td>
                         <td style="padding: 15px; text-align: right;">
                             <button class="btn-action" style="background: #3498db; margin-right: 5px; padding: 5px 10px;" onclick="editArticle(${a.id}, '${encodedName}', '${encodedType}', '${encodedImage}', '${encodedAuthor}', '${encodedContent}', ${a.status})">Modifier</button>
-                            <button class="btn-action" style="background: #2ecc71; margin-right: 5px; padding: 5px 10px;" onclick="(function(){ if(confirm('Publier cet article ?')) { const fd=new FormData(); fd.append('action','update'); fd.append('id', ${a.id}); fd.append('status', 1); fetch('index.php?controller=article',{method:'POST', body: fd}).then(()=> loadDraftsView()); } })()">Publier</button>
+                            <button class="btn-action" style="background: #2ecc71; margin-right: 5px; padding: 5px 10px;" onclick="(function(){ customConfirm('Publier cet article ?', 'Publication', '✅', '#2ecc71').then(res => { if(res) { const fd=new FormData(); fd.append('action','update'); fd.append('id', ${a.id}); fd.append('status', 1); fetch('index.php?controller=article',{method:'POST', body: fd}).then(()=> loadDraftsView()); } }); })()">Publier</button>
                             <button class="btn-action" style="background: #e74c3c; padding: 5px 10px;" onclick="deleteArticle(${a.id})">Supprimer</button>
                         </td>
                     </tr>
@@ -514,14 +570,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.deleteArticle = function(id) {
-        if(!confirm('Supprimer cet article ?')) return;
-        const fd = new FormData();
-        fd.append('action', 'delete');
-        fd.append('id', id);
-        fetch('index.php?controller=article', { method: 'POST', body: fd })
-            .then(r => r.json()).then(() => {
-                if (window.currentAdminView === 'drafts') loadDraftsView(); else loadAdminDashboard();
-            });
+        customConfirm('Supprimer cet article ?', 'Suppression', '🗑️').then(confirmed => {
+            if(!confirmed) return;
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+            fetch('index.php?controller=article', { method: 'POST', body: fd })
+                .then(r => r.json()).then(() => {
+                    if (window.currentAdminView === 'drafts') loadDraftsView(); else loadAdminDashboard();
+                });
+        });
     };
 
     window.viewComments = function(articleId) {
@@ -563,14 +621,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             ? '<span style="background:#2ecce1;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;">Validé</span>' 
                             : '<span style="background:#f1c40f;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;">En attente</span>';
                             
+                        const reportBadge = c.report_count > 0
+                            ? `<span style="background:#e74c3c;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-left:4px;" title="${c.report_count} signalements">🚨 (${c.report_count})</span>`
+                            : '';
+                            
+                        const assignedBadge = c.badge 
+                            ? `<span style="background:#9b59b6;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-left:4px;">🎖️ ${c.badge}</span>`
+                            : '';
+                            
+                        const badgeSelect = `
+                            <select onchange="assignBadge(${c.id}, this.value)" class="form-control badge-select" style="margin-right: 4px; min-width: 160px;">
+                                <option value="">Badge</option>
+                                <option value="Top Commentaire" ${c.badge === 'Top Commentaire' ? 'selected' : ''}>Top</option>
+                                <option value="Expert" ${c.badge === 'Expert' ? 'selected' : ''}>Expert</option>
+                                <option value="Pertinent" ${c.badge === 'Pertinent' ? 'selected' : ''}>Pertinent</option>
+                            </select>
+                        `;
+                            
                         // Use a specific global function for deleting from article view so it re-renders exactly this list
                         commentsHtml += `
                             <tr style="border-bottom: 1px solid #eee;">
                                 <td style="padding: 8px;"><strong>${escapeHtml(c.username)}</strong></td>
                                 <td style="padding: 8px; width: 40%;">${escapeHtml(c.comment)}</td>
-                                <td style="padding: 8px;">${statusBadge}</td>
+                                <td style="padding: 8px;">${statusBadge} ${reportBadge} ${assignedBadge}</td>
                                 <td style="padding: 8px; font-size: 0.85rem;">${date}</td>
                                 <td style="padding: 8px; text-align: right;">
+                                    ${badgeSelect}
                                     <button class="btn-action" style="background:#e74c3c; padding:3px 8px; font-size:0.8rem;" onclick="deleteCommentFromArticle(${c.id}, ${articleId})">Supprimer</button>
                                 </td>
                             </tr>
@@ -590,18 +666,20 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.deleteCommentFromArticle = function(commentId, articleId) {
-        if(!confirm('Supprimer définitivement ce commentaire ?')) return;
-        const fd = new FormData();
-        fd.append('action', 'delete');
-        fd.append('id', commentId);
-        fetch('index.php?controller=comment', { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(() => {
-                // Refresh both the dashboard stats and the specific opened view
-                loadAdminDashboard(); // This will auto update KPIs and top list
-                document.getElementById('comments-row-' + articleId).style.display = 'none';
-                viewComments(articleId); // Re-open properly updated
-            });
+        customConfirm('Supprimer définitivement ce commentaire ?', 'Suppression', '🗑️').then(confirmed => {
+            if(!confirmed) return;
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', commentId);
+            fetch('index.php?controller=comment', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(() => {
+                    // Refresh both the dashboard stats and the specific opened view
+                    loadAdminDashboard(); // This will auto update KPIs and top list
+                    document.getElementById('comments-row-' + articleId).style.display = 'none';
+                    viewComments(articleId); // Re-open properly updated
+                });
+        });
     };
 
     window.updateCommentStatus = function(id, status) {
@@ -613,13 +691,26 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(r => r.json()).then(() => loadAdminDashboard());
     };
 
-    window.deleteComment = function(id) {
-        if(!confirm('Supprimer ce commentaire ?')) return;
+    window.assignBadge = function(id, badge) {
         const fd = new FormData();
-        fd.append('action', 'delete');
+        fd.append('action', 'badge');
         fd.append('id', id);
+        fd.append('badge', badge);
         fetch('index.php?controller=comment', { method: 'POST', body: fd })
-            .then(r => r.json()).then(() => loadAdminDashboard());
+            .then(r => r.json()).then(() => {
+                if (window.currentAdminView === 'drafts') loadDraftsView(); else loadAdminDashboard();
+            });
+    };
+
+    window.deleteComment = function(id) {
+        customConfirm('Supprimer ce commentaire ?', 'Suppression', '🗑️').then(confirmed => {
+            if(!confirmed) return;
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+            fetch('index.php?controller=comment', { method: 'POST', body: fd })
+                .then(r => r.json()).then(() => loadAdminDashboard());
+        });
     };
 
     // Form interception — validation for both CREATE and UPDATE
@@ -686,21 +777,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Validation: chaque erreur sous son champ
             var hasError = false;
+            
+            // Name validation (max 30 letters/chars)
             if (!name) {
                 showInlineError('error-article-name', 'Le nom de l\'article est obligatoire.', 0);
                 if (!hasError) document.getElementById('form-article-name').focus();
                 hasError = true;
+            } else if (name.length > 30) {
+                showInlineError('error-article-name', 'Le nom de l\'article ne doit pas dépasser 30 caractères.', 0);
+                if (!hasError) document.getElementById('form-article-name').focus();
+                hasError = true;
             }
+            
+            // Type validation (no special characters)
+            // Accepts letters, numbers, spaces, and accented characters.
             if (!type) {
                 showInlineError('error-article-type', 'Le type de l\'article est obligatoire.', 0);
                 if (!hasError) document.getElementById('form-article-type').focus();
                 hasError = true;
+            } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F]+$/.test(type)) {
+                showInlineError('error-article-type', 'Le type ne doit pas contenir de caractères spéciaux.', 0);
+                if (!hasError) document.getElementById('form-article-type').focus();
+                hasError = true;
             }
+            
+            // Content validation (min 30 letters/chars)
             if (!content) {
                 showInlineError('error-article-content', 'Le contenu de l\'article est obligatoire.', 0);
                 if (!hasError) document.getElementById('form-article-content').focus();
                 hasError = true;
+            } else if (content.length < 30) {
+                showInlineError('error-article-content', 'Le contenu de l\'article ne doit pas être inférieur à 30 caractères.', 0);
+                if (!hasError) document.getElementById('form-article-content').focus();
+                hasError = true;
             }
+            
             if (hasError) return;
 
             const fd = new FormData(articleForm);
@@ -736,6 +847,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial load
     loadAdminDashboard();
+
+
 
     // Search bar — debounce
     var searchTimer = null;
@@ -851,9 +964,83 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error('Erreur stats:', err));
     }
 
-    // Load chart on dashboard load
+// Load chart on dashboard load
     loadCommentStats();
 });
+</script>
+
+<!-- Custom Modal System -->
+<div id="custom-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+    <div id="custom-modal-box" style="background: var(--white); color: var(--text-dark); padding: 30px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%; transform: scale(0.9); transition: transform 0.3s ease; text-align: center;">
+        <div id="custom-modal-icon" style="font-size: 3.5rem; margin-bottom: 15px;"></div>
+        <h3 id="custom-modal-title" style="margin: 0 0 10px 0; font-size: 1.4rem; font-weight: bold;"></h3>
+        <p id="custom-modal-message" style="margin: 0 0 25px 0; font-size: 1.05rem; color: var(--text-gray); line-height: 1.5;"></p>
+        <div id="custom-modal-actions" style="display: flex; gap: 15px; justify-content: center;"></div>
+    </div>
+</div>
+
+<script>
+const customModalOverlay = document.getElementById('custom-modal-overlay');
+const customModalBox = document.getElementById('custom-modal-box');
+const customModalIcon = document.getElementById('custom-modal-icon');
+const customModalTitle = document.getElementById('custom-modal-title');
+const customModalMessage = document.getElementById('custom-modal-message');
+const customModalActions = document.getElementById('custom-modal-actions');
+
+function openCustomModal(options) {
+    return new Promise((resolve) => {
+        customModalIcon.innerHTML = options.icon || 'ℹ️';
+        customModalTitle.innerText = options.title || 'Information';
+        customModalMessage.innerText = options.message || '';
+        customModalActions.innerHTML = '';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = options.cancelText || 'Fermer';
+        closeBtn.style.cssText = 'padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1rem; background: #e2e8f0; color: #475569; transition: all 0.2s;';
+        closeBtn.onmouseover = () => closeBtn.style.background = '#cbd5e1';
+        closeBtn.onmouseout = () => closeBtn.style.background = '#e2e8f0';
+        closeBtn.onclick = () => { closeCustomModal(); resolve(false); };
+        
+        if (options.type === 'confirm') {
+            const confirmBtn = document.createElement('button');
+            confirmBtn.innerText = options.confirmText || 'Confirmer';
+            confirmBtn.style.cssText = `padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1rem; color: white; transition: all 0.2s; background: ${options.confirmColor || '#3b82f6'}; box-shadow: 0 4px 10px rgba(0,0,0,0.15);`;
+            confirmBtn.onmouseover = () => confirmBtn.style.transform = 'translateY(-2px)';
+            confirmBtn.onmouseout = () => confirmBtn.style.transform = 'translateY(0)';
+            confirmBtn.onclick = () => { closeCustomModal(); resolve(true); };
+            customModalActions.appendChild(closeBtn);
+            customModalActions.appendChild(confirmBtn);
+        } else {
+            closeBtn.innerText = 'OK';
+            closeBtn.style.background = '#3b82f6';
+            closeBtn.style.color = '#fff';
+            closeBtn.onmouseover = () => closeBtn.style.background = '#2563eb';
+            closeBtn.onmouseout = () => closeBtn.style.background = '#3b82f6';
+            customModalActions.appendChild(closeBtn);
+        }
+
+        customModalOverlay.style.display = 'flex';
+        void customModalOverlay.offsetWidth;
+        customModalOverlay.style.opacity = '1';
+        customModalBox.style.transform = 'scale(1)';
+    });
+}
+
+function closeCustomModal() {
+    customModalOverlay.style.opacity = '0';
+    customModalBox.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        customModalOverlay.style.display = 'none';
+    }, 300);
+}
+
+window.customAlert = function(message, title = 'Information', icon = 'ℹ️') {
+    return openCustomModal({ type: 'alert', message, title, icon });
+};
+
+window.customConfirm = function(message, title = 'Confirmation', icon = '❓', confirmColor = '#e74c3c') {
+    return openCustomModal({ type: 'confirm', message, title, icon, confirmColor, confirmText: 'Oui', cancelText: 'Non' });
+};
 </script>
 
 </body>
