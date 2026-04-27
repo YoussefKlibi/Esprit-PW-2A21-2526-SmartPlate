@@ -180,10 +180,31 @@ class UserController {
         }
     }
     
-    // Lister tous les utilisateurs
-    public function listeUsers(): array {
+    // Lister tous les utilisateurs (avec filtre de recherche optionnel)
+    public function listeUsers(?string $search = null): array {
         try {
-            $stmt = $this->db->query("SELECT id, prenom, nom, email, created_at FROM users ORDER BY created_at DESC");
+            // Mettre inactif ceux qui n'ont pas été actifs depuis 5 minutes OU qui n'ont jamais été actifs (sauf les bannis)
+            $this->db->exec("UPDATE users SET statut = 'inactif' WHERE statut = 'actif' AND (last_activity IS NULL OR last_activity < DATE_SUB(NOW(), INTERVAL 5 MINUTE))");
+
+            $search = trim((string) $search);
+
+            if ($search !== '') {
+                $sql = "SELECT id, prenom, nom, email, created_at, statut, last_activity
+                        FROM users
+                        WHERE CAST(id AS CHAR) LIKE :search
+                           OR prenom LIKE :search
+                           OR nom LIKE :search
+                           OR email LIKE :search
+                        ORDER BY created_at DESC";
+
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([
+                    'search' => '%' . $search . '%'
+                ]);
+            } else {
+                $stmt = $this->db->query("SELECT id, prenom, nom, email, created_at, statut, last_activity FROM users ORDER BY created_at DESC");
+            }
+
             return $stmt->fetchAll();
         } catch (Exception $e) {
             error_log("Erreur listeUsers: " . $e->getMessage());
@@ -240,6 +261,42 @@ class UserController {
             }
         } catch (Exception $e) {
             error_log("Erreur updateUserProfile: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Mettre à jour le statut d'un utilisateur (ex: bannir)
+    public function updateStatus(int $id, string $statut): bool {
+        try {
+            // Protection métier: impossible de bannir le compte admin principal
+            $user = $this->getUserById($id);
+            if (!$user) {
+                return false;
+            }
+
+            if (($user['email'] ?? '') === 'ilyesgaied32@gmail.com' && $statut === 'banni') {
+                return false;
+            }
+
+            $stmt = $this->db->prepare("UPDATE users SET statut = :statut WHERE id = :id");
+            return $stmt->execute([
+                'statut' => $statut,
+                'id' => $id
+            ]);
+        } catch (Exception $e) {
+            error_log("Erreur updateStatus: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Mettre à jour la date de dernière activité et le statut actif
+    public function updateLastActivity(string $email): bool {
+        try {
+            // On met à jour l'activité et on force le statut à 'actif' (uniquement s'il n'est pas banni)
+            $stmt = $this->db->prepare("UPDATE users SET last_activity = NOW(), statut = 'actif' WHERE email = :email AND statut != 'banni'");
+            return $stmt->execute(['email' => $email]);
+        } catch (Exception $e) {
+            error_log("Erreur updateLastActivity: " . $e->getMessage());
             return false;
         }
     }

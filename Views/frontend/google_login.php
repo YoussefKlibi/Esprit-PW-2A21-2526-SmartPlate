@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$client_id = 'VOTRE_CLIENT_ID_GOOGLE.apps.googleusercontent.com';
+$client_id = '1010671260376-4d5hi2j046vns8l6t3kboujqaopcmrs3.apps.googleusercontent.com';
 
 $_SESSION['google_auth_action'] = $_GET['action'] ?? 'login';
 

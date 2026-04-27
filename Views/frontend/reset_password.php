@@ -115,5 +115,7 @@ if (empty($token)) {
 
     <!-- Client-side validation -->
     <script src="../js/validation.js"></script>
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/chatbot.php'; ?>
 </body>
 </html>

@@ -201,21 +201,98 @@ document.addEventListener('DOMContentLoaded', function () {
     if (userUpdateForm) {
         userUpdateForm.addEventListener('submit', function (e) {
             let isValid = true;
-            const nomInfo = { el: document.getElementById('update_nom'), err: document.getElementById('errorUpdateNom'), msg: 'Le nom est obligatoire.' };
-            const emailInfo = { el: document.getElementById('update_email'), err: document.getElementById('errorUpdateEmail'), msg: 'L\'adresse e-mail est obligatoire.' };
+            const prenomInfo = { el: document.getElementById('prenom'), err: document.getElementById('errorPrenom'), msg: 'Le prénom est obligatoire.' };
+            const nomInfo = { el: document.getElementById('nom'), err: document.getElementById('errorNom'), msg: 'Le nom est obligatoire.' };
+            const emailInfo = { el: document.getElementById('email'), err: document.getElementById('errorEmail'), msg: 'L\'adresse e-mail est obligatoire.' };
+            const passInfo = { el: document.getElementById('mot_de_passe'), err: document.getElementById('errorPassword') };
 
-            [nomInfo, emailInfo].forEach(function (info) {
-                info.err.textContent = '';
-                if (info.el.value.trim() === '') {
-                    info.err.textContent = info.msg;
+            [prenomInfo, nomInfo, emailInfo].forEach(function (info) {
+                if (info.err) info.err.textContent = '';
+                if (info.el && info.el.value.trim() === '') {
+                    if (info.err) info.err.textContent = info.msg;
                     isValid = false;
                 }
             });
 
+            if (passInfo.err) passInfo.err.textContent = '';
+
             if (isValid) {
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInfo.el.value)) {
-                    emailInfo.err.textContent = 'Le format de l\'adresse e-mail est invalide.';
+                if (emailInfo.el && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInfo.el.value)) {
+                    if (emailInfo.err) emailInfo.err.textContent = 'Le format de l\'adresse e-mail est invalide.';
                     isValid = false;
+                }
+                if (passInfo.el && passInfo.el.value.trim() !== '') {
+                    const val = passInfo.el.value;
+                    if (val.length < 8) {
+                        passInfo.err.textContent = 'Le mot de passe doit comporter au moins 8 caractères.';
+                        isValid = false;
+                    } else if (!/[A-Z]/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins une lettre majuscule.';
+                        isValid = false;
+                    } else if (!/\d/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins un chiffre.';
+                        isValid = false;
+                    } else if (!/[@$!%*?&]/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&).';
+                        isValid = false;
+                    }
+                }
+            }
+            if (!isValid) e.preventDefault();
+        });
+    }
+
+    // Validation for User Profile Form (Frontend)
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function (e) {
+            let isValid = true;
+            const prenomInfo = { el: document.getElementById('prenom'), err: document.getElementById('errorPrenomProfile'), msg: 'Le prénom est obligatoire.' };
+            const nomInfo = { el: document.getElementById('nom'), err: document.getElementById('errorNomProfile'), msg: 'Le nom est obligatoire.' };
+            const emailInfo = { el: document.getElementById('email'), err: document.getElementById('errorEmailProfile'), msg: 'L\'adresse e-mail est obligatoire.' };
+            const ancienMdpInfo = { el: document.getElementById('ancien_mdp'), err: document.getElementById('errorAncienMdp') };
+            const passInfo = { el: document.getElementById('nouveau_mdp'), err: document.getElementById('errorNouveauMdp') };
+
+            [prenomInfo, nomInfo, emailInfo].forEach(function (info) {
+                if (info.err) info.err.textContent = '';
+                if (info.el && info.el.value.trim() === '') {
+                    if (info.err) info.err.textContent = info.msg;
+                    isValid = false;
+                }
+            });
+
+            if (ancienMdpInfo.err) ancienMdpInfo.err.textContent = '';
+            if (passInfo.err) passInfo.err.textContent = '';
+
+            if (isValid) {
+                // Email format check
+                if (emailInfo.el && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInfo.el.value)) {
+                    if (emailInfo.err) emailInfo.err.textContent = 'Le format de l\'adresse e-mail est invalide.';
+                    isValid = false;
+                }
+
+                // Password logic
+                if (passInfo.el && passInfo.el.value.trim() !== '') {
+                    // If new password is typed, old password must be provided
+                    if (ancienMdpInfo.el && ancienMdpInfo.el.value.trim() === '') {
+                        ancienMdpInfo.err.textContent = 'Veuillez saisir votre ancien mot de passe pour le modifier.';
+                        isValid = false;
+                    }
+
+                    const val = passInfo.el.value;
+                    if (val.length < 8) {
+                        passInfo.err.textContent = 'Le nouveau mot de passe doit comporter au moins 8 caractères.';
+                        isValid = false;
+                    } else if (!/[A-Z]/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins une lettre majuscule.';
+                        isValid = false;
+                    } else if (!/\d/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins un chiffre.';
+                        isValid = false;
+                    } else if (!/[@$!%*?&]/.test(val)) {
+                        passInfo.err.textContent = 'Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&).';
+                        isValid = false;
+                    }
                 }
             }
             if (!isValid) e.preventDefault();

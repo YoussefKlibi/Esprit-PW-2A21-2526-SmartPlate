@@ -4,6 +4,34 @@ require_once __DIR__ . '/../../Controllers/UserController.php';
 $erreur = "";
 $success = "";
 
+function verifyEmailExistence($email) {
+    list($user, $domain) = explode('@', $email);
+    if (!getmxrr($domain, $mxhosts)) return false;
+    
+    $mx = $mxhosts[0];
+    $conn = @fsockopen($mx, 25, $errno, $errstr, 5);
+    if (!$conn) return false;
+    
+    fread($conn, 1024);
+    
+    fwrite($conn, "HELO localhost\r\n");
+    fread($conn, 1024);
+    
+    fwrite($conn, "MAIL FROM: <no-reply@smartplate.com>\r\n");
+    fread($conn, 1024);
+    
+    fwrite($conn, "RCPT TO: <$email>\r\n");
+    $res = fread($conn, 1024);
+    
+    fwrite($conn, "QUIT\r\n");
+    fclose($conn);
+    
+    if (strpos($res, '250') === 0) {
+        return true;
+    }
+    return false;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $prenom = $_POST['prenom'] ?? '';
     $nom = $_POST['nom'] ?? '';
@@ -20,6 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($existingUser) {
             $erreur = "Cet email existe déjà dans la base de données. Veuillez utiliser un autre email.";
+        } elseif (!verifyEmailExistence($email)) {
+            $erreur = "Cette adresse e-mail n'existe pas ou est introuvable. Veuillez entrer une adresse e-mail réelle (ex: un vrai compte Gmail).";
         } else {
             $user = new User($prenom, $nom, $email, $hashedPassword);
             
@@ -44,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartPlate - Ajouter un utilisateur</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Template_BackOffice.css">
     <style>
         .alert-error {
             background: #feebeb;

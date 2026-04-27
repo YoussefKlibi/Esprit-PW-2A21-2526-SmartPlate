@@ -2,9 +2,13 @@
 session_start();
 require_once __DIR__ . '/../../Controllers/UserController.php';
 
-$client_id = '1010671260376-4d5hi2j046vns8l6t3kboujqaopcmrs3.apps.googleusercontent.com';
-$client_secret = 'VOTRE_CLIENT_SECRET_GOOGLE';
+$client_id = getenv('GOOGLE_CLIENT_ID') ?: '';
+$client_secret = getenv('GOOGLE_CLIENT_SECRET') ?: '';
 $redirect_uri = 'http://localhost/template/Views/frontend/google_callback.php';
+
+if ($client_id === '' || $client_secret === '') {
+    die("Configuration Google OAuth manquante. Définissez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET.");
+}
 
 if (isset($_GET['code'])) {
     $code = $_GET['code'];
@@ -75,18 +79,46 @@ if (isset($_GET['code'])) {
             $user = $userC->createOrGetGoogleUser($googleUserData);
             
             if ($user) {
+                if (isset($user['statut']) && $user['statut'] === 'banni') {
+                    echo "<div style='font-family: sans-serif; text-align:center; margin-top:50px;'>";
+                    echo "<h2 style='color:#dc2626;'>Accès refusé</h2>";
+                    echo "<p>Votre compte a été suspendu par un administrateur.</p>";
+                    echo "<br><a href='login.php' style='padding:10px 20px; border:1px solid #e5e7eb; color:#374151; text-decoration:none; border-radius:8px;'>Retour à l'accueil</a>";
+                    echo "</div>";
+                    exit();
+                }
+
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_prenom'] = $user['prenom'];
                 $_SESSION['user_nom'] = $user['nom'];
-
                 
-                header("Location: dashboard.php");
+                // Mettre à jour l'activité immédiatement
+                $userC->updateLastActivity($user['email']);
+                
+                if ($user['email'] === 'ilyesgaied32@gmail.com') {
+                    $_SESSION['is_admin'] = true;
+                    header("Location: ../backend/admin_welcome.php");
+                } else {
+                    $_SESSION['is_admin'] = false;
+                    header("Location: dashboard.php");
+                }
                 exit();
             }
         }
+    } else {
+        // Output the actual error from Google to help with debugging
+        echo "<div style='font-family: sans-serif; text-align:center; margin-top:50px;'>";
+        echo "<h2 style='color:#dc2626;'>Erreur lors de l'obtention du jeton d'accès</h2>";
+        echo "<p>Google a renvoyé l'erreur suivante :</p>";
+        echo "<pre style='background:#f3f4f6; padding:15px; border-radius:8px; display:inline-block; text-align:left;'>";
+        echo htmlspecialchars(print_r($tokenData, true));
+        echo "</pre>";
+        echo "<p>Veuillez vérifier votre <b>Client Secret</b> dans le fichier google_callback.php.</p>";
+        echo "</div>";
+        exit();
     }
 }
 
-echo "Erreur d'authentification Google.";
+echo "Erreur d'authentification Google (Code manquant).";
 ?>

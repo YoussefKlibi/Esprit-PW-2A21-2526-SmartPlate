@@ -10,8 +10,10 @@ if (!isset($_SESSION['user_email'])) {
 $userC = new UserController();
 $userInfo = $userC->getUserByEmail($_SESSION['user_email']);
 
-if (!$userInfo) {
-    echo "Erreur : Utilisateur introuvable.";
+if (!$userInfo || strtolower(trim($userInfo['statut'] ?? '')) === 'banni') {
+    session_unset();
+    session_destroy();
+    header("Location: login.php?banned=1");
     exit();
 }
 ?>
@@ -22,7 +24,7 @@ if (!$userInfo) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartPlate - Mon Profil</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Template_FrontOffice.css">
     <style>
         body {
             background-color: #f8fafc;
@@ -186,10 +188,12 @@ if (!$userInfo) {
                 <div class="info-value"><?= htmlspecialchars($userInfo['email']) ?></div>
             </div>
 
-            <a href="../backend/admin_dashboard.html" class="btn-primary-action">Aller au Tableau de bord</a>
+            <a href="../backend/admin_welcome.php" class="btn-primary-action">Aller au Tableau de bord</a>
             <a href="logout.php" class="btn-logout">Se déconnecter</a>
         </div>
     </div>
 
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/chatbot.php'; ?>
 </body>
 </html>

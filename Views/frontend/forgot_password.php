@@ -136,7 +136,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="login-wrapper">
         <div class="login-left">
             <a href="login.php" class="brand">
-                <div class="logo-icon-login">SP</div>
+                <div class="logo-icon-login" style="padding: 0; overflow: hidden;">
+                    <img src="../xpdf/logo.jpg" alt="SmartPlate Logo" style="width:100%; height:100%; object-fit:cover; border-radius:12px; display:block;">
+                </div>
                 <span class="brand-name">SmartPlate</span>
             </a>
 
@@ -156,12 +158,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-group" style="text-align: center;">
                     <label>Code de vérification à 6 caractères</label>
                     <div class="otp-container">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[A-Za-z0-9]" required autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
+                        <input type="text" class="otp-input" maxlength="1" autocomplete="off">
                     </div>
                     <input type="hidden" id="code" name="code" value="">
                 </div>
@@ -262,5 +264,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Client-side validation -->
     <script src="../js/validation.js"></script>
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/chatbot.php'; ?>
 </body>
 </html>

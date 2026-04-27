@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartPlate - Modifier un utilisateur</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Template_BackOffice.css">
     <style>
         .alert-error {
             background: #feebeb;
@@ -124,5 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </div>
     <script src="../js/validation.js"></script>
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/../frontend/chatbot.php'; ?>
 </body>
 </html>

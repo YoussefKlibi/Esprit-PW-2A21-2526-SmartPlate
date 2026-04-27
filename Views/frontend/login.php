@@ -4,6 +4,10 @@ require_once __DIR__ . '/../../Controllers/UserController.php';
 
 $erreur = "";
 
+if (isset($_GET['banned']) && $_GET['banned'] === '1') {
+    $erreur = "Votre compte a été suspendu par un administrateur. L'accès vous est refusé.";
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -34,11 +38,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } elseif (!empty($email) && !empty($password)) {
             $userC = new UserController();
             $userInfo = $userC->getUserByEmail($email);
-
             if ($userInfo && password_verify($password, $userInfo['mot_de_passe'])) {
-                $_SESSION['user_email'] = $userInfo['email'];
-                header("Location: dashboard.php");
-                exit();
+                if (isset($userInfo['statut']) && $userInfo['statut'] === 'banni') {
+                    $erreur = "Votre compte a été suspendu par un administrateur. L'accès vous est refusé.";
+                } else {
+                    $_SESSION['user_email'] = $userInfo['email'];
+                    $_SESSION['user_id'] = (int) $userInfo['id'];
+                    
+                    // Mettre à jour l'activité immédiatement
+                    $userC->updateLastActivity($userInfo['email']);
+                    
+                    if ($userInfo['email'] === 'ilyesgaied32@gmail.com') {
+                        $_SESSION['is_admin'] = true;
+                        header("Location: ../backend/admin_welcome.php");
+                    } else {
+                        $_SESSION['is_admin'] = false;
+                        header("Location: dashboard.php");
+                    }
+                    exit();
+                }
             } else {
                 $erreur = "Adresse e-mail ou mot de passe incorrect.";
             }
@@ -60,6 +78,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         .error-text { color: red; font-size: 13px; margin-top: 5px; display: block; }
+        body { align-items: flex-start; overflow-y: auto; padding: 2rem 0; }
+        .login-wrapper { margin: 0 auto; }
     </style>
 </head>
 
@@ -68,7 +88,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="login-wrapper">
         <div class="login-left">
             <a href="#" class="brand">
-                <div class="logo-icon-login">SP</div>
+                <div class="logo-icon-login" style="padding: 0; overflow: hidden;">
+                    <img src="../xpdf/logo.jpg" alt="SmartPlate Logo" style="width:100%; height:100%; object-fit:cover; border-radius:12px; display:block;">
+                </div>
                 <span class="brand-name">SmartPlate</span>
             </a>
 
@@ -147,6 +169,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Client-side validation -->
     <script src="../js/validation.js"></script>
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/chatbot.php'; ?>
 </body>
 
 </html>
