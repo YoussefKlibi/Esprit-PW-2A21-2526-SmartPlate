@@ -9,17 +9,17 @@ class ProduitController {
         $this->model = new Produits();
     }
 
-
-
-    // 📄 LIST
+    // ================= LIST =================
     public function list() {
         return $this->model->getAllProduits();
     }
 
-    // ❌ DELETE
+    // ================= DELETE =================
     public function delete() {
         if (isset($_GET['code'])) {
+
             $code = $_GET['code'];
+
             $this->model->deleteProduit($code);
 
             header("Location: ../View/Admin_Produits.php");
@@ -27,59 +27,107 @@ class ProduitController {
         }
     }
 
-    // ✏️ UPDATE
-    public function update($data) {
-        $this->model->updateProduit($data);
-    }
+    // ================= ADD =================
+    public function add($data, $file) {
 
-            // ➕ ADD
-    public function add($data) {
+        $data['Image'] = "";
+
+        if (!empty($file['image']['name'])) {
+
+            $imageName = time() . "_" . basename($file['image']['name']);
+            $tmpName = $file['image']['tmp_name'];
+
+            $uploadDir = __DIR__ . "/../View/Images/";
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            move_uploaded_file($tmpName, $uploadDir . $imageName);
+
+            $data['Image'] = "View/Images/" . $imageName;
+        }
+
         $this->model->addProduit($data);
     }
 
-    // SEARCH
+    // ================= UPDATE =================
+    public function update($data, $file) {
+
+        // IMPORTANT: récupérer un seul produit
+        $existing = $this->model->getProduitByCode($data['code']);
+        $existing = $existing[0] ?? null;
+
+        if (!$existing) {
+            return;
+        }
+
+        if (!empty($file['image']['name'])) {
+
+            $imageName = time() . "_" . basename($file['image']['name']);
+            $tmpName = $file['image']['tmp_name'];
+
+            $uploadDir = __DIR__ . "/../View/Images/";
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            move_uploaded_file($tmpName, $uploadDir . $imageName);
+
+            $data['Image'] = "View/Images/" . $imageName;
+
+        } else {
+            $data['Image'] = $existing['Image'];
+        }
+
+        $this->model->updateProduit($data);
+    }
+
+    // ================= SEARCH =================
     public function search($code) {
-    return $this->model->getProduitByCode($code);
+        return $this->model->getProduitByCode($code);
+    }
 }
 
-}
 
-// 🔥 ROUTING SIMPLE
+// ================= ROUTING =================
 $controller = new ProduitController();
 
+// POST (ADD / UPDATE)
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($_POST['action'] === 'add') {
-        $controller->add($_POST);
+        $controller->add($_POST, $_FILES);
     }
 
     if ($_POST['action'] === 'update') {
-        $controller->update($_POST);
+        $controller->update($_POST, $_FILES);
     }
 
     header("Location: ../View/Admin_Produits.php");
     exit;
 }
 
-// DELETE ROUTE
+// DELETE
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     $controller->delete();
 }
 
-
-// 🔍 SEARCH ROUTE
+// SEARCH + LIST
 if (isset($_GET['action']) && $_GET['action'] === 'search') {
 
     $code = $_GET['code'] ?? '';
+    $produits = !empty($code)
+        ? $controller->search($code)
+        : $controller->list();
 
-    if (!empty($code)) {
-        $produits = $controller->search($code); // ✅ directement tableau
-    } else {
-        $produits = $controller->list();
-    }
-
-    include "../View/Admin_Produits.php";
-    exit;
+} else {
+    $produits = $controller->list();
 }
+
+/*👉 TOUJOURS charger la view ici
+include "../View/Admin_Produits.php";
+exit;*/
 
 ?>
