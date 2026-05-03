@@ -1,80 +1,1314 @@
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
+/* Variables de couleurs inspirées du template */
+:root {
+    --bg-main: #f4f7f6;
+    --card-bg: #ffffff;
+    --text-dark: #1a1a1a;
+    --text-gray: #8c8c8c;
+    --green-light: #d4f283;
+    --blue-light: #d0e6f5;
+    --yellow-light: #fff3a1;
+    --border-radius: 24px;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 }
 
-.navbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:20px 60px;
-background:#20c997;
-color:white;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
 }
 
-.navbar a{
-color:white;
-margin-left:20px;
-text-decoration:none;
-font-weight:bold;
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    padding: 2rem;
 }
 
-.hero{
-text-align:center;
-padding:80px;
-background:url("https://images.unsplash.com/photo-1498837167922-ddd27525d352");
-background-size:cover;
-color:white;
+/* --- Mise en page globale (Layout) --- */
+body {
+    display: flex;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f7f6;
+    overflow-x: hidden;
 }
 
-.hero h2{
-font-size:40px;
+.dashboard {
+    flex: 1;
+    padding: 2rem 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.recipes{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:30px;
-padding:50px;
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
-.card{
-background:white;
-border-radius:15px;
-box-shadow:0 10px 20px rgba(0,0,0,0.1);
-overflow:hidden;
-text-align:center;
-transition:0.3s;
+.dashboard-header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
 }
 
-.card:hover{
-transform:translateY(-10px);
+/* --- Style de la Sidebar --- */
+.sidebar {
+    width: 260px;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
 }
 
-.card img{
-width:100%;
-height:200px;
-object-fit:cover;
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 3rem;
+    padding-left: 0.5rem;
 }
 
-.card h3{
-margin:15px 0;
+.logo-icon {
+    font-size: 1.8rem;
+    background: #d4f283;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
 }
 
-.card button{
-background:#20c997;
-color:white;
-border:none;
-padding:10px 20px;
-margin-bottom:20px;
-border-radius:5px;
-cursor:pointer;
+.sidebar-logo h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
 }
 
-footer{
-text-align:center;
-padding:20px;
-background:#222;
-color:white;
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.nav-section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #8c8c8c;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover:not(.disabled) {
+    background-color: #f8fafc;
+    color: #1a1a1a;
+}
+
+.nav-item.active {
+    background-color: #d4f283;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.nav-item.active .icon {
+    transform: scale(1.1);
+}
+
+.team-modules {
+    opacity: 0.6;
+}
+
+.nav-item.disabled {
+    cursor: not-allowed;
+    background-color: transparent;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.user-badge img {
+    width: 40px;
+    height: 40px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.user-status {
+    font-size: 0.75rem;
+    color: #8c8c8c;
+}
+
+/* Badges */
+.badge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge.yellow { background-color: var(--yellow-light); }
+.badge.green-light { background-color: var(--green-light); }
+.badge.blue-light { background-color: var(--blue-light); }
+.badge.white { background-color: white; }
+
+.date-badge {
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    font-weight: 500;
+}
+
+/* Système de Grille */
+.journal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* Cartes génériques */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.card-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* Carte Score Santé */
+.health-card {
+    background-color: var(--blue-light);
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.score-number {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+.progress-bar-container {
+    background-color: rgba(255, 255, 255, 0.5);
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--text-dark);
+    height: 100%;
+    border-radius: 4px;
+}
+
+.encouragement {
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+/* Contenu Carte Progress */
+.progress-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.circle-chart {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(var(--blue-light) 0% 25%, var(--yellow-light) 25% 50%, var(--green-light) 50% 75%, #eee 75% 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.circle-inner {
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.circle-inner .percentage { font-size: 1.5rem; font-weight: 700; }
+.circle-inner .label { font-size: 0.7rem; color: var(--text-gray); }
+
+.macros-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+}
+
+.macro-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.macro-item span:last-child {
+    margin-left: auto;
+    font-weight: 600;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.dot.blue { background-color: var(--blue-light); }
+.dot.yellow { background-color: var(--yellow-light); }
+.dot.green { background-color: var(--green-light); }
+
+/* Section Repas */
+.meals-section {
+    grid-column: 1 / -1;
+    margin-top: 1rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-add-main {
+    background-color: var(--green-light);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Carte Repas individuelle */
+.meal-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.meal-image {
+    flex: 0 0 80px;
+}
+
+.meal-image img {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    min-height: 80px;
+    max-width: 80px;
+    max-height: 80px;
+    border-radius: 14px;
+    object-fit: cover;
+    display: block;
+}
+
+.meal-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.meal-tags {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.time-info {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+}
+
+.meal-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+.meal-info p {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.meal-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.meal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-left: auto;
+}
+
+.meal-actions .btn-icon {
+    justify-content: center;
+    min-width: 90px;
+}
+
+.stat-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.stat-val {
+    display: flex;
+    align-items: center;
+}
+
+.btn-action {
+    background-color: var(--green-light);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: 0;
+    text-decoration: none;
+    color: var(--text-dark);
+    text-align: center;
+}
+
+/* Affichage du poids */
+.weight-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.weight-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.weight-label {
+    font-size: 0.85rem;
+    color: #4a5568;
+    margin-bottom: 0.3rem;
+}
+
+.weight-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.weight-divider {
+    font-size: 1.5rem;
+    color: rgba(0, 0, 0, 0.2);
+}
+
+.mt-2 { margin-top: 1.5rem; }
+
+/* Ajustement Macros pour la carte Objectif */
+.macros-summary.full-width {
+    width: 100%;
+}
+
+.macro-title {
+    display: flex;
+    align-items: center;
+}
+
+.macro-target {
+    font-weight: 700 !important;
+    font-size: 1.1rem;
+}
+
+/* Section Formulaire */
+.form-section {
+    grid-column: 1 / -1;
+}
+
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: #f8fafc;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--green-light);
+    box-shadow: 0 0 0 3px rgba(212, 242, 131, 0.3);
+    background-color: white;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.right-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Boutons du formulaire */
+.btn-main {
+    background-color: var(--text-dark);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.btn-main:hover {
+    background-color: #333;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-gray);
+    border: 1px solid #e2e8f0;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background-color: #f1f5f9;
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: #e53e3e;
+    border: 1px solid #e53e3e;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #e53e3e;
+    color: white;
+}
+
+/* Page Progression */
+.timeline-container {
+    margin-top: 1rem;
+}
+
+.timeline-dates {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.stats-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.stat-box {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #4a5568;
+    margin-top: 0.2rem;
+}
+
+.full-width-card {
+    grid-column: 1 / -1;
+}
+
+.chart-container {
+    width: 100%;
+    padding-top: 1rem;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 250px;
+    background-color: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-placeholder svg {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    opacity: 0.6;
+}
+
+.chart-note {
+    position: relative;
+    z-index: 2;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-gray);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-top: auto;
+    margin-bottom: 1rem;
+}
+
+.chart-note a {
+    color: var(--text-dark);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.chart-note a:hover {
+    text-decoration: underline;
+}
+
+/* Gestion du Journal */
+.active-journal-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--green-light);
+}
+
+.journal-info-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.journal-actions-right {
+    display: flex;
+    gap: 0.8rem;
+}
+
+/* Boutons d'icônes */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: #f8fafc;
+}
+
+.btn-icon.danger {
+    color: #e53e3e;
+    border-color: #feb2b2;
+}
+
+.btn-icon.danger:hover {
+    background-color: #fff5f5;
+}
+
+/* Composants tableau de bord */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-stat {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.card-stat.primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    background: rgba(0,0,0,0.05);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.3s ease-in-out;
+}
+
+.input-error {
+    border: 2px solid red;
+}
+
+/* Chat */
+.sp-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sp-chat-messages {
+    height: 360px;
+    overflow: auto;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sp-chat-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.sp-chat-row.user {
+    justify-content: flex-end;
+}
+
+.sp-chat-bubble {
+    max-width: 78%;
+    padding: 0.8rem 1rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    line-height: 1.35;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sp-chat-row.user .sp-chat-bubble {
+    background: var(--text-dark);
+    color: #fff;
+    border-bottom-right-radius: 6px;
+}
+
+.sp-chat-row.bot .sp-chat-bubble {
+    background: #fff;
+    color: var(--text-dark);
+    border-bottom-left-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.sp-chat-meta {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    margin-top: 0.35rem;
+}
+
+.sp-chat-composer {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.sp-chat-input {
+    flex: 1;
+}
+
+.sp-chat-send[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.sp-chat-hint {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+    padding: 0 0.25rem;
+}
+
+/* Badges nutrition / humeur */
+.badge-nutrition-green {
+    background-color: #2ecc71 !important;
+    color: white;
+}
+
+.badge-nutrition-light-green {
+    background-color: #27ae60 !important;
+    color: white;
+}
+
+.badge-nutrition-orange {
+    background-color: #f39c12 !important;
+    color: white;
+}
+
+.badge-nutrition-red {
+    background-color: #e74c3c !important;
+    color: white;
+}
+
+.badge-humeur-bien {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.badge-humeur-neutre {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.badge-humeur-fatigue {
+    background-color: #9b59b6;
+    color: white;
+}
+
+.badge-humeur-stresse {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.badge-humeur-excellent {
+    background-color: #00c853;
+    color: white;
+}
+
+/* ===== FRONT OFFICE SMARTPLATE ===== */
+.front-review-layout {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 340px;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    align-items: start;
+}
+
+.front-alert {
+    margin-top: 0.8rem;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: #eefcf3;
+    color: #256b37;
+}
+
+.review-stars {
+    display: flex;
+    gap: 0.4rem;
+    margin: 0.4rem 0 0.8rem;
+    font-size: 1.8rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.review-stars span {
+    color: #d1d5db;
+    transition: 0.2s;
+}
+
+.review-stars span.active {
+    color: #f4b400;
+}
+
+.small-muted {
+    font-size: 0.82rem;
+    color: var(--text-gray);
+}
+
+.recent-review-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.recent-review-item:last-child {
+    border-bottom: none;
+}
+
+.recent-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.recent-review-content {
+    flex: 1;
+}
+
+.recent-review-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.recent-stars {
+    color: #f4b400;
+    margin: 4px 0;
+}
+
+.recent-comment {
+    font-size: 0.92rem;
+    color: #374151;
+}
+
+.assistant-card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.assistant-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.assistant-title h3 {
+    font-size: 1.15rem;
+}
+
+.assistant-bubble {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.assistant-quick {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+}
+
+.assistant-quick a {
+    display: block;
+    padding: 0.65rem 0.9rem;
+    border-radius: 20px;
+    border: 1px solid #b7e48a;
+    color: #2d5d28;
+    background: #f7fff0;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.assistant-input {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.assistant-input input {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.assistant-input button {
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #6bbf59;
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.meal-actions .btn-icon {
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 12px;
+    padding: 0.6rem 0.8rem;
+}
+
+/* ===== RECIPE DETAILS PAGE ===== */
+.recipe-detail-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.recipe-hero-card {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.recipe-hero-media img {
+    width: 100%;
+    height: 320px;
+    min-height: 320px;
+    max-height: 320px;
+    object-fit: cover;
+    border-radius: 20px;
+    display: block;
+}
+
+.recipe-hero-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recipe-detail-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.recipe-detail-desc {
+    color: var(--text-gray);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.recipe-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.detail-stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.detail-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.detail-stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.recipe-detail-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.ingredients-list-front {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.ingredient-pill-front {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 0.8rem 1rem;
+}
+
+.ingredient-name-front {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.ingredient-type-front {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+    background: white;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+}
+
+.front-review-layout.single-column {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .front-review-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1000px) {
+    .recipe-hero-card {
+        grid-template-columns: 1fr;
+    }
+
+    .recipe-detail-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .front-review-layout.single-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .journal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meal-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .meal-stats {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+
+    .meal-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .meal-actions .btn-icon {
+        width: 100%;
+    }
+
+    body {
+        display: block;
+        padding: 0;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .dashboard {
+        max-width: 100%;
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 1rem;
+    }
+
+    .right-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .btn-danger,
+    .btn-main,
+    .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+
+    .sp-chat-messages {
+        height: 300px;
+    }
+
+    .sp-chat-composer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .small-kpi-row {
+        grid-template-columns: 1fr;
+    }
+
+    .recipe-detail-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .recipe-detail-title {
+        font-size: 1.5rem;
+    }
 }
