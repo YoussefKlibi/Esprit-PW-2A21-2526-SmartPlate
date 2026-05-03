@@ -41,6 +41,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 }
 
 $reclamations = $reclamationController->getByEmail($userEmail);
+
+$searchDate = $_GET['search_date'] ?? '';
+$searchSujet = $_GET['search_sujet'] ?? '';
+$sortOrder = $_GET['sort_date'] ?? 'desc';
+
+if ($searchDate !== '') {
+    $reclamations = array_filter($reclamations, function($r) use ($searchDate) {
+        $dateCreation = $r->getDateCreation() ?? '';
+        return strpos($dateCreation, $searchDate) === 0;
+    });
+}
+
+if ($searchSujet !== '') {
+    $reclamations = array_filter($reclamations, function($r) use ($searchSujet) {
+        $sujet = $r->getSujet() ?? '';
+        return stripos($sujet, $searchSujet) !== false;
+    });
+}
+
+usort($reclamations, function($a, $b) use ($sortOrder) {
+    $dateA = strtotime($a->getDateCreation() ?? '');
+    $dateB = strtotime($b->getDateCreation() ?? '');
+    if ($dateA === $dateB) {
+        return $sortOrder === 'asc' ? $a->getId() <=> $b->getId() : $b->getId() <=> $a->getId();
+    }
+    return $sortOrder === 'asc' ? $dateA <=> $dateB : $dateB <=> $dateA;
+});
+
 $responsesRecues = [];
 
 foreach ($reclamations as $reclamation) {
@@ -68,6 +96,41 @@ include __DIR__ . '/header.php';
                 <p class="form-intro">Compte connecté: <?php echo htmlspecialchars($userEmail, ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <a href="Add_reclamation.php" class="btn btn-primary">Nouvelle réclamation</a>
+        </div>
+
+        <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+            <form method="GET" action="list_reclamation.php" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="search_date" style="font-weight: 500;">Date:</label>
+                    <input type="date" id="search_date" name="search_date" value="<?php echo htmlspecialchars($searchDate, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: auto;">
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="search_sujet" style="font-weight: 500;">Sujet:</label>
+                    <select id="search_sujet" name="search_sujet" class="form-control" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: auto;">
+                        <option value="">Tous les sujets</option>
+                        <option value="Prix" <?php echo $searchSujet === 'Prix' ? 'selected' : ''; ?>>Prix</option>
+                        <option value="Livraison" <?php echo $searchSujet === 'Livraison' ? 'selected' : ''; ?>>Livraison</option>
+                        <option value="Goût" <?php echo $searchSujet === 'Goût' ? 'selected' : ''; ?>>Goût</option>
+                        <option value="Service" <?php echo $searchSujet === 'Service' ? 'selected' : ''; ?>>Service</option>
+                        <option value="Déception" <?php echo $searchSujet === 'Déception' ? 'selected' : ''; ?>>Déception</option>
+                        <option value="Satisfaction" <?php echo $searchSujet === 'Satisfaction' ? 'selected' : ''; ?>>Satisfaction</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="sort_date" style="font-weight: 500;">Trier:</label>
+                    <select id="sort_date" name="sort_date" class="form-control" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: auto;">
+                        <option value="desc" <?php echo $sortOrder === 'desc' ? 'selected' : ''; ?>>Plus récentes d'abord</option>
+                        <option value="asc" <?php echo $sortOrder === 'asc' ? 'selected' : ''; ?>>Plus anciennes d'abord</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Appliquer</button>
+                <?php if ($searchDate !== '' || $searchSujet !== '' || $sortOrder !== 'desc'): ?>
+                    <a href="list_reclamation.php" class="btn btn-light" style="padding: 8px 16px;">Réinitialiser</a>
+                <?php endif; ?>
+            </form>
         </div>
 
         <?php if ($successMessage !== null): ?>
@@ -119,6 +182,7 @@ include __DIR__ . '/header.php';
                                 </td>
                                 <td>
                                     <div class="actions-inline">
+                                        <a href="details_reclamation.php?id=<?php echo (int) $reclamation->getId(); ?>" class="btn btn-light btn-sm" style="border-color: #4a90e2; color: #4a90e2;">Détails</a>
                                         <a href="edit_reclamation.php?id=<?php echo (int) $reclamation->getId(); ?>" class="btn btn-light btn-sm">Modifier</a>
                                         <form action="list_reclamation.php" method="post" id="delete-form-<?php echo (int) $reclamation->getId(); ?>">
                                             <input type="hidden" name="action" value="delete">

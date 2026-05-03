@@ -127,22 +127,25 @@ include __DIR__ . '/header.php';
                             type="email"
                             name="email"
                             maxlength="100"
-                            value="<?php echo htmlspecialchars($emailValue, ENT_QUOTES, 'UTF-8'); ?>"
+                            value="<?php echo htmlspecialchars($userEmail, ENT_QUOTES, 'UTF-8'); ?>"
+                            readonly
                             required
+                            style="background-color: #f5f5f5; cursor: not-allowed;"
                         >
                     </label>
                 </div>
 
                 <label class="field">
                     <span>Sujet</span>
-                    <input
-                        type="text"
-                        name="sujet"
-                        minlength="5"
-                        maxlength="255"
-                        value="<?php echo htmlspecialchars($sujetValue, ENT_QUOTES, 'UTF-8'); ?>"
-                        required
-                    >
+                    <select name="sujet" required>
+                        <option value="">Sélectionnez un sujet</option>
+                        <option value="Prix" <?php echo $sujetValue === 'Prix' ? 'selected' : ''; ?>>Prix</option>
+                        <option value="Livraison" <?php echo $sujetValue === 'Livraison' ? 'selected' : ''; ?>>Livraison</option>
+                        <option value="Goût" <?php echo $sujetValue === 'Goût' ? 'selected' : ''; ?>>Goût</option>
+                        <option value="Service" <?php echo $sujetValue === 'Service' ? 'selected' : ''; ?>>Service</option>
+                        <option value="Déception" <?php echo $sujetValue === 'Déception' ? 'selected' : ''; ?>>Déception</option>
+                        <option value="Satisfaction" <?php echo $sujetValue === 'Satisfaction' ? 'selected' : ''; ?>>Satisfaction</option>
+                    </select>
                 </label>
 
                 <label class="field">

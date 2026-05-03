@@ -8,6 +8,8 @@ class Reclamation
     private ?string $sujet;
     private ?string $message;
     private ?string $date_creation;
+    private ?string $priorite;
+    private ?string $statut;
 
     public function __construct(
         ?int $id = null,
@@ -15,7 +17,9 @@ class Reclamation
         ?string $email = null,
         ?string $sujet = null,
         ?string $message = null,
-        ?string $date_creation = null
+        ?string $date_creation = null,
+        ?string $priorite = 'Faible',
+        ?string $statut = 'En attente'
     ) {
         $this->id = $id;
         $this->nom_client = $nom_client;
@@ -23,6 +27,8 @@ class Reclamation
         $this->sujet = $sujet;
         $this->message = $message;
         $this->date_creation = $date_creation;
+        $this->priorite = $priorite;
+        $this->statut = $statut;
     }
 
     public function getId(): ?int
@@ -91,6 +97,28 @@ class Reclamation
         return $this;
     }
 
+    public function getPriorite(): ?string
+    {
+        return $this->priorite;
+    }
+
+    public function setPriorite(?string $priorite): self
+    {
+        $this->priorite = $priorite;
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(?string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
     public static function fromArray(array $data): self
     {
         return new self(
@@ -99,7 +127,9 @@ class Reclamation
             $data['email'] ?? null,
             $data['sujet'] ?? null,
             $data['message'] ?? null,
-            $data['date_creation'] ?? null
+            $data['date_creation'] ?? null,
+            $data['priorite'] ?? 'Faible',
+            $data['statut'] ?? 'En attente'
         );
     }
 
@@ -112,6 +142,8 @@ class Reclamation
             'sujet' => $this->sujet,
             'message' => $this->message,
             'date_creation' => $this->date_creation,
+            'priorite' => $this->priorite,
+            'statut' => $this->statut,
         ];
     }
 }

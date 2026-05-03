@@ -15,9 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
             formatMessage: 'Veuillez saisir une adresse e-mail valide.'
         },
         sujet: {
-            minLength: 5,
-            requiredMessage: 'Le sujet est obligatoire.',
-            minLengthMessage: 'Le sujet doit contenir au moins 5 caracteres.'
+            requiredMessage: 'Veuillez sélectionner un sujet.'
         },
         message: {
             minLength: 10,

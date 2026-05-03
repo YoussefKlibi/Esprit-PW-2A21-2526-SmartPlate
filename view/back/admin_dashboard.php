@@ -40,6 +40,9 @@ if (isset($_GET['response_deleted']) && $_GET['response_deleted'] === '1') {
 }
 
 $recentResponses = array_slice($responseController->getAll(), 0, 5);
+$allReclamations = $reclamationController->getAll();
+$allResponses = $responseController->getAll();
+
 $reclamationCache = [];
 foreach ($recentResponses as $response) {
     $reclamationId = (int) $response->getIdReclamation();
@@ -47,6 +50,90 @@ foreach ($recentResponses as $response) {
         $reclamationCache[$reclamationId] = $reclamationController->getById($reclamationId);
     }
 }
+
+// ==========================================
+// CALCUL DES STATISTIQUES AVANCÉES
+// ==========================================
+$totalReclamations = count($allReclamations);
+$resolvedReclamations = 0;
+$sujetsCount = [];
+$prioritesCount = ['Urgent' => 0, 'Moyen' => 0, 'Faible' => 0];
+$totalDaysResponse = 0;
+$responsesCount = 0;
+
+foreach ($allReclamations as $rec) {
+    if ($rec->getStatut() === 'Traité') {
+        $resolvedReclamations++;
+    }
+    
+    $sujet = $rec->getSujet() ?: 'Autre';
+    if (!isset($sujetsCount[$sujet])) $sujetsCount[$sujet] = 0;
+    $sujetsCount[$sujet]++;
+    
+    $prio = $rec->getPriorite() ?: 'Faible';
+    if (isset($prioritesCount[$prio])) {
+        $prioritesCount[$prio]++;
+    }
+}
+
+// Calculate SLA / Overdue
+$slaExceededCount = 0;
+$now = new DateTime();
+$slaDelays = ['Urgent' => '+1 day', 'Moyen' => '+3 days', 'Faible' => '+7 days'];
+
+foreach ($allReclamations as $rec) {
+    if ($rec->getStatut() === 'En attente' || $rec->getStatut() === 'En cours') {
+        $prio = $rec->getPriorite() ?: 'Faible';
+        $delay = $slaDelays[$prio] ?? '+7 days';
+        $dateCreation = new DateTime($rec->getDateCreation());
+        $deadline = clone $dateCreation;
+        $deadline->modify($delay);
+        
+        if ($now > $deadline) {
+            $slaExceededCount++;
+        }
+    }
+}
+
+// Notification Email Admin (Max 1 par jour)
+if ($slaExceededCount > 0) {
+    $flagFile = __DIR__ . '/../../config/last_reminder.txt';
+    $lastSent = file_exists($flagFile) ? trim(file_get_contents($flagFile)) : '';
+    $today = date('Y-m-d');
+    
+    if ($lastSent !== $today) {
+        $adminEmail = $currentUser['email'] ?? 'admin@smartplate.test';
+        $subject = "Alerte : $slaExceededCount réclamation(s) en retard !";
+        $msg = "Bonjour,\r\n\r\n";
+        $msg .= "Le système a détecté que $slaExceededCount réclamation(s) ont dépassé leur délai de traitement (SLA).\r\n";
+        $msg .= "Veuillez vous connecter au tableau de bord pour les traiter urgemment.\r\n\r\n";
+        $msg .= "L'équipe Automatisée SmartPlate.";
+        
+        $headers = "From: system@smartplate.com\r\nContent-Type: text/plain; charset=UTF-8\r\n";
+        @mail($adminEmail, $subject, $msg, $headers);
+        @file_put_contents($flagFile, $today);
+    }
+}
+
+// Calculate Average Response Time
+foreach ($allResponses as $resp) {
+    $recId = $resp->getIdReclamation();
+    $rec = $reclamationController->getById($recId);
+    if ($rec && $rec->getDateCreation() && $resp->getDateReponse()) {
+        $dStart = new DateTime($rec->getDateCreation());
+        $dEnd = new DateTime($resp->getDateReponse());
+        $diff = $dStart->diff($dEnd);
+        $totalDaysResponse += $diff->days;
+        $responsesCount++;
+    }
+}
+
+$tauxResolution = $totalReclamations > 0 ? round(($resolvedReclamations / $totalReclamations) * 100) : 0;
+$tempsMoyenReponse = $responsesCount > 0 ? round($totalDaysResponse / $responsesCount, 1) : 0;
+
+// Top catégories
+arsort($sujetsCount);
+$topCategories = array_slice($sujetsCount, 0, 3, true);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -92,31 +179,42 @@ foreach ($recentResponses as $response) {
             
             <div class="page-header">
                 <div>
-                    <h1>Module : Suivi Nutritionnel</h1>
-                    <p>Aperçu des performances globales des entités Objectifs, Journaux et Repas.</p>
+                    <h1>Module : Gestion des Réclamations</h1>
+                    <p>Tableau de bord analytique et suivi des performances de traitement.</p>
                 </div>
             </div>
 
+            <?php if ($slaExceededCount > 0): ?>
+                <div style="background-color: #fff3f3; border-left: 5px solid #dc3545; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                    <h3 style="color: #dc3545; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        ⚠️ ALERTE RELANCE AUTOMATIQUE
+                    </h3>
+                    <p style="margin-bottom: 0; color: #333;">
+                        Le système a détecté <strong><?php echo $slaExceededCount; ?></strong> réclamation(s) dont le délai de traitement (SLA) est dépassé ! Un e-mail de relance a été expédié. Veuillez les traiter en priorité.
+                    </p>
+                </div>
+            <?php endif; ?>
+
             <div class="kpi-grid">
                 <div class="card kpi-card">
-                    <div class="kpi-icon yellow">🍽️</div>
+                    <div class="kpi-icon green">✅</div>
                     <div class="kpi-info">
-                        <h3>1,450 <span class="trend up">↑ 12%</span></h3>
-                        <span>Repas enregistrés (7 jours)</span>
+                        <h3><?php echo $tauxResolution; ?>%</h3>
+                        <span>Taux de résolution global</span>
                     </div>
                 </div>
                 <div class="card kpi-card">
-                    <div class="kpi-icon green">🎯</div>
+                    <div class="kpi-icon yellow">⏱️</div>
                     <div class="kpi-info">
-                        <h3>320</h3>
-                        <span>Objectifs "Atteints"</span>
+                        <h3><?php echo $tempsMoyenReponse; ?> j</h3>
+                        <span>Temps moyen de réponse</span>
                     </div>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-icon red">⚠️</div>
                     <div class="kpi-info">
-                        <h3>14</h3>
-                        <span>Journaux avec anomalies</span>
+                        <h3><?php echo $prioritesCount['Urgent']; ?></h3>
+                        <span>Réclamations Urgentes (En cours/Traitées)</span>
                     </div>
                 </div>
             </div>
@@ -125,39 +223,47 @@ foreach ($recentResponses as $response) {
                 
                 <div class="card">
                     <div class="card-header">
-                        <h2>Activité des Journaux Alimentaires</h2>
+                        <h2>Top Catégories (Sujets)</h2>
                     </div>
-                    <div class="chart-mockup" style="height: 250px; display: flex; align-items: flex-end; gap: 10px; padding-top: 20px;">
-                        <div style="flex: 1; background: #e8f8f5; border-top: 3px solid var(--admin-green); height: 40%; border-radius: 4px 4px 0 0;"></div>
-                        <div style="flex: 1; background: #e8f8f5; border-top: 3px solid var(--admin-green); height: 60%; border-radius: 4px 4px 0 0;"></div>
-                        <div style="flex: 1; background: #e8f8f5; border-top: 3px solid var(--admin-green); height: 45%; border-radius: 4px 4px 0 0;"></div>
-                        <div style="flex: 1; background: #e8f8f5; border-top: 3px solid var(--admin-green); height: 80%; border-radius: 4px 4px 0 0;"></div>
-                        <div style="flex: 1; background: #e8f8f5; border-top: 3px solid var(--admin-green); height: 100%; border-radius: 4px 4px 0 0;"></div>
+                    <div style="padding-top: 10px;">
+                        <?php if (empty($topCategories)): ?>
+                            <p class="empty-admin">Pas de données.</p>
+                        <?php else: ?>
+                            <?php foreach ($topCategories as $sujet => $count): ?>
+                                <?php $percent = $totalReclamations > 0 ? round(($count / $totalReclamations) * 100) : 0; ?>
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; color: #555;">
+                                        <strong><?php echo htmlspecialchars((string) $sujet, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                        <span><?php echo $count; ?> (<?php echo $percent; ?>%)</span>
+                                    </div>
+                                    <div style="width: 100%; background-color: #eee; border-radius: 4px; height: 8px;">
+                                        <div style="width: <?php echo $percent; ?>%; background-color: #20c997; height: 100%; border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2>Dernières Alertes (Modération)</h2>
+                        <h2>Répartition par Priorité</h2>
                     </div>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <strong>Repas Suspect</strong>
-                            <span class="timeline-time">Il y a 10 minutes</span>
-                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">ID Repas #402: 5000 kcal saisis en une fois.</p>
-                            <button class="btn-action">Inspecter</button>
+                    <div class="timeline" style="margin-top: 10px;">
+                        <div class="timeline-item" style="--marker-color: #dc3545;">
+                            <strong>Haute Priorité (Urgent)</strong>
+                            <span class="timeline-time" style="font-size: 1.2em; font-weight: bold; color: #dc3545;"><?php echo $prioritesCount['Urgent']; ?></span>
+                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">Déclenchées par NLP (Gravité forte)</p>
                         </div>
-                        <div class="timeline-item" style="--marker-color: #f1c40f;">
-                            <strong>Objectif Irréaliste</strong>
-                            <span class="timeline-time">Hier, 15:00</span>
-                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">ID Objectif #102: Poids cible de 30kg demandé.</p>
-                            <button class="btn-action">Inspecter</button>
+                        <div class="timeline-item" style="--marker-color: #fd7e14;">
+                            <strong>Priorité Moyenne</strong>
+                            <span class="timeline-time" style="font-size: 1.2em; font-weight: bold; color: #fd7e14;"><?php echo $prioritesCount['Moyen']; ?></span>
+                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">Déclenchées par NLP (Gravité modérée)</p>
                         </div>
-                        <div class="timeline-item">
-                            <strong>Journal Vide</strong>
-                            <span class="timeline-time">Hier, 08:30</span>
-                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">Journal ID #892 validé sans aucun repas.</p>
-                            <button class="btn-action">Supprimer</button>
+                        <div class="timeline-item" style="--marker-color: #28a745;">
+                            <strong>Faible Priorité</strong>
+                            <span class="timeline-time" style="font-size: 1.2em; font-weight: bold; color: #28a745;"><?php echo $prioritesCount['Faible']; ?></span>
+                            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 5px;">Messages standards / Positifs</p>
                         </div>
                     </div>
                 </div>

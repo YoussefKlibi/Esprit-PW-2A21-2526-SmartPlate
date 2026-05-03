@@ -52,8 +52,8 @@ class ReclamationController
 
     public function create(Reclamation $reclamation): int
     {
-        $sql = "INSERT INTO {$this->table} (nom_client, email, sujet, message, date_creation)
-                VALUES (:nom_client, :email, :sujet, :message, :date_creation)";
+        $sql = "INSERT INTO {$this->table} (nom_client, email, sujet, message, date_creation, priorite, statut)
+                VALUES (:nom_client, :email, :sujet, :message, :date_creation, :priorite, :statut)";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
@@ -62,6 +62,8 @@ class ReclamationController
             'sujet' => $reclamation->getSujet(),
             'message' => $reclamation->getMessage(),
             'date_creation' => $reclamation->getDateCreation() ?? date('Y-m-d'),
+            'priorite' => $reclamation->getPriorite() ?? 'Faible',
+            'statut' => $reclamation->getStatut() ?? 'En attente',
         ]);
 
         $id = (int) $this->conn->lastInsertId();
@@ -81,7 +83,9 @@ class ReclamationController
                     email = :email,
                     sujet = :sujet,
                     message = :message,
-                    date_creation = :date_creation
+                    date_creation = :date_creation,
+                    priorite = :priorite,
+                    statut = :statut
                 WHERE id = :id";
 
         $stmt = $this->conn->prepare($sql);
@@ -92,6 +96,8 @@ class ReclamationController
             'sujet' => $reclamation->getSujet(),
             'message' => $reclamation->getMessage(),
             'date_creation' => $reclamation->getDateCreation() ?? date('Y-m-d'),
+            'priorite' => $reclamation->getPriorite() ?? 'Faible',
+            'statut' => $reclamation->getStatut() ?? 'En attente',
         ]);
     }
 
@@ -101,5 +107,51 @@ class ReclamationController
         $stmt = $this->conn->prepare($sql);
 
         return $stmt->execute(['id' => $id]);
+    }
+
+    public function filter(array $criteres): array
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE 1=1";
+        $params = [];
+
+        if (!empty($criteres['priorite'])) {
+            $sql .= " AND priorite = :priorite";
+            $params['priorite'] = $criteres['priorite'];
+        }
+
+        if (!empty($criteres['statut'])) {
+            $sql .= " AND statut = :statut";
+            $params['statut'] = $criteres['statut'];
+        }
+
+        if (!empty($criteres['sujet'])) {
+            $sql .= " AND sujet = :sujet";
+            $params['sujet'] = $criteres['sujet'];
+        }
+
+        if (!empty($criteres['date_debut'])) {
+            $sql .= " AND date_creation >= :date_debut";
+            $params['date_debut'] = $criteres['date_debut'];
+        }
+
+        if (!empty($criteres['date_fin'])) {
+            $sql .= " AND date_creation <= :date_fin";
+            $params['date_fin'] = $criteres['date_fin'];
+        }
+
+        $sortOrder = strtoupper($criteres['sort_date'] ?? 'DESC');
+        if (!in_array($sortOrder, ['ASC', 'DESC'])) {
+            $sortOrder = 'DESC';
+        }
+
+        $sql .= " ORDER BY date_creation {$sortOrder}, id {$sortOrder}";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(static function (array $row): Reclamation {
+            return Reclamation::fromArray($row);
+        }, $rows);
     }
 }
