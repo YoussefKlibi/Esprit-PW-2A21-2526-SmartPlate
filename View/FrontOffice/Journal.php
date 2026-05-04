@@ -550,6 +550,36 @@ if ($nutritionScore >= 85) {
         </div>
 
         <div class="form-row">
+            <!-- ✨ DÉBUT DU BOUTON IA ✨ -->
+        <style>
+            /* Style du switch façon iOS */
+            .switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; }
+            .switch input { opacity: 0; width: 0; height: 0; }
+            .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px; }
+            .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            input:checked + .slider { background-color: #84cc16; /* Vert SmartPlate */ }
+            input:checked + .slider:before { transform: translateX(22px); }
+            
+            /* Animation douce pour la boîte */
+            .ai-toggle-box { transition: all 0.3s ease; }
+            .ai-toggle-box:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        </style>
+
+        <div class="ai-toggle-box" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    🤖 Assistant IA SmartPlate
+                </span>
+                <span style="font-size: 0.85rem; color: #64748b; margin-top: 2px;">
+                    Laisser l'IA analyser la photo et calculer les macros automatiquement.
+                </span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="ia_mode_toggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <!-- ✨ FIN DU BOUTON IA ✨ -->
             <div class="form-group">
                 <label for="repas_image">Photo du repas (optionnel)</label>
                 <input type="file" id="repas_image" name="repas_image" accept="image/*" class="form-control">

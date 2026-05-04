@@ -810,15 +810,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 }
 
+// Note: prediction fetch is handled by the single listener below which
+// applies results only if the IA toggle is still enabled when the
+// response arrives. This prevents autofill after the user disables IA.
+
 document.addEventListener('DOMContentLoaded', function() {
     const imageInput = document.getElementById('repas_image');
     const nomInput = document.getElementById('nom');
+    const quantiteInput = document.getElementById('quantite'); // Le champ quantité
+    
+    // Les champs de résultats
+    const caloriesInput = document.getElementById('nbre_calories');
+    const proteineInput = document.getElementById('proteine');
+    const glucideInput = document.getElementById('glucide');
+    const lipideInput = document.getElementById('lipide');
+
+    // Variables pour stocker les valeurs pour 100g reçues par l'API
+    let baseNutrition = {
+        calories: 0,
+        proteines_g: 0,
+        glucides_g: 0,
+        lipides_g: 0
+    };
 
     if (!imageInput) return;
-    // nomInput may be absent on some pages; guard before writing to it
+
+    // 1️⃣ L'UTILISATEUR SÉLECTIONNE UNE IMAGE
+    // 1️⃣ L'UTILISATEUR SÉLECTIONNE UNE IMAGE
     imageInput.addEventListener('change', function() {
+        // --- NOUVEAU : On vérifie si l'IA est activée ---
+        const iaToggle = document.getElementById('ia_mode_toggle');
+        if (iaToggle && !iaToggle.checked) {
+            // Si le bouton est décoché, on arrête tout ici ! 
+            // L'image s'affichera dans l'aperçu (grâce à l'autre script), mais l'API ne sera pas appelée.
+            return; 
+        }
+        // -------------------------------------------------
+
         if (this.files && this.files[0]) {
-            if (nomInput) nomInput.value = "Analyse en cours...";
+            if (nomInput) nomInput.value = "Analyse IA en cours...";
 
             const formData = new FormData();
             formData.append('repas_image', this.files[0]);
@@ -829,16 +859,57 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                // Re-vérifier le toggle IA au moment d'appliquer les résultats
+                const iaToggle = document.getElementById('ia_mode_toggle');
+                if (iaToggle && !iaToggle.checked) {
+                    // L'utilisateur a désactivé l'IA depuis l'envoi — on n'applique rien.
+                    return;
+                }
+
                 if (data && data.nom_detecte && nomInput) {
                     nomInput.value = data.nom_detecte.replace(/_/g, ' ');
                 }
+
+                // Si la base de données nutritionnelle a renvoyé des valeurs
+                if (data && data.nutrition_pour_100g && !data.nutrition_pour_100g.erreur) {
+                    // Re-vérifier encore une fois (sécurité)
+                    if (iaToggle && !iaToggle.checked) return;
+
+                    baseNutrition = data.nutrition_pour_100g;
+
+                    if (!quantiteInput.value) quantiteInput.value = 100;
+                    calculerMacros();
+                }
             })
             .catch(error => {
-                console.error('Erreur:', error);
+                console.error('Erreur API:', error);
                 if (nomInput) nomInput.value = "";
             });
         }
     });
+
+    // 2️⃣ L'UTILISATEUR MODIFIE LA QUANTITÉ EN TEMPS RÉEL
+    if(quantiteInput) {
+        quantiteInput.addEventListener('input', calculerMacros);
+    }
+
+    // 🧮 LA FONCTION DE CALCUL MAGIQUE
+    function calculerMacros() {
+        // Si on n'a pas encore de valeurs de base, on ne fait rien
+        if(baseNutrition.calories === 0) return;
+
+        // Récupérer la quantité tapée (si vide, on considère 0)
+        let qte = parseFloat(quantiteInput.value) || 0;
+
+        // Le calcul en croix : (Valeur pour 100g * Quantité) / 100
+        let facteur = qte / 100;
+
+        // Mettre à jour les cases (on utilise toFixed(1) pour garder 1 chiffre après la virgule max)
+        if(caloriesInput) caloriesInput.value = Math.round(baseNutrition.calories * facteur);
+        if(proteineInput) proteineInput.value = (baseNutrition.proteines_g * facteur).toFixed(1);
+        if(glucideInput) glucideInput.value = (baseNutrition.glucides_g * facteur).toFixed(1);
+        if(lipideInput) lipideInput.value = (baseNutrition.lipides_g * facteur).toFixed(1);
+    }
 });
     
     
