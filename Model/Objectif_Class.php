@@ -200,5 +200,37 @@ public static function getStatsParStatut() {
             die('Erreur lors du tri: ' . $e->getMessage());
         }
     }
+
+    public static function verifierEtEnvoyerRappels($email_test = "klibiyoussef2017@gmail.com") {
+    $db = Config::getConnexion();
+    
+    // On cherche les objectifs qui doivent recevoir une notification pile à cette minute
+    $sql = "SELECT * FROM objectif 
+            WHERE is_notif_enabled = 1 
+            AND statut = 'en_cours'
+            AND DATE_FORMAT(heure_notification, '%H:%i') = DATE_FORMAT(NOW(), '%H:%i')";
+            
+    try {
+        $query = $db->query($sql);
+        $objectifs = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($objectifs) > 0) {
+            $sujet = "SmartPlate - N'oublie pas ton journal alimentaire !";
+            $headers = "From: noreply@smartplate.com\r\nContent-Type: text/html; charset=UTF-8\r\n";
+
+            foreach ($objectifs as $obj) {
+                $message = "<h3>Salut !</h3><p>Il est l'heure de remplir ton journal pour ton objectif de <strong>" . htmlspecialchars($obj['type_objectif']) . "</strong>.</p>";
+                
+                if(mail($email_test, $sujet, $message, $headers)) {
+                    echo "[Succès] Mail envoyé pour l'objectif #" . $obj['id_objectif'] . "\n";
+                }
+            }
+        } else {
+            echo "Rien à envoyer à " . date('H:i') . "\n";
+        }
+    } catch (Exception $e) {
+        echo 'Erreur : ' . $e->getMessage();
+    }
+}
 }
 ?>
