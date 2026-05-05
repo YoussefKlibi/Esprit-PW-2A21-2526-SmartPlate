@@ -113,8 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const VilleB = document.getElementById("VilleB");
   const CodePostalB = document.getElementById("CodePostalB");
   const PaysB = document.getElementById("PaysB");
-  const Latitude = document.getElementById("Latitude");
-  const Longitude = document.getElementById("Longitude");
+  /*const Latitude = document.getElementById("Latitude");
+  const Longitude = document.getElementById("Longitude");*/
 
   btnAddBoutique.onclick = () => {
     boutiqueModal.style.display = "flex";
@@ -139,8 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
       VilleB.value = row.cells[5].innerText;
       CodePostalB.value = row.cells[6].innerText;
       PaysB.value = row.cells[7].innerText;
-      Latitude.value = row.cells[8].innerText;
-      Longitude.value = row.cells[9].innerText;
+      /*Latitude.value = row.cells[8].innerText;
+      Longitude.value = row.cells[9].innerText;*/
 
       boutiqueModal.style.display = "flex";
 
@@ -179,6 +179,94 @@ document.addEventListener("DOMContentLoaded", () => {
       boutiqueModal.style.display = "none";
     }
   };
+
+
+/* ================== CATEGORIE ===================*/
+
+ const CategorieBtn = document.getElementById("CategorieBtn");
+  const CategorieContent = document.getElementById("CategorieContent");
+
+  CategorieBtn.addEventListener("click", () => {
+    CategorieContent.classList.toggle("open");
+  });
+
+  const CategorieForm = document.getElementById("CategorieForm");
+/*
+  CategorieForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(CategorieForm);
+
+    fetch("../Controller/StockController.php", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.text())
+    .then(() => {
+
+      const code = stockForm.querySelector("select[name='Code']").value;
+      const codeText = stockForm.querySelector("select[name='Code'] option:checked").text;
+
+      const codeB = stockForm.querySelector("select[name='CodeB']").value;
+      const codeBText = stockForm.querySelector("select[name='CodeB'] option:checked").text;
+
+      const stockValue = stockForm.querySelector("input[name='Stock']").value;
+
+      const tbody = document.querySelector("#stockContent table tbody");
+
+      let found = false;
+
+      tbody.querySelectorAll("tr").forEach(tr => {
+        const produit = tr.cells[1].innerText;
+        const boutique = tr.cells[2].innerText;
+
+        if (produit === codeText && boutique === codeBText) {
+          tr.cells[3].innerText =
+            parseInt(tr.cells[3].innerText) + parseInt(stockValue);
+          found = true;
+        }
+      });
+
+      if (!found) {
+        const image = stockForm.querySelector("select[name='Code'] option:checked").dataset.image;
+
+        const imageCell = image
+          ? `<img src="../${image}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;">`
+          : `<span style="color:gray;">Aucune image</span>`;
+
+        const newRow = `
+          <tr data-code="${code}" data-codeb="${codeB}">
+            <td>${imageCell}</td>
+            <td>${codeText}</td>
+            <td>${codeBText}</td>
+            <td>${stockValue}</td>
+            <td class="delete-stock">🗑️</td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML("beforeend", newRow);
+      }
+
+      stockForm.querySelector("input[name='Stock']").value = "";
+      stockContent.classList.add("open");
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("delete-stock")) {
+
+      const row = e.target.closest("tr");
+
+      const code = row.dataset.code;
+      const codeB = row.dataset.codeb;
+
+      fetch(`../Controller/StockController.php?action=delete&Code=${code}&CodeB=${codeB}`)
+        .then(() => {
+          row.remove();
+          stockContent.classList.add("open");
+        });
+    }
+  });
+*/
 
   /* ================= STOCK ================= */
   const stockBtn = document.getElementById("StockBtn");
@@ -265,6 +353,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+
+  /* ================= SELECTION LIGNE TABLEAU ================= */
+
+let selectedRow = null;
+
+// sélectionner une ligne
+document.addEventListener("click", (e) => {
+  const row = e.target.closest("table tbody tr");
+
+  // si on clique sur une ligne
+  if (row) {
+
+    // enlever ancienne sélection
+    if (selectedRow) {
+      selectedRow.classList.remove("selected-row");
+    }
+
+    // nouvelle sélection
+    selectedRow = row;
+    selectedRow.classList.add("selected-row");
+
+  } else {
+
+    // si clic hors tableau → annuler sélection
+    if (
+      selectedRow &&
+      !e.target.closest("table")
+    ) {
+      selectedRow.classList.remove("selected-row");
+      selectedRow = null;
+    }
+  }
+});
+
+
+
   /* ================= VALIDATION ================= */
 
   function setError(input, message) {
@@ -280,9 +404,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (error) error.innerText = "";
   }
 
-  code.addEventListener("input", () => {
+ /* code.addEventListener("input", () => {
     /^[a-zA-Z0-9]+$/.test(code.value) ? clearError(code) : setError(code, "Code invalide");
-  });
+  });*/
 
   nom.addEventListener("input", () => {
     nom.value.length >= 3 ? clearError(nom) : setError(nom, "Nom trop court");
@@ -358,7 +482,7 @@ TelB.addEventListener("input", () => {
 
   /* ================= BLOQUER SUBMIT ================= */
 
-  form.addEventListener("submit", (e) => {
+  /*form.addEventListener("submit", (e) => {
     if (
       !/^[a-zA-Z0-9]+$/.test(code.value) ||
       nom.value.length < 3 ||
@@ -367,7 +491,7 @@ TelB.addEventListener("input", () => {
       e.preventDefault();
       alert("Corrige les erreurs produit !");
     }
-  });
+  });*/
 
   formBoutique.addEventListener("submit", (e) => {
     if (
@@ -378,6 +502,64 @@ TelB.addEventListener("input", () => {
       alert("Corrige les erreurs boutique !");
     }
   });
+
+
+
+
+
+// =================== CATEGORIE ============================
+  document.addEventListener("click", (e) => {
+
+  if (e.target.classList.contains("edit-categorie")) {
+
+    const code = e.target.dataset.code;
+    const nom = e.target.dataset.nom;
+
+    // remplir le formulaire
+    document.querySelector("input[name='NomC']").value = nom;
+
+    // ajouter champs hidden pour update
+    let hidden = document.querySelector("#codeCategorieHidden");
+
+    if (!hidden) {
+      hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "CodeC";
+      hidden.id = "codeCategorieHidden";
+      document.getElementById("CategorieForm").appendChild(hidden);
+    }
+
+    hidden.value = code;
+
+    // changer bouton submit
+    document.querySelector("#CategorieForm button").innerText = "Modifier";
+    document.querySelector("#CategorieForm button").value = "update";
+  }
+
+
+
+  /* ================= PERSISTENCE TOGGLE CATEGORIE ================= */
+
+const CategorieContent = document.getElementById("CategorieContent");
+const CategorieBtn = document.getElementById("CategorieBtn");
+
+// restaurer l'état au chargement
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("categorieOpen") === "true") {
+    CategorieContent.classList.add("open");
+  }
+});
+
+// sauvegarder quand on toggle
+CategorieBtn.addEventListener("click", () => {
+  setTimeout(() => {
+    const isOpen = CategorieContent.classList.contains("open");
+    localStorage.setItem("categorieOpen", isOpen);
+  }, 10);
+});
+
+
+});
 
   
 

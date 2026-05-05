@@ -1,5 +1,5 @@
 const cards = Array.from(document.querySelectorAll(".product-card"));
-const searchInput = document.getElementById("searchInput");
+//const searchInput = document.getElementById("searchInput");
 const category = document.getElementById("filterCategory");
 const sortPrice = document.getElementById("sortPrice");
 
@@ -12,7 +12,7 @@ const perPage = 8;
 // =======================
 // FILTRE + TRI
 // =======================
-function applyFilters() {
+/*function applyFilters() {
     const search = searchInput.value.toLowerCase();
     const cat = category.value;
 
@@ -22,7 +22,19 @@ function applyFilters() {
     );
 
     applySort(); // 🔥 tri après filtre
+}*/
+
+function applyFilters() {
+
+    const cat = category.value;
+
+    filtered = cards.filter(c =>
+        cat === "all" || c.dataset.category === cat
+    );
+
+    applySort();
 }
+
 
 // =======================
 // TRI PRIX
@@ -86,7 +98,7 @@ function renderPagination() {
 // =======================
 // EVENTS
 // =======================
-searchInput.addEventListener("input", applyFilters);
+//searchInput.addEventListener("input", applyFilters);
 category.addEventListener("change", applyFilters);
 sortPrice.addEventListener("change", applySort);
 

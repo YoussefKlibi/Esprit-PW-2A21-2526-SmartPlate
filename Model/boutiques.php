@@ -9,27 +9,81 @@ class Boutiques {
         $this->pdo = Config::getConnexion();
     }
 
-    // ➕ AJOUTER BOUTIQUE
-    public function addBoutique($data) {
-        $sql = "INSERT INTO boutiques
-        (CodeB, NomB, EmailB, TelB, AdresseB, VilleB, Code_postalB, PaysB, latitude, longitude)
-        VALUES (:codeb, :nom, :email, :tel, :adresse, :ville, :cp, :pays, :lat, :lng)";
+    /* 🔍 SEARCH BY NAME
+public function searchByNameF($nom)
+{
+    $sql = "SELECT * FROM boutiques 
+            WHERE UPPER(NomB) LIKE UPPER(:nom)";
 
-        $stmt = $this->pdo->prepare($sql);
+    $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
-            'codeb' => $data['CodeB'],
-            'nom' => $data['NomB'],
-            'email' => $data['EmailB'],
-            'tel' => $data['TelB'],
-            'adresse' => $data['AdresseB'],
-            'ville' => $data['VilleB'],
-            'cp' => $data['Code_postalB'],
-            'pays' => $data['PaysB'],
-            'lat' => $data['latitude'],
-            'lng' => $data['longitude']
-        ]);
+    $stmt->execute([
+        'nom' => '%' . strtoupper($nom) . '%'
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}*/
+
+
+public function searchByNameF($nom)
+{
+    $sql = "SELECT * FROM boutiques";
+
+    $stmt = $this->pdo->query($sql);
+
+    $boutiques = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $resultats = [];
+
+    $recherche = strtoupper(trim($nom));
+
+    foreach ($boutiques as $boutique) {
+
+        $nomBoutique = strtoupper($boutique['NomB']);
+
+        // distance
+        $distance = levenshtein($recherche, $nomBoutique);
+
+        // si proche
+        if ($distance <= 3 || str_contains($nomBoutique, $recherche)) {
+
+            $boutique['distance'] = $distance;
+
+            $resultats[] = $boutique;
+        }
     }
+
+    // tri par pertinence
+    usort($resultats, function($a, $b) {
+        return $a['distance'] <=> $b['distance'];
+    });
+
+    return $resultats;
+}
+
+
+
+    // ➕ AJOUTER BOUTIQUE
+public function addBoutique($data) {
+    $sql = "INSERT INTO boutiques
+    (NomB, EmailB, TelB, AdresseB, VilleB, Code_postalB, PaysB, latitude, longitude)
+    VALUES (:nom, :email, :tel, :adresse, :ville, :cp, :pays, :lat, :lng)";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    return $stmt->execute([
+        'nom' => $data['NomB'],
+        'email' => $data['EmailB'],
+        'tel' => $data['TelB'],
+        'adresse' => $data['AdresseB'],
+        'ville' => $data['VilleB'],
+        'cp' => $data['Code_postalB'],
+        'pays' => $data['PaysB'],
+        'lat' => $data['latitude'] ?? null,
+        'lng' => $data['longitude'] ?? null
+    ]);
+}
+
 
     // 📄 LISTE BOUTIQUES
     public function getAllBoutiques() {
@@ -39,34 +93,35 @@ class Boutiques {
     }
 
     // ✏️ UPDATE BOUTIQUE
-    public function updateBoutique($data) {
-        $sql = "UPDATE boutiques SET
-            NomB = :nom,
-            EmailB = :email,
-            TelB = :tel,
-            AdresseB = :adresse,
-            VilleB = :ville,
-            Code_postalB = :cp,
-            PaysB = :pays,
-            latitude = :lat,
-            longitude = :lng
-        WHERE CodeB = :codeb";
+public function updateBoutique($data) {
+    $sql = "UPDATE boutiques SET
+        NomB = :nom,
+        EmailB = :email,
+        TelB = :tel,
+        AdresseB = :adresse,
+        VilleB = :ville,
+        Code_postalB = :cp,
+        PaysB = :pays,
+        latitude = :lat,
+        longitude = :lng
+    WHERE CodeB = :codeb";
 
-        $stmt = $this->pdo->prepare($sql);
+    $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
-            'codeb' => $data['CodeB'],
-            'nom' => $data['NomB'],
-            'email' => $data['EmailB'],
-            'tel' => $data['TelB'],
-            'adresse' => $data['AdresseB'],
-            'ville' => $data['VilleB'],
-            'cp' => $data['Code_postalB'],
-            'pays' => $data['PaysB'],
-            'lat' => $data['latitude'],
-            'lng' => $data['longitude']
-        ]);
-    }
+    return $stmt->execute([
+        'codeb' => $data['CodeB'],
+        'nom' => $data['NomB'],
+        'email' => $data['EmailB'],
+        'tel' => $data['TelB'],
+        'adresse' => $data['AdresseB'],
+        'ville' => $data['VilleB'],
+        'cp' => $data['Code_postalB'],
+        'pays' => $data['PaysB'],
+        'lat' => $data['latitude'] ?? null,
+        'lng' => $data['longitude'] ?? null
+    ]);
+}
+
 
     // ❌ DELETE
     public function deleteBoutique($codeb) {
@@ -122,13 +177,13 @@ public function validateBoutique($data, &$errors = []) {
         $errors[] = "Pays obligatoire.";
     }
 
-    if ($data['latitude'] !== "" && !is_numeric($data['latitude'])) {
+    /*if ($data['latitude'] !== "" && !is_numeric($data['latitude'])) {
         $errors[] = "Latitude invalide.";
     }
 
     if ($data['longitude'] !== "" && !is_numeric($data['longitude'])) {
         $errors[] = "Longitude invalide.";
-    }
+    }*/
 
     return empty($errors);
 }

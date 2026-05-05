@@ -29,6 +29,7 @@ class ProduitController {
 
     // ================= ADD =================
     public function add($data, $file) {
+        $data['categorie'] = $data['CodeC'];
 
         $data['Image'] = "";
 
@@ -53,6 +54,7 @@ class ProduitController {
 
     // ================= UPDATE =================
     public function update($data, $file) {
+         $data['categorie'] = $data['CodeC'];
 
         // IMPORTANT: récupérer un seul produit
         $existing = $this->model->getProduitByCode($data['code']);

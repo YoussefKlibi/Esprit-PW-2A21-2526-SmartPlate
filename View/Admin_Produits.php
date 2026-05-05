@@ -2,10 +2,13 @@
 require_once "../Controller/ProduitController.php";
 require_once "../Controller/BoutiqueController.php";
 require_once "../Controller/StockController.php";
+require_once "../Model/Categorie.php";
 
 $controller = new ProduitController();
 $controllerB = new BoutiqueController();
 $stockController = new StockController();
+$categorieModel = new Categories();
+$categories = $categorieModel->getAllCategories();
 
 /* PRODUITS */
 if (isset($_GET['code']) && !empty($_GET['code'])) {
@@ -62,9 +65,56 @@ $stocks = $stockController->getAllStocks();
 
 <!-- ACTIONS -->
     <div class="stockSection">
+        <button id="CategorieBtn">Gérer les Catégories</button>
         <button id="StockBtn">Gérer le stock</button>
     </div>
 
+<!-- toggle categorie -->
+    <div id="CategorieContent" class="CategorieContent">
+        <h3>Gestion des catégories</h3>
+        <form id="CategorieForm" method="POST" action="../Controller/CategorieController.php">
+            <!--<input type="text" name="CodeC" placeholder="code categorie">-->
+            <input type="hidden" name="CodeC" id="codeCategorieHidden">
+            <input type="hidden" name="action" id="categorieAction">
+            <input type="text" name="NomC" placeholder="Nom catégorie">
+            <button type="submit">Ajouter</button>
+        </form>
+
+       <table id="categorieTable">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Catégorie</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <?php if (!empty($categories)): ?>
+        <?php foreach ($categories as $c): ?>
+            <tr data-code="<?= $c['CodeC'] ?>" data-codeb="<?= $c['CodeC'] ?>">
+                <td><?= $c['CodeC'] ?></td>
+                <td><?= $c['NomC'] ?></td>
+                <td>
+                    <button type="button" class="edit-categorie" data-code="<?= $c['CodeC'] ?>" data-nom="<?= $c['NomC'] ?>"> ✏️</button>
+                    <a href="../Controller/CategorieController.php?delete=<?= $c['CodeC'] ?>" onclick="return confirm('Supprimer cette catégorie ?')">
+                    🗑️
+                    </a>
+            </td>
+            </tr>
+        <?php endforeach; ?>
+        <?php else: ?>
+        <tr>
+            <td colspan="9" style="text-align:center;">Aucune catégorie trouvée ❌</td>
+        </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+    </div>
+
+
+<!-- toggle stock -->
     <div id="stockContent" class="stockContent">
         <h3>Gestion du stock</h3>
         <form id="stockForm" method="POST" action="../Controller/StockController.php">
@@ -137,77 +187,58 @@ $stocks = $stockController->getAllStocks();
         <input type="text" id="searchInputProduit" name="code" placeholder="Rechercher un produit...">
         <button type="submit" name="action" value="search">🔍</button>
     </form>
-
-    <!--<div class="category-container">
-        <select id="categoryFilter">
-            <option value="all">Catégories</option>
-            <option value="Yaourt">Smart Yaourt</option>
-            <option value="Barre_énergétique">Smart Barre énergétique</option>
-            <option value="Bsissa">Smart Bsissa</option>
-            <option value="ChocoPlate">Smart ChocoPlate</option>
-        </select>
-
-        <div class="action-buttons-categorie">
-            <input type="text" id="CategoryInput" placeholder="Gérer une Catégorie">
-            <button id="addCategorie" type="button">➕</button>
-            <button id="deleteCategorie" type="button">➖</button>
-            <button id="editCategorie" type="button">✏️</button>
-        </div>
-    </div> -->
 </div>
 
 <!-- TABLE PRODUITS -->
 <div class="table-container">
 <table id="productsTable">
     <thead>
-    <tr>
-        <th>Code Produit</th>
-        <th>Produit</th>
-        <th>Catégorie</th>
-        <th>Prix</th>
-        <th>Description</th>
-        <th>Image</th>
-        <th>Actions</th>
-    </tr>
+        <tr>
+            <th>Code Produit</th>
+            <th>Produit</th>
+            <th>Catégorie</th>
+            <th>Prix</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th>Actions</th>
+        </tr>
     </thead>
 
     <tbody>
+        <?php if (!empty($produits)): ?>
+        <?php foreach ($produits as $p): ?>
 
-    <?php if (!empty($produits)): ?>
-    <?php foreach ($produits as $p): ?>
+        <tr class="product-row" data-code="<?= $p['Code'] ?>">
+            <td><?= $p['Code'] ?></td>
+            <td><?= $p['Nom'] ?></td>
+            <td><?= $p['Categorie'] ?></td>
+            <td><?= $p['Prix'] ?></td>
+            <td><?= $p['description'] ?></td>
 
-    <tr class="product-row" data-code="<?= $p['Code'] ?>">
-        <td><?= $p['Code'] ?></td>
-        <td><?= $p['Nom'] ?></td>
-        <td><?= $p['Categorie'] ?></td>
-        <td><?= $p['Prix'] ?></td>
-        <td><?= $p['description'] ?></td>
+            <td>
+                <?php if (!empty($p['Image'])): ?>
+                    <img src="../<?= $p['Image'] ?>" 
+                        alt="Produit"
+                        style="width:30px; height:30px; object-fit:cover; border-radius:6px; cursor:pointer;"
+                        class="btn-image"
+                        data-img="<?= $p['Image'] ?>">
+                <?php else: ?>
+                    <span style="color:gray;">Aucune image</span>
+                <?php endif; ?>
+            </td>
 
-        <td>
-            <?php if (!empty($p['Image'])): ?>
-                <img src="../<?= $p['Image'] ?>" 
-                    alt="Produit"
-                    style="width:30px; height:30px; object-fit:cover; border-radius:6px; cursor:pointer;"
-                    class="btn-image"
-                    data-img="<?= $p['Image'] ?>">
-            <?php else: ?>
-                <span style="color:gray;">Aucune image</span>
-            <?php endif; ?>
-        </td>
+            <td>
+                <button class="btn-edit" data-code="<?= $p['Code'] ?>">✏️</button>
+                <button class="btn-delete" data-code="<?= $p['Code'] ?>">🗑️</button>
+            </td>
+        </tr>
 
-        <td>
-            <button class="btn-edit" data-code="<?= $p['Code'] ?>">✏️</button>
-            <button class="btn-delete" data-code="<?= $p['Code'] ?>">🗑️</button>
-        </td>
-    </tr>
-
-    <?php endforeach; ?>
-    <?php else: ?>
-    <tr>
-        <td colspan="9" style="text-align:center;">Aucun produit trouvé ❌</td>
-    </tr>
-    <?php endif; ?>
-
+        <?php endforeach; ?>
+        <?php else: ?>
+        <tr>
+            <td colspan="9" style="text-align:center;">Aucun produit trouvé ❌</td>
+        </tr>
+        <?php endif; ?>
     </tbody>
 </table>
 </div>
@@ -221,14 +252,22 @@ $stocks = $stockController->getAllStocks();
 
 <form id="formProduit" action="../Controller/ProduitController.php" method="POST" enctype="multipart/form-data">
 
-    <input type="text" id="code" name="code" placeholder="Code" required>
-    <small class="error" id="codeError"></small>
+    <!--<input type="text" id="code" name="code" placeholder="Code" required>
+    <small class="error" id="codeError"></small>-->
+
+    <input type="hidden" id="code" name="code">
 
     <input type="text" id="nom" name="nom" placeholder="Nom" required>
     <small class="error" id="nomError"></small>
 
-    <input type="text" id="categorie" name="categorie" placeholder="Catégorie">
-    <small class="error" id="categorieError"></small>
+    <select id="categorie" class="select_categorie" name="CodeC" required>
+        <option value="" disabled selected>Catégorie</option>
+        <?php foreach ($categories as $c): ?>
+            <option value="<?= $c['NomC'] ?>">
+                <?= $c['NomC'] ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
 
     <input type="number" id="prix" name="prix" step="0.01" placeholder="Prix" required>
     <small class="error" id="prixError"></small>
@@ -269,8 +308,6 @@ $stocks = $stockController->getAllStocks();
     <th>Ville</th>
     <th>Code postal</th>
     <th>Pays</th>
-    <th>Latitude</th>
-    <th>Longitude</th>
     <th>Actions</th>
 
 </tr>
@@ -290,8 +327,6 @@ $stocks = $stockController->getAllStocks();
     <td><?= $f['VilleB'] ?></td>
     <td><?= $f['Code_postalB'] ?></td>
     <td><?= $f['PaysB'] ?></td>
-    <td><?= $f['latitude'] ?></td>
-    <td><?= $f['longitude'] ?></td>
     <td>
         <button class="btn-edit-boutique" data-code="<?= $f['CodeB'] ?>">✏️</button>
         <button class="btn-delete-boutique" data-code="<?= $f['CodeB'] ?>">🗑️</button>
@@ -320,8 +355,10 @@ $stocks = $stockController->getAllStocks();
 <h2 id="titre_form_boutique">Ajouter une boutique</h2>
 
 <form id="formBoutique" action="../Controller/BoutiqueController.php" method="POST">
-    <input type="text" id="CodeBoutique" name="CodeB" placeholder="Code Boutique" required>
-    <small class="error" id="CodeBError"></small>
+    <!--<input type="text" id="CodeBoutique" name="CodeB" placeholder="Code Boutique" required>
+    <small class="error" id="CodeBError"></small>-->
+
+    <input type="hidden" id="CodeBoutique" name="CodeB">
 
     <input type="text" id="NomB" name="NomB" placeholder="Nom" required>
     <small class="error" id="NomBError"></small>
@@ -343,12 +380,6 @@ $stocks = $stockController->getAllStocks();
 
     <input type="text" id="PaysB" name="PaysB" placeholder="Pays" required>
     <small class="error" id="PaysBError"></small>
-
-    <input type="text" id="Latitude" name="latitude" placeholder="Latitude">
-    <small class="error" id="LatitudeError"></small>
-
-    <input type="text" id="Longitude" name="longitude" placeholder="Longitude">
-    <small class="error" id="LongitudeError"></small>
 
     <button type="submit" id="submitBtnBoutique" name="action" value="add">Ajouter</button>
 </form>

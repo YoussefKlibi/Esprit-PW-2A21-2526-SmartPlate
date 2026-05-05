@@ -12,13 +12,13 @@ class Produits {
     // ➕ AJOUTER PRODUIT
     public function addProduit($data) {
         $sql = "INSERT INTO produits 
-                (Code, Nom, Categorie, Prix, description, Image)
-                VALUES (:code, :nom, :categorie, :prix, :description, :image)";
+                (/*Code, */Nom, Categorie, Prix, description, Image)
+                VALUES (/*:code, */:nom, :categorie, :prix, :description, :image)";
 
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute([
-            'code' => $data['code'],
+            /*'code' => $data['code'],*/
             'nom' => $data['nom'],
             'categorie' => $data['categorie'],
             'prix' => $data['prix'],

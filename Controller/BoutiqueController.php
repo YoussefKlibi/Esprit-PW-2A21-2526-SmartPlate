@@ -1,5 +1,7 @@
 <?php
+require_once "../Model/GeocodingService.php";
 require_once __DIR__ . "/../Model/boutiques.php";
+
 
 class BoutiqueController {
 
@@ -8,6 +10,13 @@ class BoutiqueController {
     public function __construct() {
         $this->model = new Boutiques();
     }
+
+
+    public function searchByNameF($nom)
+{
+    return $this->model->searchByNameF($nom);
+}
+
 
     public function list() {
         return $this->model->getAllBoutiques();
@@ -18,9 +27,9 @@ class BoutiqueController {
         // 🔒 VALIDATION PHP
         $errors = [];
 
-        if (empty($data['CodeB']) || !preg_match('/^[A-Za-z0-9_-]{2,20}$/', $data['CodeB'])) {
+        /*if (empty($data['CodeB']) || !preg_match('/^[A-Za-z0-9_-]{2,20}$/', $data['CodeB'])) {
             $errors[] = "Code boutique invalide.";
-        }
+        }*/
 
         if (empty($data['NomB']) || strlen($data['NomB']) < 2) {
             $errors[] = "Nom invalide.";
@@ -53,6 +62,21 @@ class BoutiqueController {
             exit;
         }
 
+            // 🌍 GÉOCODAGE AUTOMATIQUE
+    $geo = new GeocodingService();
+
+    $coords = $geo->getCoordinates(
+        $data['AdresseB'],
+        $data['VilleB'],
+        $data['Code_postalB'],
+        $data['PaysB']
+    );
+
+    // si API échoue
+    $data['latitude'] = $coords['lat'] ?? null;
+    $data['longitude'] = $coords['lon'] ?? null;
+
+    
         return $this->model->addBoutique($data);
     }
 
@@ -115,22 +139,52 @@ switch ($action) {
         exit;
 
     case 'search':
-        $codeb = $_GET['codeb'] ?? '';
+        $nom = $_GET['NomB'] ?? '';
         $message = "";
 
-        if (empty($codeb)) {
-            $message = "⚠️ Veuillez saisir le code d'une boutique";
+        if (empty($nom)) {
+            $message = "⚠️ Veuillez saisir le nom de la boutique";
             $boutiques = [];
         } else {
-            $boutiques = $controller->searchByCode($codeb);
+            $boutiques = $controller->searchByName($nom);
+
+            if (empty($boutiques)) {
+                $message = "❌ Aucune boutique trouvée";
+            }
+        }
+            include "../View/Admin_Produits.php";
+            exit;
+
+case 'searchF':
+        $nom = $_GET['NomB'] ?? '';
+        $message = "";
+
+        if (empty($nom)) {
+            $message = "⚠️ Veuillez saisir le nom de la boutique";
+            $boutiques = [];
+        } else {
+            $boutiques = $controller->searchByNameF($nom);
 
             if (empty($boutiques)) {
                 $message = "❌ Aucune boutique trouvée";
             }
         }
 
-        include "../View/Admin_Produits.php";
+        include "../View/Front_boutiques.php";
         exit;
+
+    case 'searchAjax':
+    header('Content-Type: application/json');
+
+    $nom = $_GET['NomB'] ?? '';
+
+    if (empty($nom)) {
+        echo json_encode($controller->list());
+    } else {
+        echo json_encode($controller->searchByNameF($nom));
+    }
+    exit;
+
 
     default:
         $boutiques = $controller->list();

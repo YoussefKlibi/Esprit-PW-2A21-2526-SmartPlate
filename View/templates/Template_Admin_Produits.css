@@ -127,7 +127,7 @@ body {
     box-shadow: var(--shadow);
 
     display: flex;
-    justify-content: flex-end; 
+    justify-content: space-between; 
     align-items: center;        
 
     padding: 0 30px;
@@ -154,7 +154,44 @@ h3 {
     background-color: #888;
 }
 
+#CategorieBtn {
+    background-color: #636e72;
+    color: var(--white);
+    border-color: #2d3436;
+    cursor: pointer;
+    transition: 0.2s;
+
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+#CategorieBtn:hover {
+    background-color: #888;
+}
+
 .stockContent {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.4s ease;
+
+    background: var(--white);
+    box-shadow: var(--shadow);
+    border-radius: 5px;
+
+    margin-top: 10px;
+    
+    padding: 0 20px; /* fermé */
+}
+/* quand ouvert */
+.stockContent.open {
+    max-height: 500px;
+    opacity: 1;
+    margin-bottom: 20px;
+    padding: 20px; /* espace intérieur quand ouvert */
+}
+
+.CategorieContent{
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -170,14 +207,32 @@ h3 {
 }
 
 /* quand ouvert */
-.stockContent.open {
+.CategorieContent.open {
     max-height: 500px;
     opacity: 1;
     margin-bottom: 20px;
     padding: 20px; /* espace intérieur quand ouvert */
 }
 
+/* table categorie*/
+
+.CategorieContent table{
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.CategorieContent th,
+.CategorieContent td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
 /* table style */
+.selected-row {
+    background-color: #d4f283 !important;
+    transition: 0.2s;
+}
+
 .stockContent table {
     width: 100%;
     border-collapse: collapse;
@@ -365,6 +420,7 @@ h3 {
     border-radius: 10px;
 }
 
+#categorieTable,
 #productsTable,
 #boutiqueTable,
 #stockTable {
@@ -379,6 +435,8 @@ h3 {
 #productsTable td,
 #boutiqueTable th,
 #boutiqueTable td,
+#categorieTable th,
+#categorieTable td,
 #stockTable th,
 #stockTable td {
     border-bottom: 1px solid #eee;
@@ -387,6 +445,7 @@ h3 {
 }
 #productsTable th,
 #boutiqueTable th,
+#categorieTable th,
 #stockTable th {
     background-color: #f8f9fa;
     color: var(--text-dark);
@@ -404,9 +463,14 @@ h3 {
     background-color: #f1f3f5;
 }
 
+#categorieTable tr:hover {
+    background-color: #f1f3f5;
+}
+
 /* ⭐ IMPORTANT : sticky header */
 #productsTable thead th,
 #boutiqueTable thead th,
+#categorieTable thead th,
 #stockTable thead th {
     position: sticky;
     top: 0;
@@ -416,6 +480,10 @@ h3 {
 
 /* form stock */
 #stockForm {
+    margin-bottom: 20px;
+}
+
+#CategorieForm {
     margin-bottom: 20px;
 }
 
@@ -630,7 +698,14 @@ small.error {
 }
 
 
-
+.select_categorie{
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: 0.2s;
+  margin-bottom: 15px;
+}
 
 /* SELECTIONNER UNE LIGNE DU TABLEAU */
 .selected-row {

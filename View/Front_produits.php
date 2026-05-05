@@ -1,8 +1,12 @@
 <?php
 require_once __DIR__ . "/../Model/Produits.php";
+require_once "../Model/Categorie.php";
 
 $model = new Produits();
 $produits = $model->getAllProduits() ?? [];
+
+$categorieModel = new Categories();
+$categories = $categorieModel->getAllCategories();
 ?>
 
 <!DOCTYPE html>
@@ -31,6 +35,7 @@ $produits = $model->getAllProduits() ?? [];
         <a href="Objectif.html" class="nav-item">🎯 Mes Objectifs</a>
         <a href="Progression.html" class="nav-item">📈 Ma Progression</a>
         <a href="Front_produits.php" class="nav-item active">🛒 Produits</a>
+        <a href="Front_boutiques.php" class="nav-item ">🏪 Boutiques</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -56,20 +61,27 @@ $produits = $model->getAllProduits() ?? [];
     <div class="card">
         <div class="form-row">
 
-            <div class="form-group">
+            <!--<div class="form-group">
                 <input type="text" id="searchInput" class="form-control"
                        placeholder="Rechercher un produit...">
-            </div>
+            </div>-->
 
-            <div class="form-group">
-                <select id="filterCategory" class="form-control">
-                    <option value="all">Toutes les catégories</option>
-                    <option value="Yaourt">Smart Yaourt</option>
-                    <option value="Barre_énergétique">Smart Barre énergétique</option>
-                    <option value="Bsissa">Smart Bsissa</option>
-                    <option value="ChocoPlate">Smart ChocoPlate</option>
-                </select>
-            </div>
+
+            
+<div class="form-group">
+    <select id="filterCategory" class="select_categorie">
+
+        <option value="all">Toutes les catégories</option>
+
+        <?php foreach ($categories as $c): ?>
+            <option value="<?= htmlspecialchars($c['NomC']) ?>">
+                <?= htmlspecialchars($c['NomC']) ?>
+            </option>
+        <?php endforeach; ?>
+
+    </select>
+</div>
+
 
         </div>
     </div>

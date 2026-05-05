@@ -368,3 +368,17 @@ body {
         flex-direction: column;
     }
 }
+
+.select_categorie{
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: 0.2s;
+  margin-bottom: 15px;
+}
+
+.infoo{
+    color:#494949;
+    font-size: 3px;
+}
