@@ -63,5 +63,7 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
         </div>
     </main>
 
+    <!-- Intégration du Chatbot Assistant -->
+    <?php include __DIR__ . '/../frontend/chatbot.php'; ?>
 </body>
 </html>

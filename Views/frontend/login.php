@@ -8,6 +8,7 @@ if (isset($_GET['banned']) && $_GET['banned'] === '1') {
     $erreur = "Votre compte a été suspendu par un administrateur. L'accès vous est refusé.";
 }
 
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -48,11 +49,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     // Mettre à jour l'activité immédiatement
                     $userC->updateLastActivity($userInfo['email']);
                     
+                    // Enregistrer la connexion en historique (sans bloquer)
+                    $loginLat = isset($_POST['login_lat']) && $_POST['login_lat'] !== '' ? (float)$_POST['login_lat'] : null;
+                    $loginLng = isset($_POST['login_lng']) && $_POST['login_lng'] !== '' ? (float)$_POST['login_lng'] : null;
+                    $userC->logConnection(
+                        $userInfo['id'], 
+                        $_SERVER['REMOTE_ADDR'] ?? '', 
+                        $_SERVER['HTTP_USER_AGENT'] ?? '',
+                        'Success',
+                        $loginLat,
+                        $loginLng
+                    );
+
                     if ($userInfo['email'] === 'ilyesgaied32@gmail.com') {
                         $_SESSION['is_admin'] = true;
-                        header("Location: ../backend/admin_welcome.php");
                     } else {
                         $_SESSION['is_admin'] = false;
+                    }
+
+                    // Libérer la session immédiatement pour éviter de bloquer l'application
+                    session_write_close();
+
+
+                    
+                    if ($userInfo['email'] === 'ilyesgaied32@gmail.com') {
+                        header("Location: ../backend/admin_welcome.php");
+                    } else {
                         header("Location: dashboard.php");
                     }
                     exit();
@@ -104,6 +126,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <?php endif; ?>
 
             <form id="loginForm" action="login.php" method="POST" class="modern-form">
+                <input type="hidden" id="login_lat" name="login_lat" value="">
+                <input type="hidden" id="login_lng" name="login_lng" value="">
+                
                 <div class="form-group">
                     <label for="email">Adresse mail</label>
                     <input type="text" id="email" name="email" class="form-control" placeholder="exemple@mail.com">
@@ -141,16 +166,94 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         iconSpan.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
                     }
                 }
+
+                // Capturer la géolocalisation exacte HTML5
+                document.addEventListener('DOMContentLoaded', () => {
+                    const loginForm = document.getElementById('loginForm');
+                    let geoResolved = false;
+
+                    // 1. Essayer de récupérer la position en arrière-plan dès le chargement
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                                    document.getElementById('login_lat').value = 36.8988;
+                                    document.getElementById('login_lng').value = 10.1895;
+                                } else {
+                                    document.getElementById('login_lat').value = position.coords.latitude;
+                                    document.getElementById('login_lng').value = position.coords.longitude;
+                                }
+                                geoResolved = true;
+                            }, 
+                            function(error) {
+                                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                                    document.getElementById('login_lat').value = 36.8988;
+                                    document.getElementById('login_lng').value = 10.1895;
+                                }
+                                geoResolved = true; // Résolu (avec erreur, mais on ne bloque plus)
+                            },
+                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                        );
+                    } else {
+                        geoResolved = true;
+                    }
+
+                    // 2. Intercepter la soumission si on n'a pas encore fini
+                    loginForm.addEventListener('submit', function(e) {
+                        // Si le formulaire est déjà bloqué par validation.js, on ne fait rien
+                        if (e.defaultPrevented) return;
+
+                        if (!geoResolved && document.getElementById('login_lat').value === '') {
+                            e.preventDefault(); // Bloquer l'envoi temporairement
+                            
+                            const btn = loginForm.querySelector('button[type="submit"]');
+                            const originalText = btn.innerHTML;
+                            btn.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Localisation...';
+                            btn.disabled = true;
+                            btn.style.opacity = '0.8';
+
+                            // Forcer une nouvelle requête GPS avec un timeout court
+                            navigator.geolocation.getCurrentPosition(
+                                function(position) {
+                                    // Correction intelligente pour le développement local :
+                                    // Les PC de bureau sans puce GPS se basent sur l'IP du routeur (qui donne souvent El Battan).
+                                    // Si on est sur localhost, on force la position exacte sur 'The X Level' (Pôle El Ghazela).
+                                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                                        document.getElementById('login_lat').value = 36.8988;
+                                        document.getElementById('login_lng').value = 10.1895;
+                                    } else {
+                                        document.getElementById('login_lat').value = position.coords.latitude;
+                                        document.getElementById('login_lng').value = position.coords.longitude;
+                                    }
+                                    geoResolved = true;
+                                    loginForm.submit(); // Envoyer le formulaire
+                                }, 
+                                function(error) {
+                                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                                        document.getElementById('login_lat').value = 36.8988;
+                                        document.getElementById('login_lng').value = 10.1895;
+                                    }
+                                    geoResolved = true;
+                                    loginForm.submit(); // Envoyer quand même
+                                },
+                                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+                            );
+                        }
+                    });
+                });
             </script>
 
-            <div class="divider">ou</div>
-
+            <div style="display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.9rem;">
+                <div style="flex: 1; border-bottom: 1px solid #e2e8f0;"></div>
+                <span style="padding: 0 10px;">ou</span>
+                <div style="flex: 1; border-bottom: 1px solid #e2e8f0;"></div>
+            </div>
+            
             <a href="google_login.php?action=login" class="btn-secondary"
-                style="width: 100%; border-radius: 14px; padding: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none;">
+                style="width: 100%; border-radius: 14px; padding: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; margin-bottom: 1.5rem;">
                 <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
                 Continuer avec Google
             </a>
-
             <div style="margin-top: 2rem; text-align: center; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
                 <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 0.8rem;">Nouveau sur SmartPlate ?
                 </p>

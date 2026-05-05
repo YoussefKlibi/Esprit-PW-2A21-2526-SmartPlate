@@ -21,6 +21,14 @@ document.addEventListener("DOMContentLoaded", function () {
             answer: "Pour <b>modifier votre profil</b>, cliquez sur 'Mon Profil' dans le menu de gauche de votre tableau de bord. Vous pourrez y mettre à jour vos informations personnelles (nom, email) et modifier votre mot de passe."
         },
         {
+            keywords: ["mot de passe oublié", "oublié", "réinitialiser", "perdu", "password"],
+            answer: "Si vous avez oublié votre mot de passe, allez sur la page de connexion et cliquez sur <b>'Mot de passe oublié ?'</b>. Entrez votre email pour recevoir un lien de réinitialisation sécurisé."
+        },
+        {
+            keywords: ["activité", "historique", "connexions", "appareils", "lieux", "sécurité"],
+            answer: "Pour consulter vos lieux de connexion et vos appareils actifs, allez dans <b>Mon Profil</b>, cliquez sur l'icône <b>Paramètres (⚙️)</b>, puis sur <b>🛡️ Sécurité et Connexion</b>. Vous pourrez y gérer vos sessions."
+        },
+        {
             keywords: ["ajouter", "utilisateur", "nouveau utilisateur"],
             answer: "Cette action est réservée aux <b>administrateurs</b>. Depuis le panneau d'administration, naviguez vers 'Utilisateurs & Logins', puis cliquez sur le bouton <b>'+ Ajouter un utilisateur'</b> en haut à droite."
         },
@@ -89,7 +97,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const questions = [
             "Créer un compte",
             "Se connecter",
+            "Mot de passe oublié",
             "Modifier mon profil",
+            "Activité de connexion",
             "Ajouter un utilisateur",
             "Modifier un utilisateur",
             "Supprimer un utilisateur"

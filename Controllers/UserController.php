@@ -169,7 +169,8 @@ class UserController {
     // Mettre à jour le mot de passe
     public function updatePassword(int $id, string $hashedPassword): bool {
         try {
-            $stmt = $this->db->prepare("UPDATE users SET mot_de_passe = :password, reset_token = NULL, token_expires = NULL WHERE id = :id");
+            // Si le compte a été bloqué par sécurité (banni), le fait de réinitialiser le mot de passe le débloque
+            $stmt = $this->db->prepare("UPDATE users SET mot_de_passe = :password, reset_token = NULL, token_expires = NULL, statut = IF(statut = 'banni', 'inactif', statut) WHERE id = :id");
             return $stmt->execute([
                 'password' => $hashedPassword,
                 'id' => $id
@@ -189,7 +190,7 @@ class UserController {
             $search = trim((string) $search);
 
             if ($search !== '') {
-                $sql = "SELECT id, prenom, nom, email, created_at, statut, last_activity
+                $sql = "SELECT id, prenom, nom, email, created_at, statut, last_activity, last_latitude, last_longitude, last_location_update
                         FROM users
                         WHERE CAST(id AS CHAR) LIKE :search
                            OR prenom LIKE :search
@@ -202,7 +203,7 @@ class UserController {
                     'search' => '%' . $search . '%'
                 ]);
             } else {
-                $stmt = $this->db->query("SELECT id, prenom, nom, email, created_at, statut, last_activity FROM users ORDER BY created_at DESC");
+                $stmt = $this->db->query("SELECT id, prenom, nom, email, created_at, statut, last_activity, last_latitude, last_longitude, last_location_update FROM users ORDER BY created_at DESC");
             }
 
             return $stmt->fetchAll();
@@ -298,6 +299,257 @@ class UserController {
         } catch (Exception $e) {
             error_log("Erreur updateLastActivity: " . $e->getMessage());
             return false;
+        }
+    }
+
+    // Mettre à jour la dernière localisation utilisateur
+    public function updateUserLocation(string $email, float $latitude, float $longitude): bool {
+        try {
+            if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+                return false;
+            }
+
+            date_default_timezone_set('Africa/Tunis');
+            $now = date('Y-m-d H:i:s');
+
+            $stmt = $this->db->prepare(
+                "UPDATE users
+                 SET last_latitude = :latitude,
+                     last_longitude = :longitude,
+                     last_location_update = :now
+                 WHERE email = :email"
+            );
+
+            return $stmt->execute([
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'now' => $now,
+                'email' => $email
+            ]);
+        } catch (Exception $e) {
+            error_log("Erreur updateUserLocation: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+
+    public function logConnection(int $userId, string $ip, string $deviceInfo, string $status = 'Success', ?float $clientLat = null, ?float $clientLng = null): array {
+        try {
+            $city = 'Inconnu';
+            $country = 'Inconnu';
+            $lat = $clientLat;
+            $lng = $clientLng;
+
+            if ($clientLat !== null && $clientLng !== null) {
+                // Reverse geocoding précis avec Nominatim (OpenStreetMap)
+                $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$clientLat}&lon={$clientLng}&addressdetails=1";
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_USERAGENT, "SmartPlate/1.0");
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                $resp = curl_exec($ch);
+                curl_close($ch);
+
+                if ($resp) {
+                    $data = json_decode($resp, true);
+                    if (isset($data['address'])) {
+                        $addr = $data['address'];
+                        // On prend le plus précis possible (quartier, puis village, puis ville)
+                        $city = $addr['suburb'] ?? $addr['village'] ?? $addr['town'] ?? $addr['city'] ?? $addr['county'] ?? 'Inconnu';
+                        $country = $addr['country'] ?? 'Inconnu';
+                    }
+                }
+                
+                // Récupérer quand même la vraie IP publique si on est en local
+                if ($ip === '127.0.0.1' || $ip === '::1') {
+                    $ipUrl = "http://ip-api.com/json/?fields=query";
+                    $chIp = curl_init($ipUrl);
+                    curl_setopt($chIp, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($chIp, CURLOPT_TIMEOUT, 2);
+                    $respIp = curl_exec($chIp);
+                    curl_close($chIp);
+                    if ($respIp) {
+                        $dataIp = json_decode($respIp, true);
+                        if (isset($dataIp['query'])) {
+                            $ip = $dataIp['query'];
+                        }
+                    }
+                }
+            } else {
+                // Fallback sur la géolocalisation par adresse IP (moins précis)
+                $apiUrl = "http://ip-api.com/json/";
+                if ($ip !== '127.0.0.1' && $ip !== '::1') {
+                    $apiUrl .= $ip;
+                }
+                $apiUrl .= "?fields=status,country,city,lat,lon,query";
+
+                $ch = curl_init($apiUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                if ($response) {
+                    $data = json_decode($response, true);
+                    if (isset($data['status']) && $data['status'] === 'success') {
+                        $city = $data['city'] ?? 'Inconnu';
+                        $country = $data['country'] ?? 'Inconnu';
+                        $lat = $data['lat'] ?? null;
+                        $lng = $data['lon'] ?? null;
+                        
+                        if (($ip === '127.0.0.1' || $ip === '::1') && isset($data['query'])) {
+                            $ip = $data['query'];
+                        }
+                    }
+                }
+            }
+
+            date_default_timezone_set('Africa/Tunis');
+            $loginTime = date('Y-m-d H:i:s');
+
+            $stmt = $this->db->prepare(
+                "INSERT INTO login_history (user_id, ip_address, city, country, latitude, longitude, login_time, device_info, status)
+                 VALUES (:user_id, :ip, :city, :country, :lat, :lng, :time, :device, :status)"
+            );
+
+            $stmt->execute([
+                'user_id' => $userId,
+                'ip' => $ip,
+                'city' => $city,
+                'country' => $country,
+                'lat' => $lat,
+                'lng' => $lng,
+                'time' => $loginTime,
+                'device' => substr($deviceInfo, 0, 255),
+                'status' => $status
+            ]);
+            
+            $historyId = (int) $this->db->lastInsertId();
+            
+            // Mettre à jour également la table users avec la dernière position
+            if ($lat !== null && $lng !== null) {
+                $updateUser = $this->db->prepare("UPDATE users SET last_latitude = :lat, last_longitude = :lng, last_location_update = :time WHERE id = :user_id");
+                $updateUser->execute([
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'time' => $loginTime,
+                    'user_id' => $userId
+                ]);
+            }
+            
+            // --- NOUVEAU : Création de la session sécurisée dans user_sessions ---
+            $sessionToken = bin2hex(random_bytes(32));
+            $stmtSession = $this->db->prepare(
+                "INSERT INTO user_sessions (user_id, session_token, device_name, ip_address, user_agent, location, created_at, last_activity, is_active)
+                 VALUES (:uid, :token, :device, :ip, :ua, :loc, :created_at, :last_activity, 1)"
+            );
+            $stmtSession->execute([
+                'uid'          => $userId,
+                'token'        => $sessionToken,
+                'device'       => substr($deviceInfo, 0, 255),
+                'ip'           => $ip,
+                'ua'           => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 1000),
+                'loc'          => "$city, $country",
+                'created_at'   => $loginTime,
+                'last_activity'=> $loginTime
+            ]);
+            
+            // Lier ce token à l'utilisateur actuel dans la table users
+            $updateUserToken = $this->db->prepare("UPDATE users SET session_token = :token, session_device = :device, session_created = :time WHERE id = :uid");
+            $updateUserToken->execute([
+                'token' => $sessionToken,
+                'device' => substr($deviceInfo, 0, 255),
+                'time' => $loginTime,
+                'uid' => $userId
+            ]);
+
+            return ['history_id' => $historyId, 'session_token' => $sessionToken];
+        } catch (Exception $e) {
+            error_log("Erreur logConnection: " . $e->getMessage());
+            return ['history_id' => 0, 'session_token' => ''];
+        }
+    }
+
+    public function isSessionValidToken(string $token): bool {
+        try {
+            $stmt = $this->db->prepare("SELECT id FROM user_sessions WHERE session_token = :token AND is_active = 1");
+            $stmt->execute(['token' => $token]);
+            return $stmt->fetch() !== false;
+        } catch (PDOException $e) {
+            return true; // En cas d'erreur DB, on évite les déconnexions intempestives
+        }
+    }
+
+    public function isSessionValidHistory(int $historyId): bool {
+        try {
+            $stmt = $this->db->prepare("SELECT id FROM login_history WHERE id = :id");
+            $stmt->execute(['id' => $historyId]);
+            return $stmt->fetch() !== false;
+        } catch (PDOException $e) {
+            return true;
+        }
+    }
+
+    public function updateSessionActivity(string $token): void {
+        try {
+            $stmt = $this->db->prepare("UPDATE user_sessions SET last_activity = NOW() WHERE session_token = :token");
+            $stmt->execute(['token' => $token]);
+        } catch (PDOException $e) {
+            // Ignorer
+        }
+    }
+
+    public function isSessionValid(int $historyId): bool {
+        try {
+            $stmt = $this->db->prepare("SELECT id FROM login_history WHERE id = :id");
+            $stmt->execute(['id' => $historyId]);
+            return $stmt->fetch() !== false;
+        } catch (PDOException $e) {
+            return true; // En cas d'erreur DB, on ne déconnecte pas par précaution
+        }
+    }
+
+    public function getLoginHistory(int $userId, int $limit = 5): array {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM login_history WHERE user_id = :user_id AND status != 'Logged Out' ORDER BY login_time DESC LIMIT :limit");
+            // PDO can't bind limit easily without specifying type, so we use bindValue
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Erreur getLoginHistory: " . $e->getMessage());
+            return [];
+        }
+    }
+    public function logoutDevice(int $userId, int $historyId): bool
+    {
+        try {
+
+        // Supprimer l'historique
+        $stmt = $this->db->prepare("DELETE FROM login_history WHERE id = :id AND user_id = :user_id");
+        return $stmt->execute([
+            'id' => $historyId,
+            'user_id' => $userId
+        ]);
+    } catch (PDOException $e) {
+        error_log("Erreur dans logoutDevice : " . $e->getMessage());
+        return false;
+    }
+}
+    // Déconnexion basée sur le Token (Sécurité ultime)
+    public function deactivateSessionByToken(string $token): void {
+        try {
+            $this->db->prepare("UPDATE user_sessions SET is_active = 0 WHERE session_token = :token")->execute(['token' => $token]);
+            $this->db->prepare("UPDATE users SET session_token = NULL WHERE session_token = :token")->execute(['token' => $token]);
+        } catch (PDOException $e) {}
+    }
+    public function cleanupExpiredSessions(): void {
+        try {
+            $this->db->exec("DELETE FROM user_sessions WHERE last_activity < DATE_SUB(NOW(), INTERVAL 7 DAY)");
+        } catch (PDOException $e) {
+            error_log("Erreur cleanupExpiredSessions: " . $e->getMessage());
         }
     }
 }

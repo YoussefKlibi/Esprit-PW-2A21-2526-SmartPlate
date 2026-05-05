@@ -1,7 +1,9 @@
 <!-- Chargement des styles du Chatbot -->
 <link rel="stylesheet" href="../css/chatbot.css">
 
-<!-- Structure du Chatbot -->
+<!--La fenêtre de chat  -->
+ 
+
 <div class="chatbot-container">
     <div class="chatbot-window" id="chatbot-window">
         <div class="chatbot-header">
@@ -18,11 +20,13 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        
+        <!--Zone de message  -->
+
         <div class="chatbot-messages" id="chatbot-messages">
-            <!-- Les messages apparaîtront ici dynamiquement -->
         </div>
+        <!--Zone de saisie  -->
         
+
         <div class="chatbot-input">
             <input type="text" id="chat-input" placeholder="Posez votre question ici..." autocomplete="off">
             <button id="chat-send" title="Envoyer">
@@ -30,7 +34,6 @@
             </button>
         </div>
     </div>
-
     <!-- Bouton flottant pour ouvrir le chat -->
     <div class="chatbot-toggle" id="chatbot-toggle" title="Besoin d'aide ?">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>

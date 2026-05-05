@@ -19,3 +19,4 @@ $auth_url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
 header('Location: ' . filter_var($auth_url, FILTER_SANITIZE_URL));
 exit();
 ?>
+//Démarrer l'authentification

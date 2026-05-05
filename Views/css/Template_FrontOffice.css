@@ -1066,3 +1066,197 @@ body {
     /* vert vif */
     color: white;
 }
+
+/* --- Mode Sombre --- */
+body.dark-mode {
+    --bg-main: #121212;
+    --card-bg: #1e1e1e;
+    --text-dark: #f5f5f5;
+    --text-gray: #a0a0a0;
+    --green-light: #527a00;
+    --blue-light: #1e3a5f;
+    --yellow-light: #7a6e00;
+}
+body.dark-mode .sidebar {
+    background-color: var(--card-bg);
+    border-right-color: #333;
+}
+body.dark-mode .card,
+body.dark-mode .card-stat,
+body.dark-mode .meal-card,
+body.dark-mode .active-journal-bar,
+body.dark-mode .form-control {
+    background-color: var(--card-bg);
+    color: var(--text-dark);
+    border-color: #333;
+}
+body.dark-mode .form-control {
+    background-color: #2c2c2c;
+    color: var(--text-dark);
+}
+body.dark-mode .nav-item:hover:not(.disabled),
+body.dark-mode .btn-secondary:hover,
+body.dark-mode .btn-icon:hover {
+    background-color: #2c2c2c;
+    color: var(--text-dark);
+}
+body.dark-mode .sidebar-logo h2,
+body.dark-mode .user-name,
+body.dark-mode .btn-icon {
+    color: var(--text-dark);
+}
+body.dark-mode .sp-chat-messages {
+    background-color: #2c2c2c;
+    border-color: #333;
+}
+body.dark-mode .sp-chat-row.bot .sp-chat-bubble {
+    background: #1e1e1e;
+    color: var(--text-dark);
+    border-color: #333;
+}
+body.dark-mode .settings-modal {
+    background: #262626 !important;
+    border: 1px solid #333;
+}
+body.dark-mode .settings-modal h3,
+body.dark-mode .settings-modal p {
+    color: #f5f5f5 !important;
+}
+body.dark-mode .settings-modal-btn {
+    background: #1e1e1e !important;
+    color: #f5f5f5 !important;
+    border-color: #333 !important;
+}
+body.dark-mode .settings-modal-btn:hover {
+    background: #333 !important;
+}
+body.dark-mode .settings-modal-btn.active {
+    background: #d4f283 !important;
+    color: #1a1a1a !important;
+    border-color: #d4f283 !important;
+}
+
+/* --- Statut en ligne --- */
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+.dot.online {
+    background-color: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+}
+.dot.offline {
+    background-color: gray;
+}
+
+/* Nouvelles règles pour Modal Paramètres */
+.settings-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 350px;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+.settings-modal-header {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+}
+.settings-modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+.settings-modal-body {
+    padding: 16px;
+}
+.settings-modal-section-title {
+    margin: 0 0 10px 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.settings-modal-btn {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    cursor: pointer;
+    text-align: left;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.settings-modal-btn:hover {
+    background: #f8fafc;
+}
+.settings-modal-btn.active {
+    background: var(--text-dark);
+    color: white;
+    border-color: var(--text-dark);
+}
+.settings-modal-action-btn {
+    border-top: 1px solid #f1f5f9;
+    background: #fff;
+    color: #64748b;
+    padding: 14px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    width: 100%;
+}
+.settings-modal-action-btn.primary {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+/* Custom Confirm Modal (supp.jpeg style) */
+.custom-confirm-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 10000; backdrop-filter: blur(4px);
+    transition: opacity 0.3s ease;
+}
+.custom-confirm-modal {
+    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+    background: var(--card-bg, #fff); width: 90%; max-width: 400px; padding: 30px 24px;
+    border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); z-index: 10001;
+    text-align: center; font-family: 'Inter', sans-serif; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+}
+.custom-confirm-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+.custom-confirm-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 2rem; background: #feebeb; color: #e74c3c;
+}
+.custom-confirm-title { margin: 0 0 10px; font-size: 1.3rem; font-weight: 700; color: var(--text-dark, #1e293b); }
+.custom-confirm-desc { margin: 0 0 24px; font-size: 0.95rem; color: var(--text-gray, #64748b); line-height: 1.5; }
+.custom-confirm-actions { display: flex; gap: 12px; }
+.custom-confirm-btn {
+    flex: 1; padding: 12px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; border: none; outline: none;
+}
+.custom-confirm-btn-cancel { background: #f1f5f9; color: #64748b; }
+.custom-confirm-btn-cancel:hover { background: #e2e8f0; }
+.custom-confirm-btn-danger { background: #e74c3c; color: #fff; }
+.custom-confirm-btn-danger:hover { background: #c0392b; box-shadow: 0 4px 12px rgba(231,76,60,0.3); }
+
+/* Make sure Dark Mode overrides work */
+body.dark-mode .custom-confirm-modal { background: #262626; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+body.dark-mode .custom-confirm-btn-cancel { background: #333; color: #f5f5f5; }
+body.dark-mode .custom-confirm-btn-cancel:hover { background: #444; }
+body.dark-mode .custom-confirm-icon.danger-icon { background: rgba(231,76,60,0.2); }
