@@ -14,5 +14,6 @@
             <p>Quartier Santé</p>
         </div>
     </footer>
+    </div>
 </body>
 </html>

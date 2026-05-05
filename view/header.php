@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/auth.php';
 startSessionIfNeeded();
 
-$pageTitle = $pageTitle ?? 'SmartPlate - Front Office';
+$pageTitle = $pageTitle ?? 'SmartPlate';
 $currentPage = $currentPage ?? 'index';
 $currentUser = getCurrentUser();
 $isIndexPage = $currentPage === 'index';
@@ -22,26 +22,72 @@ $isLoginPage = $currentPage === 'login';
     <link rel="stylesheet" href="Template.css">
 </head>
 <body>
-    <header class="site-header">
-        <div class="logo-group">
-            <div class="logo-mark" aria-hidden="true">SP</div>
-            <div class="logo-text">
-                <strong>SmartPlate</strong>
-                <span>front office</span>
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">SP</div>
+            <h2>SmartPlate</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+        <a href="Accueil.php" class="nav-item">
+            <span class="icon">🏠</span>
+            <span>Accueil</span>
+        </a>
+
+        <a href="Produits.php" class="nav-item">
+            <span class="icon">🛍️</span>
+            <span>Produits</span>
+        </a>
+
+        <a href="Recettes.php" class="nav-item">
+            <span class="icon">🥗</span>
+            <span>Recettes</span>
+        </a>
+
+        <div class="nav-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <span class="nav-section-title">Suivi Nutritionnel</span>
+            
+            <div class="sub-nav" style="padding-left: 1.2rem; margin-top: 0.5rem; border-left: 2px solid #e2e8f0; margin-left: 1rem;">
+                <a href="Journal.php" class="nav-item">
+                    <span class="icon">🍽️</span>
+                    <span>Journal Alimentaire</span>
+                </a>
+                
+                <a href="Objectif.php" class="nav-item">
+                    <span class="icon">🎯</span>
+                    <span>Mon Objectif</span>
+                </a>
+                
+                <a href="Progression.php" class="nav-item">
+                    <span class="icon">📈</span>
+                    <span>Ma Progression</span>
+                </a>
             </div>
         </div>
 
-        <nav class="site-nav" aria-label="Navigation principale">
-            <a href="index.php#home" class="<?php echo $isIndexPage ? 'active' : ''; ?>">Accueil</a>
-            <a href="index.php#services" class="<?php echo $isIndexPage ? 'active' : ''; ?>">Services</a>
-            <a href="index.php#plans" class="<?php echo $isIndexPage ? 'active' : ''; ?>">Offres</a>
-            <a href="Add_reclamation.php" class="<?php echo $isAddReclamationPage ? 'active' : ''; ?>">Réclamation</a>
-            <a href="list_reclamation.php" class="<?php echo $isListReclamationPage ? 'active' : ''; ?>">Mes réclamations</a>
-        </nav>
+        <a href="Forum.php" class="nav-item">
+            <span class="icon">💬</span>
+            <span>Forum</span>
+        </a>
 
-        <?php if ($currentUser === null): ?>
-            <a href="login.php" class="btn btn-ghost <?php echo $isLoginPage ? 'active' : ''; ?>">Se connecter</a>
-        <?php else: ?>
-            <a href="logout.php" class="btn btn-ghost">Deconnexion (<?php echo htmlspecialchars((string) ($currentUser['name'] ?? 'Compte'), ENT_QUOTES, 'UTF-8'); ?>)</a>
-        <?php endif; ?>
-    </header>
+        <a href="Reclamation.php" class="nav-item">
+            <span class="icon">📝</span>
+            <span>Réclamation</span>
+        </a>
+    </nav>
+
+        <div class="sidebar-footer">
+            <?php if ($currentUser === null): ?>
+                <a href="login.php" class="btn btn-ghost" style="width: 100%; text-align: center;">Se connecter</a>
+            <?php else: ?>
+                <div class="user-badge">
+                    <div class="user-info">
+                        <span class="user-name"><?php echo htmlspecialchars((string) ($currentUser['name'] ?? 'Compte'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <a href="logout.php" style="font-size: 0.75rem; color: #8c8c8c; text-decoration: none;">Déconnexion</a>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </aside>
+
+    <div class="dashboard">

@@ -85,8 +85,11 @@ foreach ($reclamations as $reclamation) {
 
 include __DIR__ . '/header.php';
 ?>
-
+<head>
+    <link rel="stylesheet" href="template-backoffice.css">
+</head>
 <main>
+    
     <section class="section" id="mes-reclamations">
         <div class="section-head section-head-inline">
             <div>
