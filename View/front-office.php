@@ -24,15 +24,24 @@
 <div class="dashboard">
 
     <!-- Header -->
-    <div class="dashboard-header">
-        <h1>Blog Alimentation Durable & Intelligente</h1>
-        <p style="color: var(--text-gray); font-size: 0.9rem;">Lisez nos articles et partagez votre avis</p>
+    <div class="forum-hero">
+        <div class="forum-hero-bg"></div>
+        <div class="forum-hero-content">
+            <div class="forum-hero-icon">💬</div>
+            <h1 class="forum-hero-title">Forum</h1>
+            <p class="forum-hero-subtitle">Échangez, débattez et partagez vos idées sur l'alimentation durable</p>
+            <div class="forum-hero-stats">
+                <span class="forum-stat-pill">🔥 Discussions actives</span>
+                <span class="forum-stat-pill">🌍 Communauté engagée</span>
+                <span class="forum-stat-pill live-pulse">⚡ En direct</span>
+            </div>
+        </div>
     </div>
 
     <!-- Liste des articles -->
     <div class="card">
         <div class="card-header">
-            <h2>Derniers articles</h2>
+            <h2>📋 Discussions Récentes</h2>
         </div>
 
         <div id="articles-list">
@@ -178,6 +187,19 @@ document.addEventListener('DOMContentLoaded', function(){
                 // Load comments for this article
                 loadComments(a.id);
             });
+
+            // Repasse les commentaires (purge toxiques côté serveur après 1 min + mise à jour affichage)
+            const articleIds = articles.map(function(a) { return a.id; });
+            if (window.__commentToxicPoll) {
+                clearInterval(window.__commentToxicPoll);
+            }
+            window.__commentToxicPoll = setInterval(function() {
+                articleIds.forEach(function(id) {
+                    if (typeof window.loadComments === 'function') {
+                        window.loadComments(id);
+                    }
+                });
+            }, 20000);
         })
         .catch(err => {
             const container = document.getElementById('articles-list');
@@ -188,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // Make functions globally available
     window.loadComments = function(articleId) {
         // Fetch published comments (status = 1) - adding all=1 bypasses moderation for local testing
-        fetch(`index.php?controller=comment&action=list&article_id=${articleId}&all=1`)
+        fetch(`index.php?controller=comment&action=list&article_id=${articleId}&all=1&public_mask=1`)
             .then(r => r.json())
             .then(comments => {
                 const container = document.getElementById(`comments-${articleId}`);
@@ -221,6 +243,8 @@ document.addEventListener('DOMContentLoaded', function(){
                     
                     const modText = c.status == 0 ? '<span style="color: #e74c3c; font-size: 0.8rem; background: #fee2e2; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">(En attente)</span>' : '';
                     const badgeText = c.badge ? `<span style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; margin-left: 8px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🎖️ ${escapeHtml(c.badge)}</span>` : '';
+                    const toxicNote = c.toxic_masked ? '<span style="color: #b45309; font-size: 0.78rem; margin-left: 8px;">(Contenu masqué)</span>' : '';
+                    const editStyle = c.toxic_masked ? 'display:none;' : '';
 
                     const replyBtn = !isReply ? `
                         <button onclick="toggleReplyForm(${c.id})" class="vote-btn btn-reply-front" style="font-weight: bold; margin-left: auto;">
@@ -236,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function(){
                                     </div>
                                     <div>
                                         <strong style="font-size: 1rem; color: var(--text-dark);">${escapeHtml(c.username)}</strong> ${badgeText}
-                                        <span style="color: #888; font-size: 0.85rem; margin-left: 6px;">• ${cDate}</span> ${modText}
+                                        <span style="color: #888; font-size: 0.85rem; margin-left: 6px;">• ${cDate}</span> ${modText} ${toxicNote}
                                     </div>
                                 </div>
                                 <div style="font-size: 1rem; color: var(--text-dark, #444); line-height: 1.5; padding-left: 42px;">
@@ -256,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function(){
                                 </div>
                             </div>
                             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;" id="comment-actions-${c.id}">
-                                <button data-edit-comment="${c.id}" data-article="${articleId}" title="Modifier" class="btn-action" style="padding: 0.65rem 0.9rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <button data-edit-comment="${c.id}" data-article="${articleId}" title="Modifier" class="btn-action" style="padding: 0.65rem 0.9rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem; ${editStyle}">
                                     ✏️ Modifier
                                 </button>
                                 <button data-delete-comment="${c.id}" data-article="${articleId}" title="Supprimer" class="btn-danger" style="padding: 0.65rem 0.9rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
@@ -811,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function(){
         if (view === 'articles') {
             document.getElementById('fo-view-articles').style.display = 'block';
             document.getElementById('nav-fo-articles').classList.add('active');
-            document.getElementById('fo-page-title').textContent = 'Blog Alimentation Durable & Intelligente';
+            document.getElementById('fo-page-title').textContent = 'Forum';
             document.getElementById('fo-page-subtitle').textContent = 'Lisez nos articles et partagez votre avis';
         } else if (view === 'collaborations') {
             document.getElementById('fo-view-collaborations').style.display = 'block';

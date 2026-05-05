@@ -86,6 +86,8 @@ class Database
             
             // Check and add parent_id if table exists but column is missing
             $this->checkAndAddColumn($pdo, 'comments', 'parent_id', 'INT DEFAULT NULL');
+            $this->checkAndAddColumn($pdo, 'comments', 'toxic_flag', 'TINYINT(1) NOT NULL DEFAULT 0');
+            $this->checkAndAddColumn($pdo, 'comments', 'toxic_delete_at', 'DATETIME DEFAULT NULL');
             
             // Clean up existing orphaned replies
             $pdo->exec("DELETE FROM comments WHERE parent_id IS NOT NULL AND parent_id NOT IN (SELECT id FROM (SELECT id FROM comments) as tmp)");

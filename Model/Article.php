@@ -80,9 +80,23 @@ class Article
 
     public function delete(int $id): bool
     {
-        $stmt = $this->pdo->prepare('DELETE FROM articles WHERE id = ?');
-        $stmt->execute([$id]);
-        return $stmt->rowCount() > 0;
+        $this->pdo->beginTransaction();
+        try {
+            // Supprimer tous les commentaires (y compris réponses) liés à l’article
+            $stmtComments = $this->pdo->prepare('DELETE FROM comments WHERE article_id = ?');
+            $stmtComments->execute([$id]);
+
+            $stmt = $this->pdo->prepare('DELETE FROM articles WHERE id = ?');
+            $stmt->execute([$id]);
+            $ok = $stmt->rowCount() > 0;
+            $this->pdo->commit();
+            return $ok;
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            return false;
+        }
     }
 
     public function addRating(int $id, int $stars): array
@@ -162,4 +176,3 @@ class Article
         return $validated;
     }
 }
-?>

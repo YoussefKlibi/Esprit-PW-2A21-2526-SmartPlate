@@ -1,12 +1,15 @@
 <?php
 require_once __DIR__ . '/../Model/Article.php';
+require_once __DIR__ . '/../Model/Comment.php';
 
 class ArticleController
 {
     private $model;
+    private $pdo;
 
     public function __construct(PDO $pdo)
     {
+        $this->pdo = $pdo;
         $this->model = new Article($pdo);
     }
 
@@ -19,6 +22,8 @@ class ArticleController
         $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD'] === 'POST' ? 'create' : 'list');
 
         try {
+            (new Comment($this->pdo))->purgeExpiredToxic();
+
             switch ($action) {
                 case 'list':   $this->listArticles(); break;
                 case 'search': $this->searchArticles(); break;

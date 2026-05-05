@@ -19,6 +19,8 @@ class CommentController
         $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD'] === 'POST' ? 'create' : 'list');
 
         try {
+            $this->model->purgeExpiredToxic();
+
             switch ($action) {
                 case 'list':   $this->listComments(); break;
                 case 'stats':  $this->statsComments(); break;
@@ -30,6 +32,7 @@ class CommentController
                 case 'report': $this->reportComment(); break;
                 case 'reclassify': $this->reclassifyComment(); break;
                 case 'badge':  $this->assignBadge(); break;
+                case 'check_new': $this->checkNewComments(); break;
                 default:
                     http_response_code(400);
                     echo json_encode(['error' => 'Unknown action']);
@@ -44,7 +47,8 @@ class CommentController
     {
         $article_id = isset($_GET['article_id']) ? (int)$_GET['article_id'] : null;
         $all = isset($_GET['all']) && $_GET['all'] == 1;
-        $rows = $this->model->list($article_id, !$all);
+        $publicMask = isset($_GET['public_mask']) && $_GET['public_mask'] === '1';
+        $rows = $this->model->list($article_id, !$all, $publicMask);
         echo json_encode($rows);
     }
 
@@ -86,8 +90,42 @@ class CommentController
             return;
         }
 
-        $id = $this->model->create($article_id, $username, $comment, $status, $emoji, $parent_id);
-        echo json_encode(['success' => true, 'id' => $id]);
+        $result = $this->model->create($article_id, $username, $comment, $status, $emoji, $parent_id);
+        $id = $result['id'];
+        $toxic = $result['toxic'];
+        $this->trayNotifyNewComment($id, $username, $comment, $article_id);
+        echo json_encode(['success' => true, 'id' => $id, 'toxic' => $toxic]);
+    }
+
+    /**
+     * Nouveaux commentaires après last_id (polling cloche admin).
+     */
+    private function checkNewComments(): void
+    {
+        $lastId = isset($_GET['last_id']) ? (int)$_GET['last_id'] : 0;
+        $newComments = $this->model->getNewerThan($lastId);
+        echo json_encode(['new_comments' => $newComments, 'count' => count($newComments)]);
+    }
+
+    private function trayNotifyNewComment(int $id, string $username, string $comment, int $articleId): void
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return;
+        }
+        $script = realpath(__DIR__ . '/../scripts/tray-notify.ps1');
+        if ($script === false || !is_readable($script)) {
+            return;
+        }
+        $snippet = mb_substr(preg_replace('/\s+/', ' ', $comment), 0, 120);
+        $title = 'Smart Plate — nouveau commentaire';
+        $body = $username . ' · article #' . $articleId . "\n" . $snippet;
+        $cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File '
+            . escapeshellarg($script)
+            . ' -Title ' . escapeshellarg($title)
+            . ' -Body ' . escapeshellarg($body);
+        if (function_exists('popen')) {
+            @pclose(@popen('cmd /c start /B ' . $cmd, 'r'));
+        }
     }
 
     private function voteComment()
@@ -183,4 +221,3 @@ class CommentController
         echo json_encode(['success' => (bool)$ok]);
     }
 }
-?>

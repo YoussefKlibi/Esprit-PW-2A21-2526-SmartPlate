@@ -7,6 +7,7 @@
  *   index.php?page=back                    → Back-office
  *   index.php?controller=article&action=X  → API Article (JSON)
  *   index.php?controller=comment&action=X  → API Comment (JSON)
+ *   action=check_new — nouveaux commentaires (notifications back-office)
  */
 
 // Load database configuration
@@ -27,6 +28,7 @@ if ($controller !== null) {
         echo json_encode(['error' => 'Database connection failed']);
         exit;
     }
+    $db->createTables();
 
     switch ($controller) {
         case 'article':
@@ -61,4 +63,3 @@ switch ($page) {
         require __DIR__ . '/View/front-office.php';
         break;
 }
-?>

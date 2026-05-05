@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Admin - Gestion du Blog Smart Plate</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/template-backoffice.css?v=7">
+    <link rel="stylesheet" href="css/template-backoffice.css?v=11">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -29,11 +29,22 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-        <h2>Blog Alimentation Durable & Intelligente</h2>
+        <div class="forum-topbar-banner">
+            <div class="forum-topbar-border"></div>
+            <div class="forum-topbar-inner">
+                <span class="forum-topbar-icon">💬</span>
+                <h2 class="forum-topbar-title">Forum</h2>
+                <span class="forum-topbar-pill live-pulse">⚡ En direct</span>
+            </div>
+        </div>
 
         <div class="admin-profile">
+            <div id="notif-bell" class="notif-bell-wrap" role="button" tabindex="0" title="Nouveaux commentaires">
+                <span class="notif-bell-icon" aria-hidden="true">🔔</span>
+                <span id="notif-badge" class="notif-badge" hidden>0</span>
+            </div>
             <span>Admin</span>
-            <img src="https://via.placeholder.com/40">
+            <img src="https://via.placeholder.com/40" alt="" class="admin-avatar">
         </div>
     </div>
 
@@ -1041,6 +1052,108 @@ window.customAlert = function(message, title = 'Information', icon = 'ℹ️') {
 window.customConfirm = function(message, title = 'Confirmation', icon = '❓', confirmColor = '#e74c3c') {
     return openCustomModal({ type: 'confirm', message, title, icon, confirmColor, confirmText: 'Oui', cancelText: 'Non' });
 };
+</script>
+
+<script>
+(function() {
+    var notifLastId = 0;
+    var notifInitialized = false;
+    var notifBellCount = 0;
+
+    function initNotifBell() {
+        var bell = document.getElementById('notif-bell');
+        if (!bell || bell.getAttribute('data-notif-init') === '1') return;
+        bell.setAttribute('data-notif-init', '1');
+        function goDashboard() {
+            notifBellCount = 0;
+            var badge = document.getElementById('notif-badge');
+            if (badge) { badge.hidden = true; badge.textContent = '0'; }
+            if (typeof switchView === 'function') switchView('dashboard');
+        }
+        bell.addEventListener('click', goDashboard);
+        bell.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goDashboard(); }
+        });
+    }
+
+    function updateNotifBadge(count) {
+        notifBellCount += count;
+        var badge = document.getElementById('notif-badge');
+        if (!badge) return;
+        if (notifBellCount > 0) {
+            badge.textContent = notifBellCount > 99 ? '99+' : String(notifBellCount);
+            badge.hidden = false;
+            var bell = document.getElementById('notif-bell');
+            if (bell) {
+                bell.style.transform = 'rotate(12deg)';
+                setTimeout(function() { bell.style.transform = 'rotate(-12deg)'; }, 120);
+                setTimeout(function() { bell.style.transform = 'none'; }, 280);
+            }
+        } else {
+            badge.hidden = true;
+        }
+    }
+
+    function showDesktopNotification(comment) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        var articleName = comment.article_name || ('Article #' + comment.article_id);
+        var isFlagged = comment.flagged == 1;
+        var title = isFlagged
+            ? 'Commentaire signalé'
+            : 'Nouveau commentaire — ' + (comment.username || 'Anonyme');
+        var body = isFlagged
+            ? ('Commentaire à modérer sur « ' + articleName + ' »')
+            : (String(comment.comment || '').substring(0, 100) + (String(comment.comment || '').length > 100 ? '…' : '') + '\n' + articleName);
+        try {
+            var n = new Notification(title, { body: body, icon: 'assets/logo.png', tag: 'c-' + comment.id });
+            n.onclick = function() { window.focus(); if (typeof switchView === 'function') switchView('dashboard'); n.close(); };
+            setTimeout(function() { try { n.close(); } catch (e) {} }, 8000);
+        } catch (e) {}
+    }
+
+    function pollNewComments() {
+        fetch('index.php?controller=comment&action=check_new&last_id=' + notifLastId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.new_comments || !data.new_comments.length) return;
+                if (!notifInitialized) {
+                    notifInitialized = true;
+                    var maxId = 0;
+                    data.new_comments.forEach(function(c) { if (c.id > maxId) maxId = c.id; });
+                    notifLastId = maxId;
+                    return;
+                }
+                var newCount = 0;
+                data.new_comments.forEach(function(c) {
+                    if (c.id > notifLastId) {
+                        showDesktopNotification(c);
+                        newCount++;
+                    }
+                });
+                if (newCount > 0) {
+                    updateNotifBadge(newCount);
+                    if (window.currentAdminView === 'dashboard' && typeof loadAdminDashboard === 'function') {
+                        loadAdminDashboard();
+                    }
+                }
+                var maxId = notifLastId;
+                data.new_comments.forEach(function(c) { if (c.id > maxId) maxId = c.id; });
+                notifLastId = maxId;
+            })
+            .catch(function() {});
+    }
+
+    function boot() {
+        initNotifBell();
+        pollNewComments();
+        setInterval(pollNewComments, 10000);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();
 </script>
 
 </body>

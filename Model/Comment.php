@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/CommentModeration.php';
+
 class Comment
 {
     protected $pdo;
@@ -8,11 +10,23 @@ class Comment
         $this->pdo = $pdo;
     }
 
-    public function create(int $article_id, string $username, string $comment, int $status = 0, ?string $emoji = null, ?int $parent_id = null): int
+    /**
+     * @return array{id: int, toxic: bool}
+     */
+    public function create(int $article_id, string $username, string $comment, int $status = 0, ?string $emoji = null, ?int $parent_id = null): array
     {
-        $stmt = $this->pdo->prepare('INSERT INTO comments (article_id, username, comment, created_at, status, emoji, parent_id) VALUES (?, ?, ?, NOW(), ?, ?, ?)');
-        $stmt->execute([$article_id, $username, $comment, $status, $emoji, $parent_id]);
-        return (int)$this->pdo->lastInsertId();
+        $toxic = CommentModeration::isToxic($comment);
+        $toxicFlag = $toxic ? 1 : 0;
+        if ($toxic) {
+            $status = 1;
+        }
+
+        // Date de suppression = même horloge que MySQL (évite décalage fuseau / PHP vs NOW() en purge)
+        $stmt = $this->pdo->prepare('INSERT INTO comments (article_id, username, comment, created_at, status, emoji, parent_id, toxic_flag, toxic_delete_at) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, IF(? = 1, DATE_ADD(NOW(), INTERVAL 1 MINUTE), NULL))');
+        $stmt->execute([$article_id, $username, $comment, $status, $emoji, $parent_id, $toxicFlag, $toxicFlag]);
+        $id = (int)$this->pdo->lastInsertId();
+
+        return ['id' => $id, 'toxic' => $toxic];
     }
 
     public function get(int $id): ?array
@@ -23,7 +37,7 @@ class Comment
         return $row === false ? null : $row;
     }
 
-    public function list(?int $article_id = null, bool $publishedOnly = true): array
+    public function list(?int $article_id = null, bool $publishedOnly = true, bool $publicMaskToxic = false): array
     {
         if ($article_id !== null) {
             if ($publishedOnly) {
@@ -32,15 +46,71 @@ class Comment
                 $stmt = $this->pdo->prepare('SELECT *, IF(badge_assigned_at >= NOW() - INTERVAL 48 HOUR, badge, NULL) AS badge FROM comments WHERE article_id = ? ORDER BY created_at DESC');
             }
             $stmt->execute([$article_id]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->applyPublicToxicMask($rows, $publicMaskToxic);
         }
 
+        // Jointure sur articles : ne pas lister les commentaires orphelins (article supprimé)
         if ($publishedOnly) {
-            $stmt = $this->pdo->query('SELECT *, IF(badge_assigned_at >= NOW() - INTERVAL 48 HOUR, badge, NULL) AS badge FROM comments WHERE status = 1 ORDER BY created_at DESC');
+            $stmt = $this->pdo->query('SELECT c.*, IF(c.badge_assigned_at >= NOW() - INTERVAL 48 HOUR, c.badge, NULL) AS badge FROM comments c INNER JOIN articles a ON a.id = c.article_id WHERE c.status = 1 ORDER BY c.created_at DESC');
         } else {
-            $stmt = $this->pdo->query('SELECT *, IF(badge_assigned_at >= NOW() - INTERVAL 48 HOUR, badge, NULL) AS badge FROM comments ORDER BY created_at DESC');
+            $stmt = $this->pdo->query('SELECT c.*, IF(c.badge_assigned_at >= NOW() - INTERVAL 48 HOUR, c.badge, NULL) AS badge FROM comments c INNER JOIN articles a ON a.id = c.article_id ORDER BY c.created_at DESC');
         }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->applyPublicToxicMask($rows, $publicMaskToxic);
+    }
+
+    /**
+     * Supprime les commentaires toxiques dont le délai de grâce (1 min) est écoulé.
+     * Supprime également les réponses enfants pour éviter les orphelins.
+     */
+    public function purgeExpiredToxic(): void
+    {
+        try {
+            // Récupérer les IDs des commentaires toxiques expirés
+            $stmt = $this->pdo->query('SELECT id FROM comments WHERE toxic_delete_at IS NOT NULL AND toxic_delete_at <= NOW()');
+            $expiredIds = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+
+            if (!empty($expiredIds)) {
+                $placeholders = implode(',', array_fill(0, count($expiredIds), '?'));
+
+                // Supprimer d'abord les réponses enfants
+                $stmtChildren = $this->pdo->prepare("DELETE FROM comments WHERE parent_id IN ($placeholders)");
+                $stmtChildren->execute($expiredIds);
+
+                // Puis supprimer les commentaires toxiques eux-mêmes
+                $stmtParents = $this->pdo->prepare("DELETE FROM comments WHERE id IN ($placeholders)");
+                $stmtParents->execute($expiredIds);
+            }
+        } catch (PDOException $e) {
+            // Colonnes absentes tant que createTables n'a pas tourné
+        }
+    }
+
+    /**
+     * Front : texte remplacé par des étoiles pour tout commentaire marqué toxique.
+     * Pendant le délai de grâce (1 min), le texte est déjà masqué.
+     * Après expiration, toxic_delete_at est mis à NULL et le masquage reste permanent.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function applyPublicToxicMask(array $rows, bool $publicMaskToxic): array
+    {
+        if (!$publicMaskToxic || $rows === []) {
+            return $rows;
+        }
+        foreach ($rows as &$row) {
+            if (empty($row['toxic_flag'])) {
+                continue;
+            }
+            // Masquer tout commentaire toxique (en attente ou déjà expiré)
+            $row['comment'] = '★★★★★';
+            $row['toxic_masked'] = true;
+        }
+        unset($row);
+
+        return $rows;
     }
 
     public function switchVote(int $id, string $type, ?string $oldType = null): bool
@@ -77,9 +147,31 @@ class Comment
     {
         $fields = [];
         $params = [];
+        $statusHandled = false;
+
         if (isset($data['username'])) { $fields[] = 'username = ?'; $params[] = $data['username']; }
-        if (isset($data['comment'])) { $fields[] = 'comment = ?'; $params[] = $data['comment']; }
-        if (isset($data['status'])) { $fields[] = 'status = ?'; $params[] = (int)$data['status']; }
+        if (isset($data['comment'])) {
+            $fields[] = 'comment = ?';
+            $params[] = $data['comment'];
+            $toxic = CommentModeration::isToxic($data['comment']);
+            if ($toxic) {
+                $fields[] = 'toxic_flag = ?';
+                $params[] = 1;
+                $fields[] = 'toxic_delete_at = DATE_ADD(NOW(), INTERVAL 1 MINUTE)';
+                $fields[] = 'status = ?';
+                $params[] = 1;
+                $statusHandled = true;
+            } else {
+                $fields[] = 'toxic_flag = ?';
+                $params[] = 0;
+                $fields[] = 'toxic_delete_at = ?';
+                $params[] = null;
+            }
+        }
+        if (isset($data['status']) && !$statusHandled) {
+            $fields[] = 'status = ?';
+            $params[] = (int)$data['status'];
+        }
 
         if (empty($fields)) {
             return false;
@@ -140,5 +232,14 @@ class Comment
         }
         return true;
     }
+
+    /**
+     * Commentaires créés après un ID (notifications back-office / tray).
+     */
+    public function getNewerThan(int $lastId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT c.*, a.name AS article_name FROM comments c LEFT JOIN articles a ON c.article_id = a.id WHERE c.id > ? ORDER BY c.id ASC');
+        $stmt->execute([$lastId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
-?>
