@@ -6,7 +6,7 @@ class Config {
         if (!isset(self::$pdo)) {
             try {
                 self::$pdo = new PDO(
-                    'mysql:host=localhost;dbname=smartplate_db',
+                    'mysql:host=localhost;dbname=smartplate',
                     'root',
                     '',
                     [
