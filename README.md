@@ -38,7 +38,8 @@ SmartPlate is a web platform focused on sustainable food and intelligent nutriti
 
 ### Backend
 - PHP  
-- MySQL  
+- MySQL
+- Python
 
 ---
 
