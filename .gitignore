@@ -1,0 +1,7 @@
+*.local
+.env
+.env.*
+Views/frontend/google_oauth_config.php
+View/User/frontend/google_oauth_config.php
+View/User/frontend/google_oauth_config.php
+View/User/frontend/google_oauth_config.example.php
